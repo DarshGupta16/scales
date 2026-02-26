@@ -1,0 +1,80 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum Unit {
+  seconds
+  minutes
+  hours
+  days
+  weeks
+  months
+  years
+  meters
+  kilometers
+  miles
+  grams
+  kilograms
+  pounds
+  celsius
+  fahrenheit
+  percentage
+  bytes
+  kilobytes
+  megabytes
+  gigabytes
+  terabytes
+  dollars
+  euros
+  rupees
+  count
+}
+
+enum ViewType {
+  line
+  bar
+  area
+  pie
+  scatter
+}
+
+model Dataset {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  title       String
+  description String?
+  unit        Unit
+  createdAt   DateTime      @default(now())
+
+  measurements Measurement[]
+  views        DatasetView[]
+}
+
+model Measurement {
+  id        String   @id @default(cuid())
+  timestamp DateTime
+  value     Float
+
+  dataset   Dataset  @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  datasetId String
+
+  @@index([datasetId])
+}
+
+model DatasetView {
+  id        String   @id @default(cuid())
+  type      ViewType
+
+  dataset   Dataset  @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  datasetId String
+
+  @@unique([datasetId, type]) // prevents duplicate view types
+}

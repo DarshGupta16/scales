@@ -11,3 +11,8 @@ dist-ssr
 .vinxi
 __unconfig*
 todos.json
+
+/generated/prisma
+
+/generated/prisma
+scales.db

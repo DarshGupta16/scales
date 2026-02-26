@@ -12,6 +12,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@prisma/client": "^7.4.1",
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/react-devtools": "^0.7.0",
     "@tanstack/react-router": "^1.132.0",
@@ -21,6 +22,7 @@
     "@tanstack/router-plugin": "^1.132.0",
     "framer-motion": "^12.34.3",
     "lucide-react": "^0.545.0",
+    "prisma": "^7.4.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "recharts": "^3.7.0",
