@@ -33,7 +33,7 @@ function Index() {
     return datasets.filter(
       (dataset) =>
         dataset.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        dataset.unit.toLowerCase().includes(searchQuery.toLowerCase())
+        dataset.unit.toLowerCase().includes(searchQuery.toLowerCase()),
     );
   }, [datasets, searchQuery]);
 
@@ -61,14 +61,24 @@ function Index() {
   return (
     <div className="min-h-screen pb-24 bg-[#050505] relative selection:bg-brand selection:text-white">
       {/* Subtle Grain Overlay */}
-      <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-[100]" style={{ backgroundImage: 'url("https://grainy-gradients.vercel.app/noise.svg")' }}></div>
-      
+      <div
+        className="fixed inset-0 pointer-events-none opacity-[0.03] z-[100]"
+        style={{
+          backgroundImage:
+            'url("https://grainy-gradients.vercel.app/noise.svg")',
+        }}
+      ></div>
+
       {/* Top Bar */}
       <header className="sticky top-0 z-50 bg-[#050505]/80 backdrop-blur-xl border-b border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-brand/10 border border-brand/20 rounded-xl flex items-center justify-center overflow-hidden">
-              <img src="/icon.png" alt="Scales Logo" className="w-full h-full object-cover" />
+              <img
+                src="/icon.png"
+                alt="Scales Logo"
+                className="w-full h-full object-cover"
+              />
             </div>
             <div className="flex flex-col">
               <h1 className="text-xl font-display font-bold text-white tracking-tight uppercase leading-tight">
@@ -102,7 +112,9 @@ function Index() {
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
             <div className="max-w-2xl">
               <h2 className="text-4xl md:text-6xl font-display font-extrabold text-white tracking-tighter uppercase leading-none mb-6">
-                Your<br/><span className="text-brand">Collections</span>
+                Your
+                <br />
+                <span className="text-brand">Collections</span>
               </h2>
               <p className="text-sm text-zinc-500 font-sans uppercase tracking-[0.2em] border-l border-brand/50 pl-4">
                 Refined metrics. Elegant tracking.
@@ -202,10 +214,7 @@ function Index() {
             <UnitSelector value={newUnit} onChange={setNewUnit} />
           </div>
 
-          <button
-            type="submit"
-            className="mt-4 brutal-btn-brand py-4 w-full"
-          >
+          <button type="submit" className="mt-4 brutal-btn-brand py-4 w-full">
             Create Tracker
           </button>
         </form>
