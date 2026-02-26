@@ -35,15 +35,15 @@ export function ViewSwitcher({
             <button
               onClick={() => onViewChange(view)}
               className={`
-                flex items-center gap-2 px-4 py-2 border-2 text-sm font-bold uppercase tracking-widest transition-all rounded-none
+                flex items-center gap-2 px-4 py-2 border text-[10px] font-bold uppercase tracking-[0.2em] transition-all rounded-xl
                 ${
                   isActive
-                    ? "bg-brand border-brand text-black shadow-[4px_4px_0_0_rgba(255,255,255,1)]"
-                    : "bg-black border-white text-white hover:border-brand hover:text-brand"
+                    ? "bg-brand border-brand text-white shadow-lg shadow-brand/20"
+                    : "bg-white/5 border-white/10 text-zinc-400 hover:border-brand/50 hover:text-white"
                 }
               `}
             >
-              <Icon className="w-5 h-5" />
+              <Icon className="w-4 h-4" />
               <span>{view}</span>
             </button>
             
@@ -54,12 +54,12 @@ export function ViewSwitcher({
                   onRemoveView(view);
                 }}
                 className={`
-                  absolute -top-3 -right-3 w-6 h-6 bg-black border-2 border-white 
-                  flex items-center justify-center text-white hover:bg-[#ff3333] hover:text-white hover:border-white
-                  opacity-0 group-hover:opacity-100 transition-opacity z-10 rounded-none
+                  absolute -top-2 -right-2 w-5 h-5 bg-zinc-900 border border-white/10 rounded-full
+                  flex items-center justify-center text-zinc-500 hover:text-red-400 hover:border-red-400/50
+                  opacity-0 group-hover:opacity-100 transition-all z-10
                 `}
               >
-                <X className="w-4 h-4" />
+                <X className="w-3 h-3" />
               </button>
             )}
           </div>
@@ -68,10 +68,10 @@ export function ViewSwitcher({
 
       <button
         onClick={onAddView}
-        className="flex items-center gap-2 px-4 py-2 border-2 border-dashed border-zinc-600 text-sm font-bold uppercase tracking-widest bg-transparent text-zinc-400 hover:border-white hover:text-white transition-all rounded-none"
+        className="flex items-center gap-2 px-4 py-2 border border-dashed border-white/10 text-[10px] font-bold uppercase tracking-[0.2em] bg-transparent text-zinc-500 hover:border-brand/50 hover:text-brand transition-all rounded-xl"
       >
-        <Plus className="w-5 h-5" />
-        <span>ADD</span>
+        <Plus className="w-4 h-4" />
+        <span>Add</span>
       </button>
     </div>
   );

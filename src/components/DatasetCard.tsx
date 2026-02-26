@@ -9,6 +9,7 @@ import {
   BarChart,
   Bar,
 } from "recharts";
+import { motion } from "framer-motion";
 
 interface DatasetCardProps {
   dataset: Dataset;
@@ -24,12 +25,17 @@ export function DatasetCard({ dataset }: DatasetCardProps) {
       case "area":
         return (
           <AreaChart data={previewData}>
+            <defs>
+              <linearGradient id={`gradient-${dataset.id}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+              </linearGradient>
+            </defs>
             <Area
-              type="step"
+              type="monotone"
               dataKey="value"
-              stroke="#ccff00"
-              fill="#ccff00"
-              fillOpacity={0.2}
+              stroke="#8b5cf6"
+              fill={`url(#gradient-${dataset.id})`}
               strokeWidth={2}
             />
           </AreaChart>
@@ -37,17 +43,17 @@ export function DatasetCard({ dataset }: DatasetCardProps) {
       case "bar":
         return (
           <BarChart data={previewData}>
-            <Bar dataKey="value" fill="#ccff00" />
+            <Bar dataKey="value" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
           </BarChart>
         );
       default:
         return (
           <LineChart data={previewData}>
             <Line
-              type="step"
+              type="monotone"
               dataKey="value"
-              stroke="#ccff00"
-              strokeWidth={3}
+              stroke="#8b5cf6"
+              strokeWidth={2.5}
               dot={false}
             />
           </LineChart>
@@ -56,33 +62,36 @@ export function DatasetCard({ dataset }: DatasetCardProps) {
   };
 
   return (
-    <Link
-      to="/datasets/$datasetId"
-      params={{ datasetId: dataset.id }}
-      className="block h-full brutal-card group bg-black"
+    <motion.div
+      whileHover={{ y: -8, scale: 1.02 }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
     >
-      <div className="flex justify-between items-start mb-6">
-        <div>
-          <h3 className="text-2xl font-display font-extrabold text-white uppercase tracking-tighter group-hover:text-brand transition-colors">
-            {dataset.title}
-          </h3>
-          <p className="text-xs font-sans font-bold text-zinc-500 uppercase tracking-[0.2em] mt-1 border-l-2 border-brand pl-2">
-            {dataset.unit}
-          </p>
+      <Link
+        to="/datasets/$datasetId"
+        params={{ datasetId: dataset.id }}
+        className="block h-full brutal-card group"
+      >
+        <div className="flex justify-between items-start mb-6">
+          <div>
+            <h3 className="text-xl font-display font-bold text-white uppercase tracking-tight group-hover:text-brand transition-colors">
+              {dataset.title}
+            </h3>
+            <p className="text-[10px] font-sans font-bold text-zinc-500 uppercase tracking-[0.2em] mt-2">
+              {dataset.unit}
+            </p>
+          </div>
         </div>
-      </div>
 
-      <div className="h-32 w-full mb-6 bg-[#111] border-2 border-[#333] p-2 min-h-0 relative overflow-hidden group-hover:border-white transition-colors">
-        {/* Grid lines inside chart container */}
-        <div className="absolute inset-0 pointer-events-none opacity-20" style={{ backgroundImage: 'linear-gradient(#444 1px, transparent 1px), linear-gradient(90deg, #444 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
-        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-          {renderPreviewChart()}
-        </ResponsiveContainer>
-      </div>
+        <div className="h-28 w-full mb-6 bg-white/[0.02] border border-white/5 rounded-2xl p-2 min-h-0 relative overflow-hidden group-hover:border-brand/20 transition-colors">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+            {renderPreviewChart()}
+          </ResponsiveContainer>
+        </div>
 
-      <p className="text-sm font-sans text-zinc-400 line-clamp-2 leading-relaxed uppercase">
-        {dataset.description || "NO PARAMETERS PROVIDED."}
-      </p>
-    </Link>
+        <p className="text-xs font-sans text-zinc-500 line-clamp-2 leading-relaxed uppercase tracking-wider">
+          {dataset.description || "Refined tracking parameters."}
+        </p>
+      </Link>
+    </motion.div>
   );
 }

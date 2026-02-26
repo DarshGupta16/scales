@@ -31,10 +31,10 @@ export function UnitSelector({ value, onChange }: UnitSelectorProps) {
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between px-4 py-3 bg-black border-2 border-white focus:outline-none focus:border-brand focus:shadow-[4px_4px_0_0_var(--color-brand)] transition-all text-left rounded-none"
+        className="w-full flex items-center justify-between px-4 py-3 bg-zinc-900/50 border border-white/10 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all text-left rounded-xl"
       >
-        <span className="text-white uppercase tracking-widest font-bold text-sm">{value}</span>
-        <ChevronsUpDown className="w-5 h-5 text-brand" />
+        <span className="text-white uppercase tracking-widest font-bold text-[10px]">{value}</span>
+        <ChevronsUpDown className="w-4 h-4 text-brand" />
       </button>
 
       {isOpen && (
@@ -43,19 +43,19 @@ export function UnitSelector({ value, onChange }: UnitSelectorProps) {
             className="fixed inset-0 z-[60]" 
             onClick={() => setIsOpen(false)} 
           />
-          <div className="absolute top-full left-0 right-0 mt-2 bg-black border-2 border-white brutal-shadow z-[70] overflow-hidden rounded-none">
-            <div className="p-3 border-b-2 border-white bg-[#111] flex items-center gap-2">
-              <Search className="w-5 h-5 text-brand" />
+          <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-900 border border-white/10 shadow-2xl z-[70] overflow-hidden rounded-2xl animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="p-3 border-b border-white/5 bg-white/[0.02] flex items-center gap-2">
+              <Search className="w-4 h-4 text-zinc-500" />
               <input
                 autoFocus
                 type="text"
-                placeholder="FILTER..."
-                className="w-full bg-transparent border-none focus:ring-0 text-sm py-1 placeholder-zinc-600 text-white uppercase tracking-widest font-bold"
+                placeholder="Filter Units..."
+                className="w-full bg-transparent border-none focus:ring-0 text-xs py-1 placeholder-zinc-600 text-white uppercase tracking-widest font-bold"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            <div className="max-h-60 overflow-y-auto p-2 bg-black">
+            <div className="max-h-60 overflow-y-auto p-2 bg-zinc-900">
               {filteredUnits.map((unit) => (
                 <button
                   key={unit}
@@ -66,20 +66,20 @@ export function UnitSelector({ value, onChange }: UnitSelectorProps) {
                     setSearch("");
                   }}
                   className={`
-                    w-full flex items-center justify-between px-3 py-3 text-sm transition-all uppercase tracking-widest font-bold rounded-none
+                    w-full flex items-center justify-between px-4 py-3 text-[10px] transition-all uppercase tracking-widest font-bold rounded-xl
                     ${value === unit 
-                      ? "bg-brand text-black border-2 border-brand" 
-                      : "text-zinc-400 hover:bg-[#111] hover:text-white border-2 border-transparent"
+                      ? "bg-brand text-white shadow-lg shadow-brand/20" 
+                      : "text-zinc-500 hover:bg-white/5 hover:text-white"
                     }
                   `}
                 >
                   <span>{unit}</span>
-                  {value === unit && <Check className="w-5 h-5" />}
+                  {value === unit && <Check className="w-4 h-4" />}
                 </button>
               ))}
               {filteredUnits.length === 0 && (
-                <div className="p-4 text-center text-xs text-zinc-600 uppercase tracking-widest font-bold">
-                  NULL RESULT.
+                <div className="p-4 text-center text-[10px] text-zinc-600 uppercase tracking-widest font-bold">
+                  Zero results.
                 </div>
               )}
             </div>

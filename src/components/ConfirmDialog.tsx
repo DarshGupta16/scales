@@ -21,16 +21,16 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title}>
-      <div className="flex flex-col gap-8">
-        <p className="text-zinc-300 font-sans uppercase tracking-widest text-sm leading-relaxed border-l-4 border-white pl-4">
+      <div className="flex flex-col gap-10">
+        <p className="text-zinc-400 font-sans uppercase tracking-[0.15em] text-xs leading-relaxed border-l-2 border-brand/50 pl-6">
           {message}
         </p>
         <div className="flex justify-end gap-4 mt-2">
           <button
             onClick={onClose}
-            className="px-6 py-3 border-2 border-white bg-black text-white font-bold uppercase tracking-widest hover:bg-white hover:text-black transition-all rounded-none"
+            className="px-6 py-3 bg-white/5 text-zinc-400 font-bold uppercase tracking-widest text-xs hover:bg-white/10 hover:text-white transition-all rounded-xl"
           >
-            ABORT
+            Abort
           </button>
           <button
             onClick={() => {
@@ -38,11 +38,11 @@ export function ConfirmDialog({
               onClose();
             }}
             className={`
-              px-6 py-3 border-2 border-white font-bold uppercase tracking-widest transition-all rounded-none
+              px-6 py-3 font-bold uppercase tracking-widest text-xs transition-all rounded-xl shadow-lg
               ${
                 type === "danger"
-                  ? "bg-[#ff3333] text-white shadow-[4px_4px_0_0_rgba(255,255,255,1)] hover:-translate-y-1 hover:translate-x-1 hover:shadow-[6px_6px_0_0_rgba(255,255,255,1)] active:translate-y-[4px] active:translate-x-[4px] active:shadow-none"
-                  : "bg-brand text-black shadow-[4px_4px_0_0_var(--color-brand)] hover:-translate-y-1 hover:translate-x-1 hover:shadow-[6px_6px_0_0_var(--color-brand)] active:translate-y-[4px] active:translate-x-[4px] active:shadow-none"
+                  ? "bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500 hover:text-white"
+                  : "bg-brand text-white shadow-brand/20 hover:brightness-110"
               }
             `}
           >
