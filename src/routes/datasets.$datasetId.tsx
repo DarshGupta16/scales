@@ -8,7 +8,6 @@ import { Modal } from "../components/Modal";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { ArrowLeft, Plus } from "lucide-react";
 import type { ViewType, Measurement } from "../types/dataset";
-import { motion } from "framer-motion";
 
 export const Route = createFileRoute("/datasets/$datasetId")({
   component: DatasetDetail,

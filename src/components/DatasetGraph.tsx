@@ -136,9 +136,10 @@ export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
               dataKey="value"
               animationDuration={1500}
               stroke="none"
+              cornerRadius={10}
             >
               {chartData.map((_, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} cornerRadius={10} />
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>
             {tooltip}

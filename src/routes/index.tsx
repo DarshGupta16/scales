@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 import { mockDatasets } from "../data/mockDatasets";
@@ -5,9 +6,10 @@ import { DatasetCard } from "../components/DatasetCard";
 import { SearchBar } from "../components/SearchBar";
 import { Modal } from "../components/Modal";
 import { UnitSelector } from "../components/UnitSelector";
-import { Plus, LayoutGrid, Info } from "lucide-react";
+import { Plus, LayoutGrid, Info, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Dataset, Unit } from "../types/dataset";
+import { useTRPC } from "../trpc/client";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -17,6 +19,10 @@ function Index() {
   const [datasets, setDatasets] = useState<Dataset[]>(mockDatasets);
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  // tRPC Test using Query Options (tRPC 11 pattern)
+  const trpc = useTRPC();
+  const hello = useQuery(trpc.hello.queryOptions({ name: "Builder" }));
 
   // Form State
   const [newTitle, setNewTitle] = useState("");
@@ -64,9 +70,19 @@ function Index() {
             <div className="w-10 h-10 bg-brand/10 border border-brand/20 rounded-xl flex items-center justify-center overflow-hidden">
               <img src="/icon.png" alt="Scales Logo" className="w-full h-full object-cover" />
             </div>
-            <h1 className="text-xl font-display font-bold text-white tracking-tight uppercase hidden sm:block">
-              Scales
-            </h1>
+            <div className="flex flex-col">
+              <h1 className="text-xl font-display font-bold text-white tracking-tight uppercase leading-tight">
+                Scales
+              </h1>
+              <div className="flex items-center gap-2 text-[10px] font-mono text-zinc-500 uppercase tracking-widest">
+                {hello.isLoading ? (
+                  <Loader2 className="w-2 h-2 animate-spin" />
+                ) : (
+                  <span className="text-brand">●</span>
+                )}
+                {hello.data?.greeting ?? "Connecting..."}
+              </div>
+            </div>
           </div>
 
           <SearchBar value={searchQuery} onChange={setSearchQuery} />
