@@ -13,58 +13,58 @@ export function DatasetTable({ measurements, unit, onDelete }: DatasetTableProps
   );
 
   return (
-    <div className="overflow-hidden bg-white border border-slate-200 rounded-2xl shadow-sm">
+    <div className="w-full border-2 border-white bg-black">
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-slate-200">
-          <thead className="bg-slate-50">
+        <table className="min-w-full">
+          <thead className="bg-[#111] border-b-2 border-white">
             <tr>
               <th
                 scope="col"
-                className="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider"
+                className="px-6 py-4 text-left text-xs font-bold text-brand uppercase tracking-[0.2em]"
               >
                 Timestamp
               </th>
               <th
                 scope="col"
-                className="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider"
+                className="px-6 py-4 text-left text-xs font-bold text-brand uppercase tracking-[0.2em]"
               >
                 Value
               </th>
               <th
                 scope="col"
-                className="px-6 py-4 text-right text-xs font-bold text-slate-400 uppercase tracking-wider"
+                className="px-6 py-4 text-right text-xs font-bold text-brand uppercase tracking-[0.2em]"
               >
-                Actions
+                Terminate
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-slate-200">
+          <tbody className="bg-black divide-y-2 divide-[#333]">
             {sortedMeasurements.map((measurement) => (
-              <tr key={measurement.id} className="hover:bg-slate-50 transition-colors group">
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+              <tr key={measurement.id} className="hover:bg-[#111] transition-colors group">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-400 font-sans tracking-wider">
                   {new Date(measurement.timestamp).toLocaleString(undefined, {
                     dateStyle: "medium",
                     timeStyle: "short",
-                  })}
+                  }).toUpperCase()}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-900">
-                  {measurement.value} <span className="text-slate-400 font-normal uppercase text-[10px] ml-1">{unit}</span>
+                <td className="px-6 py-4 whitespace-nowrap text-lg font-bold text-white font-sans">
+                  {measurement.value} <span className="text-zinc-500 font-normal uppercase text-xs ml-1 tracking-widest">{unit}</span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <td className="px-6 py-4 whitespace-nowrap text-right">
                   <button
                     onClick={() => onDelete(measurement.id)}
-                    className="text-slate-300 hover:text-red-500 transition-colors p-2 rounded-lg hover:bg-red-50"
+                    className="text-zinc-600 hover:text-black hover:bg-[#ff3333] transition-colors p-2 border-2 border-transparent hover:border-white inline-flex"
                     title="Delete measurement"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-5 h-5" />
                   </button>
                 </td>
               </tr>
             ))}
             {sortedMeasurements.length === 0 && (
               <tr>
-                <td colSpan={3} className="px-6 py-12 text-center text-slate-400 italic">
-                  No measurements recorded yet.
+                <td colSpan={3} className="px-6 py-12 text-center text-zinc-600 font-bold uppercase tracking-widest">
+                  NO DATA LOGGED.
                 </td>
               </tr>
             )}

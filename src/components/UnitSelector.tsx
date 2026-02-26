@@ -31,10 +31,10 @@ export function UnitSelector({ value, onChange }: UnitSelectorProps) {
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-left"
+        className="w-full flex items-center justify-between px-4 py-3 bg-black border-2 border-white focus:outline-none focus:border-brand focus:shadow-[4px_4px_0_0_var(--color-brand)] transition-all text-left rounded-none"
       >
-        <span className="text-slate-700 capitalize">{value}</span>
-        <ChevronsUpDown className="w-4 h-4 text-slate-400" />
+        <span className="text-white uppercase tracking-widest font-bold text-sm">{value}</span>
+        <ChevronsUpDown className="w-5 h-5 text-brand" />
       </button>
 
       {isOpen && (
@@ -43,19 +43,19 @@ export function UnitSelector({ value, onChange }: UnitSelectorProps) {
             className="fixed inset-0 z-[60]" 
             onClick={() => setIsOpen(false)} 
           />
-          <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-2xl shadow-2xl z-[70] overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="p-3 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
-              <Search className="w-4 h-4 text-slate-400" />
+          <div className="absolute top-full left-0 right-0 mt-2 bg-black border-2 border-white brutal-shadow z-[70] overflow-hidden rounded-none">
+            <div className="p-3 border-b-2 border-white bg-[#111] flex items-center gap-2">
+              <Search className="w-5 h-5 text-brand" />
               <input
                 autoFocus
                 type="text"
-                placeholder="Search units..."
-                className="w-full bg-transparent border-none focus:ring-0 text-sm py-1 placeholder-slate-400"
+                placeholder="FILTER..."
+                className="w-full bg-transparent border-none focus:ring-0 text-sm py-1 placeholder-zinc-600 text-white uppercase tracking-widest font-bold"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            <div className="max-h-60 overflow-y-auto p-2">
+            <div className="max-h-60 overflow-y-auto p-2 bg-black">
               {filteredUnits.map((unit) => (
                 <button
                   key={unit}
@@ -66,20 +66,20 @@ export function UnitSelector({ value, onChange }: UnitSelectorProps) {
                     setSearch("");
                   }}
                   className={`
-                    w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm transition-all
+                    w-full flex items-center justify-between px-3 py-3 text-sm transition-all uppercase tracking-widest font-bold rounded-none
                     ${value === unit 
-                      ? "bg-indigo-50 text-indigo-700 font-bold" 
-                      : "text-slate-600 hover:bg-slate-50"
+                      ? "bg-brand text-black border-2 border-brand" 
+                      : "text-zinc-400 hover:bg-[#111] hover:text-white border-2 border-transparent"
                     }
                   `}
                 >
-                  <span className="capitalize">{unit}</span>
-                  {value === unit && <Check className="w-4 h-4" />}
+                  <span>{unit}</span>
+                  {value === unit && <Check className="w-5 h-5" />}
                 </button>
               ))}
               {filteredUnits.length === 0 && (
-                <div className="p-4 text-center text-xs text-slate-400 italic">
-                  No units found.
+                <div className="p-4 text-center text-xs text-zinc-600 uppercase tracking-widest font-bold">
+                  NULL RESULT.
                 </div>
               )}
             </div>

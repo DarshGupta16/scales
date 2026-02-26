@@ -25,7 +25,7 @@ interface DatasetGraphProps {
   unit: string;
 }
 
-const COLORS = ["#6366f1", "#8b5cf6", "#ec4899", "#f43f5e", "#f59e0b", "#10b981"];
+const COLORS = ["#ccff00", "#ff3333", "#0055ff", "#ffffff", "#888888"];
 
 export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
   const chartData = useMemo(() => {
@@ -43,10 +43,10 @@ export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white p-3 border border-slate-200 rounded-xl shadow-lg ring-1 ring-black/5">
-          <p className="text-xs font-medium text-slate-400 mb-1">{label}</p>
-          <p className="text-sm font-bold text-indigo-600">
-            {payload[0].value} <span className="text-slate-500 font-normal uppercase text-[10px]">{unit}</span>
+        <div className="bg-black p-4 border-2 border-white brutal-shadow-brand">
+          <p className="text-xs font-bold text-zinc-500 mb-2 uppercase tracking-widest">{label}</p>
+          <p className="text-2xl font-display font-extrabold text-brand uppercase">
+            {payload[0].value} <span className="text-white text-sm tracking-widest">{unit}</span>
           </p>
         </div>
       );
@@ -56,13 +56,13 @@ export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
 
   const commonProps = {
     data: chartData,
-    margin: { top: 10, right: 10, left: 0, bottom: 0 },
+    margin: { top: 20, right: 20, left: 0, bottom: 0 },
   };
 
-  const xAxis = <XAxis dataKey="displayDate" hide />;
-  const yAxis = <YAxis hide />;
-  const cartesianGrid = <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />;
-  const tooltip = <Tooltip content={<CustomTooltip />} />;
+  const xAxis = <XAxis dataKey="displayDate" stroke="#888" tick={{ fill: '#fff', fontSize: 10, fontFamily: 'JetBrains Mono' }} tickLine={{ stroke: '#fff' }} axisLine={{ stroke: '#fff', strokeWidth: 2 }} />;
+  const yAxis = <YAxis stroke="#888" tick={{ fill: '#fff', fontSize: 10, fontFamily: 'JetBrains Mono' }} tickLine={{ stroke: '#fff' }} axisLine={{ stroke: '#fff', strokeWidth: 2 }} />;
+  const cartesianGrid = <CartesianGrid strokeDasharray="0" vertical={true} stroke="#333" strokeWidth={1} />;
+  const tooltip = <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#fff', strokeWidth: 1, strokeDasharray: '4 4' }} />;
 
   const renderChart = () => {
     switch (viewType) {
@@ -74,13 +74,13 @@ export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
             {yAxis}
             {tooltip}
             <Line
-              type="monotone"
+              type="step"
               dataKey="value"
-              stroke="#6366f1"
-              strokeWidth={3}
-              dot={{ r: 4, fill: "#6366f1", strokeWidth: 2, stroke: "#fff" }}
-              activeDot={{ r: 6, strokeWidth: 0 }}
-              animationDuration={1000}
+              stroke="#ccff00"
+              strokeWidth={4}
+              dot={{ r: 0, fill: "#000", strokeWidth: 2, stroke: "#ccff00" }}
+              activeDot={{ r: 8, strokeWidth: 2, stroke: "#fff", fill: "#000" }}
+              animationDuration={0}
             />
           </LineChart>
         );
@@ -93,9 +93,8 @@ export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
             {tooltip}
             <Bar
               dataKey="value"
-              fill="#6366f1"
-              radius={[6, 6, 0, 0]}
-              animationDuration={1000}
+              fill="#ccff00"
+              animationDuration={0}
             />
           </BarChart>
         );
@@ -103,23 +102,22 @@ export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
         return (
           <AreaChart {...commonProps}>
             <defs>
-              <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
-              </linearGradient>
+              <pattern id="diagonalHatch" width="8" height="8" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
+                <line x1="0" y1="0" x2="0" y2="8" stroke="#ccff00" strokeWidth="2" />
+              </pattern>
             </defs>
             {cartesianGrid}
             {xAxis}
             {yAxis}
             {tooltip}
             <Area
-              type="monotone"
+              type="step"
               dataKey="value"
-              stroke="#6366f1"
-              strokeWidth={3}
+              stroke="#ccff00"
+              strokeWidth={4}
               fillOpacity={1}
-              fill="url(#colorValue)"
-              animationDuration={1000}
+              fill="url(#diagonalHatch)"
+              animationDuration={0}
             />
           </AreaChart>
         );
@@ -130,11 +128,13 @@ export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
               data={chartData}
               cx="50%"
               cy="50%"
-              innerRadius={60}
-              outerRadius={80}
-              paddingAngle={5}
+              innerRadius={0}
+              outerRadius={120}
+              paddingAngle={0}
               dataKey="value"
-              animationDuration={1000}
+              animationDuration={0}
+              stroke="#000"
+              strokeWidth={2}
             >
               {chartData.map((_, index) => (
                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -147,14 +147,15 @@ export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
         return (
           <ScatterChart {...commonProps}>
             {cartesianGrid}
-            <XAxis type="category" dataKey="displayDate" name="Time" hide />
-            <YAxis type="number" dataKey="value" name="Value" hide />
+            <XAxis type="category" dataKey="displayDate" name="Time" stroke="#fff" tick={{ fill: '#fff', fontSize: 10, fontFamily: 'JetBrains Mono' }} />
+            <YAxis type="number" dataKey="value" name="Value" stroke="#fff" tick={{ fill: '#fff', fontSize: 10, fontFamily: 'JetBrains Mono' }} />
             {tooltip}
             <Scatter
               name="Measurements"
               data={chartData}
-              fill="#6366f1"
-              animationDuration={1000}
+              fill="#ccff00"
+              shape="square"
+              animationDuration={0}
             />
           </ScatterChart>
         );
@@ -164,7 +165,7 @@ export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
   };
 
   return (
-    <div className="w-full h-full min-h-[300px] min-w-0">
+    <div className="w-full h-full min-h-[400px] min-w-0 bg-[#0a0a0a] border-2 border-[#333] p-4 relative">
       <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
         {renderChart()}
       </ResponsiveContainer>

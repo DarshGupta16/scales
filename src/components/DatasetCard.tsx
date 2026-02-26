@@ -9,7 +9,6 @@ import {
   BarChart,
   Bar,
 } from "recharts";
-import { motion } from "framer-motion";
 
 interface DatasetCardProps {
   dataset: Dataset;
@@ -26,10 +25,10 @@ export function DatasetCard({ dataset }: DatasetCardProps) {
         return (
           <AreaChart data={previewData}>
             <Area
-              type="monotone"
+              type="step"
               dataKey="value"
-              stroke="#6366f1"
-              fill="#6366f1"
+              stroke="#ccff00"
+              fill="#ccff00"
               fillOpacity={0.2}
               strokeWidth={2}
             />
@@ -38,17 +37,17 @@ export function DatasetCard({ dataset }: DatasetCardProps) {
       case "bar":
         return (
           <BarChart data={previewData}>
-            <Bar dataKey="value" fill="#6366f1" radius={[2, 2, 0, 0]} />
+            <Bar dataKey="value" fill="#ccff00" />
           </BarChart>
         );
       default:
         return (
           <LineChart data={previewData}>
             <Line
-              type="monotone"
+              type="step"
               dataKey="value"
-              stroke="#6366f1"
-              strokeWidth={2}
+              stroke="#ccff00"
+              strokeWidth={3}
               dot={false}
             />
           </LineChart>
@@ -57,36 +56,33 @@ export function DatasetCard({ dataset }: DatasetCardProps) {
   };
 
   return (
-    <motion.div
-      whileHover={{ y: -4, transition: { duration: 0.2 } }}
-      className="group"
+    <Link
+      to="/datasets/$datasetId"
+      params={{ datasetId: dataset.id }}
+      className="block h-full brutal-card group bg-black"
     >
-      <Link
-        to="/datasets/$datasetId"
-        params={{ datasetId: dataset.id }}
-        className="block h-full bg-white border border-slate-200 rounded-[2rem] p-8 shadow-sm hover:shadow-xl hover:border-indigo-100 transition-all duration-300"
-      >
-        <div className="flex justify-between items-start mb-6">
-          <div>
-            <h3 className="text-xl font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
-              {dataset.title}
-            </h3>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] mt-2">
-              {dataset.unit}
-            </p>
-          </div>
+      <div className="flex justify-between items-start mb-6">
+        <div>
+          <h3 className="text-2xl font-display font-extrabold text-white uppercase tracking-tighter group-hover:text-brand transition-colors">
+            {dataset.title}
+          </h3>
+          <p className="text-xs font-sans font-bold text-zinc-500 uppercase tracking-[0.2em] mt-1 border-l-2 border-brand pl-2">
+            {dataset.unit}
+          </p>
         </div>
+      </div>
 
-        <div className="h-32 w-full mb-6 bg-slate-50/50 rounded-2xl p-2 min-h-0">
-          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-            {renderPreviewChart()}
-          </ResponsiveContainer>
-        </div>
+      <div className="h-32 w-full mb-6 bg-[#111] border-2 border-[#333] p-2 min-h-0 relative overflow-hidden group-hover:border-white transition-colors">
+        {/* Grid lines inside chart container */}
+        <div className="absolute inset-0 pointer-events-none opacity-20" style={{ backgroundImage: 'linear-gradient(#444 1px, transparent 1px), linear-gradient(90deg, #444 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
+        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+          {renderPreviewChart()}
+        </ResponsiveContainer>
+      </div>
 
-        <p className="text-sm text-slate-500 line-clamp-2 leading-relaxed">
-          {dataset.description || "No description provided."}
-        </p>
-      </Link>
-    </motion.div>
+      <p className="text-sm font-sans text-zinc-400 line-clamp-2 leading-relaxed uppercase">
+        {dataset.description || "NO PARAMETERS PROVIDED."}
+      </p>
+    </Link>
   );
 }

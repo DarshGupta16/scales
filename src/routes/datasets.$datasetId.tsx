@@ -39,15 +39,18 @@ function DatasetDetail() {
 
   if (!dataset) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center">
-        <h1 className="text-4xl font-bold text-slate-900 mb-4">Dataset Not Found</h1>
-        <p className="text-slate-500 mb-8 max-w-md">The dataset you're looking for doesn't exist or has been removed.</p>
-        <Link
-          to="/"
-          className="px-6 py-3 bg-indigo-600 text-white rounded-2xl font-semibold shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all"
-        >
-          Go Back Home
-        </Link>
+      <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center bg-black selection:bg-brand selection:text-black relative">
+        <div className="fixed inset-0 pointer-events-none opacity-20" style={{ backgroundImage: 'linear-gradient(#333 1px, transparent 1px), linear-gradient(90deg, #333 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
+        <div className="bg-[#111] p-12 border-4 border-white brutal-shadow relative z-10">
+          <h1 className="text-6xl font-display font-extrabold text-white mb-6 uppercase tracking-tighter">DATASET<br/><span className="text-[#ff3333]">NULL</span></h1>
+          <p className="text-zinc-400 font-sans uppercase tracking-widest mb-10 border-l-4 border-[#ff3333] pl-4 text-left">Entity not found or purged from records.</p>
+          <Link
+            to="/"
+            className="inline-block brutal-btn w-full"
+          >
+            RETURN TO ROOT
+          </Link>
+        </div>
       </div>
     );
   }
@@ -115,42 +118,54 @@ function DatasetDetail() {
   const availableViewTypes: ViewType[] = ["line", "bar", "area", "pie", "scatter"];
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20">
+    <div className="min-h-screen bg-black pb-20 selection:bg-brand selection:text-black relative">
+      <div className="fixed inset-0 pointer-events-none opacity-20 z-0" style={{ backgroundImage: 'linear-gradient(#333 1px, transparent 1px), linear-gradient(90deg, #333 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
+      
       {/* Detail Header */}
-      <header className="bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+      <header className="bg-black border-b-4 border-white brutal-shadow relative z-10 sticky top-0">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-24 flex items-center justify-between">
+          <div className="flex items-center gap-6">
             <Link
               to="/"
-              className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all"
+              className="p-3 text-white border-2 border-white hover:bg-white hover:text-black transition-all rounded-none"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-6 h-6 stroke-[3]" />
             </Link>
             <div>
-              <h1 className="text-xl font-bold text-slate-900">{dataset.title}</h1>
-              <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
-                {dataset.unit}
+              <h1 className="text-3xl sm:text-4xl font-display font-extrabold text-white uppercase tracking-tighter">{dataset.title}</h1>
+              <p className="text-sm font-sans font-bold text-brand uppercase tracking-[0.3em] mt-1">
+                UNIT: {dataset.unit}
               </p>
             </div>
           </div>
           
           <button
             onClick={() => setIsAddMeasurementOpen(true)}
-            className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all"
+            className="hidden sm:flex items-center gap-3 px-6 py-3 border-2 border-white bg-brand text-black font-bold uppercase tracking-widest brutal-shadow-brand hover:-translate-y-1 hover:translate-x-1 hover:shadow-[8px_8px_0_0_var(--color-brand)] transition-all active:translate-y-1 active:translate-x-1 active:shadow-none"
           >
-            <Plus className="w-4 h-4" />
-            <span>Add Data</span>
+            <Plus className="w-5 h-5 stroke-[3]" />
+            <span>INJECT DATA</span>
+          </button>
+          
+          <button
+            onClick={() => setIsAddMeasurementOpen(true)}
+            className="sm:hidden flex items-center justify-center w-12 h-12 border-2 border-white bg-brand text-black brutal-shadow-brand active:translate-y-1 active:translate-x-1 active:shadow-none"
+          >
+            <Plus className="w-6 h-6 stroke-[3]" />
           </button>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="grid grid-cols-1 gap-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-0">
+        <div className="grid grid-cols-1 gap-12">
           {/* Graph Section */}
           <section className="flex flex-col gap-6">
-            <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm min-h-[450px] flex flex-col">
-              <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-                <h2 className="text-lg font-bold text-slate-900">Visualization</h2>
+            <div className="bg-[#050505] p-6 sm:p-10 border-4 border-white brutal-shadow min-h-[500px] flex flex-col">
+              <div className="flex flex-wrap items-center justify-between gap-6 mb-10 border-b-2 border-[#333] pb-6">
+                <h2 className="text-2xl font-display font-bold text-white uppercase tracking-tight flex items-center gap-3">
+                  <span className="w-4 h-4 bg-brand inline-block"></span>
+                  Visual Matrix
+                </h2>
                 <ViewSwitcher
                   views={dataset.views}
                   activeView={activeView || "line"}
@@ -160,7 +175,7 @@ function DatasetDetail() {
                 />
               </div>
               
-              <div className="flex-1 min-h-0">
+              <div className="flex-1 min-h-0 border-2 border-[#333] p-1 bg-black">
                 {activeView ? (
                   <DatasetGraph
                     data={dataset.measurements}
@@ -168,8 +183,8 @@ function DatasetDetail() {
                     unit={dataset.unit}
                   />
                 ) : (
-                  <div className="h-full flex flex-col items-center justify-center text-slate-400 italic">
-                    No active view selected. Add a view to visualize data.
+                  <div className="h-full flex flex-col items-center justify-center text-zinc-600 font-sans uppercase tracking-widest font-bold">
+                    [ NO ACTIVE RENDERER. SYSTEM STANDBY. ]
                   </div>
                 )}
               </div>
@@ -178,17 +193,19 @@ function DatasetDetail() {
 
           {/* Table Section */}
           <section className="flex flex-col gap-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-slate-900">Measurements History</h2>
-              <span className="text-sm font-medium text-slate-400 bg-slate-100 px-3 py-1 rounded-full">
-                {dataset.measurements.length} Total
+            <div className="flex items-center justify-between border-l-4 border-brand pl-4">
+              <h2 className="text-2xl font-display font-bold text-white uppercase tracking-tight">Raw Log</h2>
+              <span className="text-sm font-bold font-sans text-brand border-2 border-brand px-4 py-1 uppercase tracking-widest bg-[#111]">
+                ENTRIES: {dataset.measurements.length}
               </span>
             </div>
-            <DatasetTable
-              measurements={dataset.measurements}
-              unit={dataset.unit}
-              onDelete={setConfirmDeleteMeasurement}
-            />
+            <div className="brutal-shadow border-4 border-white bg-black">
+              <DatasetTable
+                measurements={dataset.measurements}
+                unit={dataset.unit}
+                onDelete={setConfirmDeleteMeasurement}
+              />
+            </div>
           </section>
         </div>
       </main>
@@ -197,37 +214,37 @@ function DatasetDetail() {
       <Modal
         isOpen={isAddMeasurementOpen}
         onClose={() => setIsAddMeasurementOpen(false)}
-        title="Add Measurement"
+        title="INJECT NEW MEASUREMENT"
       >
-        <form onSubmit={handleAddMeasurement} className="flex flex-col gap-5">
+        <form onSubmit={handleAddMeasurement} className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-bold text-slate-700">Value ({dataset.unit})</label>
+            <label className="text-xs font-bold text-brand uppercase tracking-widest">Value ({dataset.unit})</label>
             <input
               autoFocus
               type="number"
               step="any"
               required
               placeholder="0.00"
-              className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+              className="brutal-input text-xl"
               value={newValue}
               onChange={(e) => setNewValue(e.target.value)}
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-bold text-slate-700">Timestamp</label>
+            <label className="text-xs font-bold text-brand uppercase tracking-widest">Timestamp</label>
             <input
               type="datetime-local"
               required
-              className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+              className="brutal-input [color-scheme:dark]"
               value={newTimestamp}
               onChange={(e) => setNewTimestamp(e.target.value)}
             />
           </div>
           <button
             type="submit"
-            className="mt-2 w-full py-3.5 bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all"
+            className="mt-4 brutal-btn-brand py-4 text-lg w-full"
           >
-            Save Measurement
+            WRITE TO LOG
           </button>
         </form>
       </Modal>
@@ -235,9 +252,9 @@ function DatasetDetail() {
       <Modal
         isOpen={isAddViewOpen}
         onClose={() => setIsAddViewOpen(false)}
-        title="Add New View"
+        title="INITIALIZE RENDERER"
       >
-        <div className="grid grid-cols-1 gap-3">
+        <div className="grid grid-cols-1 gap-4">
           {availableViewTypes.map((view) => {
             const isAlreadyAdded = dataset.views.includes(view);
             return (
@@ -246,19 +263,19 @@ function DatasetDetail() {
                 disabled={isAlreadyAdded}
                 onClick={() => handleAddView(view)}
                 className={`
-                  flex items-center justify-between p-4 rounded-2xl border transition-all text-left
+                  flex items-center justify-between p-5 border-2 transition-all text-left uppercase tracking-widest font-bold
                   ${
                     isAlreadyAdded
-                      ? "bg-slate-50 border-slate-100 text-slate-400 cursor-not-allowed"
-                      : "bg-white border-slate-200 text-slate-700 hover:border-indigo-300 hover:bg-indigo-50/30 group"
+                      ? "bg-[#111] border-[#333] text-zinc-600 cursor-not-allowed"
+                      : "bg-black border-white text-white hover:border-brand hover:text-brand hover:pl-8 group"
                   }
                 `}
               >
-                <span className="font-bold capitalize">{view} View</span>
+                <span>{view} RENDERER</span>
                 {isAlreadyAdded ? (
-                  <span className="text-[10px] font-bold uppercase tracking-widest bg-slate-200 text-slate-500 px-2 py-1 rounded">Added</span>
+                  <span className="text-[10px] bg-[#333] text-zinc-400 px-3 py-1">ACTIVE</span>
                 ) : (
-                  <Plus className="w-4 h-4 text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <Plus className="w-5 h-5 text-brand opacity-0 group-hover:opacity-100 transition-opacity" />
                 )}
               </button>
             );
@@ -270,9 +287,9 @@ function DatasetDetail() {
         isOpen={!!confirmDeleteMeasurement}
         onClose={() => setConfirmDeleteMeasurement(null)}
         onConfirm={() => confirmDeleteMeasurement && handleDeleteMeasurement(confirmDeleteMeasurement)}
-        title="Delete Measurement"
-        message="Are you sure you want to delete this data point? This action cannot be undone."
-        confirmText="Delete"
+        title="PURGE ENTRY"
+        message="CONFIRM PURGE OF SELECTED DATA POINT. THIS ACTION IS IRREVERSIBLE AND WILL PERMANENTLY ALTER THE LOG."
+        confirmText="EXECUTE PURGE"
         type="danger"
       />
 
@@ -280,9 +297,9 @@ function DatasetDetail() {
         isOpen={!!confirmRemoveView}
         onClose={() => setConfirmRemoveView(null)}
         onConfirm={() => confirmRemoveView && handleRemoveView(confirmRemoveView)}
-        title="Remove View"
-        message={`Are you sure you want to remove the ${confirmRemoveView} view from this dataset?`}
-        confirmText="Remove"
+        title="DISABLE RENDERER"
+        message={`CONFIRM DEACTIVATION OF [${confirmRemoveView?.toUpperCase()}] RENDERER MODULE FROM THIS DATASET.`}
+        confirmText="DISABLE"
         type="danger"
       />
     </div>

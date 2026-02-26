@@ -33,24 +33,25 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/80"
+            style={{ backgroundImage: 'repeating-linear-gradient(45deg, #000 25%, transparent 25%, transparent 75%, #000 75%, #000), repeating-linear-gradient(45deg, #000 25%, #111 25%, #111 75%, #000 75%, #000)', backgroundPosition: '0 0, 10px 10px', backgroundSize: '20px 20px', opacity: 0.9 }}
           />
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden"
+            className="relative bg-black border-4 border-white brutal-shadow w-full max-w-md rounded-none"
           >
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-              <h3 className="text-lg font-bold text-slate-900">{title}</h3>
+            <div className="px-6 py-5 border-b-4 border-white flex items-center justify-between bg-[#111]">
+              <h3 className="text-xl font-display font-extrabold text-white uppercase tracking-tighter">{title}</h3>
               <button
                 onClick={onClose}
-                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all"
+                className="p-2 text-white border-2 border-transparent hover:border-white hover:bg-white hover:text-black transition-all rounded-none"
               >
-                <X className="w-5 h-5" />
+                <X className="w-6 h-6 stroke-[3]" />
               </button>
             </div>
-            <div className="p-6">{children}</div>
+            <div className="p-8 bg-black">{children}</div>
           </motion.div>
         </div>
       )}

@@ -15,7 +15,7 @@ export const Route = createRootRoute({
         content: 'width=device-width, initial-scale=1',
       },
       {
-        title: 'Scales | Dataset Visualization',
+        title: 'SCALES | BRUTAL METRICS',
       },
     ],
     links: [
@@ -34,7 +34,7 @@ export const Route = createRootRoute({
       },
       {
         rel: 'stylesheet',
-        href: 'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Outfit:wght@100..900&display=swap',
+        href: 'https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Syne:wght@400..800&display=swap',
       },
     ],
   }),
@@ -43,11 +43,11 @@ export const Route = createRootRoute({
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <head>
         <HeadContent />
       </head>
-      <body className="bg-slate-50 text-slate-900 min-h-screen">
+      <body className="bg-black text-white min-h-screen font-sans selection:bg-brand selection:text-black">
         <main>
           {children}
         </main>

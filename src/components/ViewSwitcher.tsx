@@ -25,7 +25,7 @@ export function ViewSwitcher({
   onRemoveView,
 }: ViewSwitcherProps) {
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-3">
       {views.map((view) => {
         const Icon = viewIcons[view];
         const isActive = activeView === view;
@@ -35,16 +35,16 @@ export function ViewSwitcher({
             <button
               onClick={() => onViewChange(view)}
               className={`
-                flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all
+                flex items-center gap-2 px-4 py-2 border-2 text-sm font-bold uppercase tracking-widest transition-all rounded-none
                 ${
                   isActive
-                    ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200"
-                    : "bg-white text-slate-600 border border-slate-200 hover:border-indigo-300 hover:text-indigo-600 shadow-sm"
+                    ? "bg-brand border-brand text-black shadow-[4px_4px_0_0_rgba(255,255,255,1)]"
+                    : "bg-black border-white text-white hover:border-brand hover:text-brand"
                 }
               `}
             >
-              <Icon className="w-4 h-4" />
-              <span className="capitalize">{view}</span>
+              <Icon className="w-5 h-5" />
+              <span>{view}</span>
             </button>
             
             {views.length > 1 && (
@@ -54,12 +54,12 @@ export function ViewSwitcher({
                   onRemoveView(view);
                 }}
                 className={`
-                  absolute -top-2 -right-2 w-5 h-5 bg-white border border-slate-200 rounded-full 
-                  flex items-center justify-center text-slate-400 hover:text-red-500 hover:border-red-200
-                  opacity-0 group-hover:opacity-100 transition-opacity shadow-sm z-10
+                  absolute -top-3 -right-3 w-6 h-6 bg-black border-2 border-white 
+                  flex items-center justify-center text-white hover:bg-[#ff3333] hover:text-white hover:border-white
+                  opacity-0 group-hover:opacity-100 transition-opacity z-10 rounded-none
                 `}
               >
-                <X className="w-3 h-3" />
+                <X className="w-4 h-4" />
               </button>
             )}
           </div>
@@ -68,10 +68,10 @@ export function ViewSwitcher({
 
       <button
         onClick={onAddView}
-        className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-slate-100 text-slate-500 hover:bg-slate-200 transition-all border border-transparent"
+        className="flex items-center gap-2 px-4 py-2 border-2 border-dashed border-zinc-600 text-sm font-bold uppercase tracking-widest bg-transparent text-zinc-400 hover:border-white hover:text-white transition-all rounded-none"
       >
-        <Plus className="w-4 h-4" />
-        <span>Add View</span>
+        <Plus className="w-5 h-5" />
+        <span>ADD</span>
       </button>
     </div>
   );

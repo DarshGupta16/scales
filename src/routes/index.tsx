@@ -53,13 +53,18 @@ function Index() {
   };
 
   return (
-    <div className="min-h-screen pb-24 bg-slate-50">
+    <div className="min-h-screen pb-24 bg-black relative selection:bg-brand selection:text-black">
+      {/* Brutalist Grid Background overlay */}
+      <div className="fixed inset-0 pointer-events-none opacity-20" style={{ backgroundImage: 'linear-gradient(#333 1px, transparent 1px), linear-gradient(90deg, #333 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
+      
       {/* Top Bar */}
-      <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-200">
+      <header className="sticky top-0 z-10 bg-black border-b-2 border-white brutal-shadow mb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <img src="/icon.png" alt="logo" className="w-10 rounded-2xl" />
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight hidden sm:block">
+            <div className="w-10 h-10 bg-brand border-2 border-white flex items-center justify-center brutal-shadow-brand">
+              <span className="font-display font-bold text-black text-xl">S</span>
+            </div>
+            <h1 className="text-2xl font-display font-extrabold text-white tracking-tighter uppercase hidden sm:block">
               Scales
             </h1>
           </div>
@@ -67,7 +72,7 @@ function Index() {
           <SearchBar value={searchQuery} onChange={setSearchQuery} />
 
           <div className="flex items-center gap-2">
-            <button className="hidden sm:flex items-center gap-2 px-4 py-2 text-slate-500 hover:text-slate-900 transition-colors font-medium text-sm">
+            <button className="hidden sm:flex items-center gap-2 px-4 py-2 text-white border-2 border-white hover:bg-white hover:text-black transition-colors font-bold uppercase tracking-widest text-xs h-full">
               <LayoutGrid className="w-4 h-4" />
               <span>Grid</span>
             </button>
@@ -76,16 +81,15 @@ function Index() {
       </header>
 
       {/* Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="flex flex-col gap-10">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 relative z-0">
+        <div className="flex flex-col gap-12">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
-            <div className="max-w-xl">
-              <h2 className="text-4xl font-extrabold text-slate-900 tracking-tight">
-                Your Collections
+            <div className="max-w-2xl">
+              <h2 className="text-5xl md:text-7xl font-display font-extrabold text-white tracking-tighter uppercase leading-none mb-6">
+                Data<br/><span className="text-brand">Collections</span>
               </h2>
-              <p className="mt-3 text-lg text-slate-500 leading-relaxed">
-                Beautifully simple data tracking. Monitor your metrics,
-                visualize trends, and stay on top of your progress.
+              <p className="text-lg text-zinc-400 font-sans uppercase tracking-widest border-l-4 border-brand pl-4">
+                Raw metrics. Unfiltered truth.
               </p>
             </div>
           </div>
@@ -97,10 +101,10 @@ function Index() {
                   <motion.div
                     key={dataset.id}
                     layout
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.9 }}
-                    transition={{ duration: 0.25, ease: "easeOut" }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
                   >
                     <DatasetCard dataset={dataset} />
                   </motion.div>
@@ -112,16 +116,16 @@ function Index() {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="text-center py-32 bg-white rounded-[2.5rem] border-2 border-dashed border-slate-200"
+                className="text-center py-32 bg-[#111] border-2 border-white brutal-shadow mt-8"
               >
-                <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Info className="w-8 h-8 text-slate-300" />
+                <div className="w-20 h-20 bg-black border-2 border-white flex items-center justify-center mx-auto mb-6 brutal-shadow">
+                  <Info className="w-10 h-10 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-1">
-                  No datasets found
+                <h3 className="text-2xl font-display font-bold text-white mb-2 uppercase">
+                  Void Detected
                 </h3>
-                <p className="text-slate-500">
-                  Try a different search term or create a new collection.
+                <p className="text-zinc-500 font-sans uppercase tracking-wider">
+                  No datasets match your query.
                 </p>
               </motion.div>
             )}
@@ -131,52 +135,52 @@ function Index() {
 
       {/* Floating Action Button */}
       <motion.button
-        whileHover={{ scale: 1.05, y: -2 }}
+        whileHover={{ scale: 1.05, y: -4 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsAddModalOpen(true)}
-        className="fixed bottom-10 right-10 w-16 h-16 bg-indigo-600 text-white rounded-full shadow-2xl shadow-indigo-300 flex items-center justify-center hover:bg-indigo-700 transition-all z-30 ring-4 ring-white"
+        className="fixed bottom-10 right-10 w-20 h-20 bg-brand text-black border-4 border-white flex items-center justify-center brutal-shadow transition-all z-30"
         aria-label="Add new dataset"
       >
-        <Plus className="w-8 h-8" />
+        <Plus className="w-10 h-10 stroke-[3]" />
       </motion.button>
 
       {/* Add Dataset Modal */}
       <Modal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        title="Create New Collection"
+        title="INITIALIZE NEW TRACKER"
       >
         <form onSubmit={handleAddDataset} className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-bold text-slate-700">
-              Collection Title
+            <label className="text-xs font-bold text-brand uppercase tracking-widest">
+              Identifier
             </label>
             <input
               autoFocus
               type="text"
               required
-              placeholder="e.g. Daily Steps, Weekly Sales"
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+              placeholder="E.G. CALORIES, WORKOUTS"
+              className="brutal-input"
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
             />
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-bold text-slate-700">
-              Description (Optional)
+            <label className="text-xs font-bold text-brand uppercase tracking-widest">
+              Parameters (Optional)
             </label>
             <textarea
               rows={3}
-              placeholder="What are you tracking?"
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all resize-none"
+              placeholder="DEFINE THE METRIC..."
+              className="brutal-input resize-none"
               value={newDesc}
               onChange={(e) => setNewDesc(e.target.value)}
             />
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-bold text-slate-700">
+            <label className="text-xs font-bold text-brand uppercase tracking-widest">
               Measurement Unit
             </label>
             <UnitSelector value={newUnit} onChange={setNewUnit} />
@@ -184,9 +188,9 @@ function Index() {
 
           <button
             type="submit"
-            className="mt-2 w-full py-4 bg-indigo-600 text-white rounded-2xl font-bold shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-[0.98]"
+            className="mt-4 brutal-btn-brand text-lg py-4 w-full"
           >
-            Create Collection
+            EXECUTE CREATION
           </button>
         </form>
       </Modal>
