@@ -1,118 +1,183 @@
-import { createFileRoute } from '@tanstack/react-router'
-import {
-  Zap,
-  Server,
-  Route as RouteIcon,
-  Shield,
-  Waves,
-  Sparkles,
-} from 'lucide-react'
+import { createFileRoute } from "@tanstack/react-router";
+import { useState, useMemo } from "react";
+import { mockDatasets } from "../data/mockDatasets";
+import { DatasetCard } from "../components/DatasetCard";
+import { SearchBar } from "../components/SearchBar";
+import { Modal } from "../components/Modal";
+import { UnitSelector } from "../components/UnitSelector";
+import { Plus, LayoutGrid, Info } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import type { Dataset, Unit } from "../types/dataset";
 
-export const Route = createFileRoute('/')({ component: App })
+export const Route = createFileRoute("/")({
+  component: Index,
+});
 
-function App() {
-  const features = [
-    {
-      icon: <Zap className="w-12 h-12 text-cyan-400" />,
-      title: 'Powerful Server Functions',
-      description:
-        'Write server-side code that seamlessly integrates with your client components. Type-safe, secure, and simple.',
-    },
-    {
-      icon: <Server className="w-12 h-12 text-cyan-400" />,
-      title: 'Flexible Server Side Rendering',
-      description:
-        'Full-document SSR, streaming, and progressive enhancement out of the box. Control exactly what renders where.',
-    },
-    {
-      icon: <RouteIcon className="w-12 h-12 text-cyan-400" />,
-      title: 'API Routes',
-      description:
-        'Build type-safe API endpoints alongside your application. No separate backend needed.',
-    },
-    {
-      icon: <Shield className="w-12 h-12 text-cyan-400" />,
-      title: 'Strongly Typed Everything',
-      description:
-        'End-to-end type safety from server to client. Catch errors before they reach production.',
-    },
-    {
-      icon: <Waves className="w-12 h-12 text-cyan-400" />,
-      title: 'Full Streaming Support',
-      description:
-        'Stream data from server to client progressively. Perfect for AI applications and real-time updates.',
-    },
-    {
-      icon: <Sparkles className="w-12 h-12 text-cyan-400" />,
-      title: 'Next Generation Ready',
-      description:
-        'Built from the ground up for modern web applications. Deploy anywhere JavaScript runs.',
-    },
-  ]
+function Index() {
+  const [datasets, setDatasets] = useState<Dataset[]>(mockDatasets);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  // Form State
+  const [newTitle, setNewTitle] = useState("");
+  const [newDesc, setNewDesc] = useState("");
+  const [newUnit, setNewUnit] = useState<Unit>("count");
+
+  const filteredDatasets = useMemo(() => {
+    return datasets.filter((dataset) =>
+      dataset.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      dataset.unit.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [datasets, searchQuery]);
+
+  const handleAddDataset = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTitle) return;
+
+    const newId = newTitle.toLowerCase().replace(/\s+/g, "-");
+    const newDataset: Dataset = {
+      id: `${newId}-${Math.random().toString(36).substring(7)}`,
+      title: newTitle,
+      description: newDesc,
+      unit: newUnit,
+      views: ["line"],
+      measurements: [],
+    };
+
+    setDatasets([newDataset, ...datasets]);
+    setIsAddModalOpen(false);
+    setNewTitle("");
+    setNewDesc("");
+    setNewUnit("count");
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
-      <section className="relative py-20 px-6 text-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-purple-500/10"></div>
-        <div className="relative max-w-5xl mx-auto">
-          <div className="flex items-center justify-center gap-6 mb-6">
-            <img
-              src="/tanstack-circle-logo.png"
-              alt="TanStack Logo"
-              className="w-24 h-24 md:w-32 md:h-32"
-            />
-            <h1 className="text-6xl md:text-7xl font-black text-white [letter-spacing:-0.08em]">
-              <span className="text-gray-300">TANSTACK</span>{' '}
-              <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
-                START
-              </span>
+    <div className="min-h-screen pb-24 bg-slate-50">
+      {/* Top Bar */}
+      <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200">
+              <span className="text-white font-bold text-xl">S</span>
+            </div>
+            <h1 className="text-xl font-bold text-slate-900 tracking-tight hidden sm:block">
+              Scales
             </h1>
           </div>
-          <p className="text-2xl md:text-3xl text-gray-300 mb-4 font-light">
-            The framework for next generation AI applications
-          </p>
-          <p className="text-lg text-gray-400 max-w-3xl mx-auto mb-8">
-            Full-stack framework powered by TanStack Router for React and Solid.
-            Build modern applications with server functions, streaming, and type
-            safety.
-          </p>
-          <div className="flex flex-col items-center gap-4">
-            <a
-              href="https://tanstack.com/start"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-8 py-3 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold rounded-lg transition-colors shadow-lg shadow-cyan-500/50"
-            >
-              Documentation
-            </a>
-            <p className="text-gray-400 text-sm mt-2">
-              Begin your TanStack Start journey by editing{' '}
-              <code className="px-2 py-1 bg-slate-700 rounded text-cyan-400">
-                /src/routes/index.tsx
-              </code>
-            </p>
+
+          <SearchBar value={searchQuery} onChange={setSearchQuery} />
+
+          <div className="flex items-center gap-2">
+            <button className="hidden sm:flex items-center gap-2 px-4 py-2 text-slate-500 hover:text-slate-900 transition-colors font-medium text-sm">
+              <LayoutGrid className="w-4 h-4" />
+              <span>Grid</span>
+            </button>
           </div>
         </div>
-      </section>
+      </header>
 
-      <section className="py-16 px-6 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {features.map((feature, index) => (
-            <div
-              key={index}
-              className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-6 hover:border-cyan-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/10"
-            >
-              <div className="mb-4">{feature.icon}</div>
-              <h3 className="text-xl font-semibold text-white mb-3">
-                {feature.title}
-              </h3>
-              <p className="text-gray-400 leading-relaxed">
-                {feature.description}
+      {/* Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="flex flex-col gap-10">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+            <div className="max-w-xl">
+              <h2 className="text-4xl font-extrabold text-slate-900 tracking-tight">Your Collections</h2>
+              <p className="mt-3 text-lg text-slate-500 leading-relaxed">
+                Beautifully simple data tracking. Monitor your metrics, visualize trends, and stay on top of your progress.
               </p>
             </div>
-          ))}
+          </div>
+
+          <div className="relative">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              <AnimatePresence mode="popLayout">
+                {filteredDatasets.map((dataset) => (
+                  <motion.div
+                    key={dataset.id}
+                    layout
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ duration: 0.25, ease: "easeOut" }}
+                  >
+                    <DatasetCard dataset={dataset} />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+
+            {filteredDatasets.length === 0 && (
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-center py-32 bg-white rounded-[2.5rem] border-2 border-dashed border-slate-200"
+              >
+                <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Info className="w-8 h-8 text-slate-300" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-1">No datasets found</h3>
+                <p className="text-slate-500">Try a different search term or create a new collection.</p>
+              </motion.div>
+            )}
+          </div>
         </div>
-      </section>
+      </main>
+
+      {/* Floating Action Button */}
+      <motion.button
+        whileHover={{ scale: 1.05, y: -2 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={() => setIsAddModalOpen(true)}
+        className="fixed bottom-10 right-10 w-16 h-16 bg-indigo-600 text-white rounded-full shadow-2xl shadow-indigo-300 flex items-center justify-center hover:bg-indigo-700 transition-all z-30 ring-4 ring-white"
+        aria-label="Add new dataset"
+      >
+        <Plus className="w-8 h-8" />
+      </motion.button>
+
+      {/* Add Dataset Modal */}
+      <Modal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        title="Create New Collection"
+      >
+        <form onSubmit={handleAddDataset} className="flex flex-col gap-6">
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-bold text-slate-700">Collection Title</label>
+            <input
+              autoFocus
+              type="text"
+              required
+              placeholder="e.g. Daily Steps, Weekly Sales"
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-bold text-slate-700">Description (Optional)</label>
+            <textarea
+              rows={3}
+              placeholder="What are you tracking?"
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all resize-none"
+              value={newDesc}
+              onChange={(e) => setNewDesc(e.target.value)}
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-bold text-slate-700">Measurement Unit</label>
+            <UnitSelector value={newUnit} onChange={setNewUnit} />
+          </div>
+
+          <button
+            type="submit"
+            className="mt-2 w-full py-4 bg-indigo-600 text-white rounded-2xl font-bold shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-[0.98]"
+          >
+            Create Collection
+          </button>
+        </form>
+      </Modal>
     </div>
-  )
+  );
 }
