@@ -1,13 +1,13 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { mockDatasets } from "../data/mockDatasets";
 import { DatasetCard } from "../components/DatasetCard";
 import { SearchBar } from "../components/SearchBar";
 import { Modal } from "../components/Modal";
 import { UnitSelector } from "../components/UnitSelector";
 import { Plus, LayoutGrid, Info, Loader2 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import type { Dataset, Unit } from "../types/dataset";
 import { useTRPC } from "../trpc/client";
 
@@ -23,6 +23,14 @@ function Index() {
   // tRPC Test using Query Options (tRPC 11 pattern)
   const trpc = useTRPC();
   const hello = useQuery(trpc.hello.queryOptions({ name: "Builder" }));
+  const upsertDataset = useMutation(trpc.upsertDataset.mutationOptions());
+  const getDatasets = useQuery(trpc.getDatasets.queryOptions());
+
+  useEffect(() => {
+    if (getDatasets.isFetched) {
+      console.log(getDatasets.data);
+    }
+  }, [getDatasets]);
 
   // Form State
   const [newTitle, setNewTitle] = useState("");
@@ -44,12 +52,15 @@ function Index() {
     const newId = newTitle.toLowerCase().replace(/\s+/g, "-");
     const newDataset: Dataset = {
       id: `${newId}-${Math.random().toString(36).substring(7)}`,
+      slug: newId,
       title: newTitle,
       description: newDesc,
       unit: newUnit,
       views: ["line"],
       measurements: [],
     };
+
+    upsertDataset.mutate(newDataset);
 
     setDatasets([newDataset, ...datasets]);
     setIsAddModalOpen(false);
@@ -124,20 +135,20 @@ function Index() {
 
           <div className="relative">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              <AnimatePresence mode="popLayout">
-                {filteredDatasets.map((dataset) => (
-                  <motion.div
-                    key={dataset.id}
-                    layout
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-                  >
-                    <DatasetCard dataset={dataset} />
-                  </motion.div>
-                ))}
-              </AnimatePresence>
+              {/* <AnimatePresence mode="popLayout"> */}
+              {filteredDatasets.map((dataset) => (
+                // <motion.div
+                //   key={dataset.id}
+                //   layout
+                //   initial={{ opacity: 0, y: 20 }}
+                //   animate={{ opacity: 1, y: 0 }}
+                //   exit={{ opacity: 0, scale: 0.9 }}
+                //   transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+                // >
+                <DatasetCard dataset={dataset} />
+                // </motion.div>
+              ))}
+              {/* </AnimatePresence> */}
             </div>
 
             {filteredDatasets.length === 0 && (

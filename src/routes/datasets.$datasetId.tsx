@@ -15,34 +15,46 @@ export const Route = createFileRoute("/datasets/$datasetId")({
 
 function DatasetDetail() {
   const { datasetId } = Route.useParams();
-  
+
   // In a real app, this would be managed by TanStack Query
   const [allDatasets, setAllDatasets] = useState(mockDatasets);
-  
+
   const dataset = useMemo(() => {
     return allDatasets.find((d) => d.id === datasetId);
   }, [allDatasets, datasetId]);
 
   const [activeView, setActiveView] = useState<ViewType | null>(
-    dataset?.views[0] || "line"
+    dataset?.views[0] || "line",
   );
 
   // Modals state
   const [isAddMeasurementOpen, setIsAddMeasurementOpen] = useState(false);
   const [isAddViewOpen, setIsAddViewOpen] = useState(false);
-  const [confirmDeleteMeasurement, setConfirmDeleteMeasurement] = useState<string | null>(null);
-  const [confirmRemoveView, setConfirmRemoveView] = useState<ViewType | null>(null);
+  const [confirmDeleteMeasurement, setConfirmDeleteMeasurement] = useState<
+    string | null
+  >(null);
+  const [confirmRemoveView, setConfirmRemoveView] = useState<ViewType | null>(
+    null,
+  );
 
   // Form states
   const [newValue, setNewValue] = useState("");
-  const [newTimestamp, setNewTimestamp] = useState(new Date().toISOString().slice(0, 16));
+  const [newTimestamp, setNewTimestamp] = useState(
+    new Date().toISOString().slice(0, 16),
+  );
 
   if (!dataset) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center bg-[#050505] selection:bg-brand selection:text-white relative">
         <div className="bg-[#0a0a0a] p-16 border border-white/10 rounded-[3rem] shadow-2xl relative z-10">
-          <h1 className="text-5xl font-display font-extrabold text-white mb-6 uppercase tracking-tighter">Records<br/><span className="text-red-500">Absent</span></h1>
-          <p className="text-zinc-500 font-sans uppercase tracking-[0.2em] mb-10 border-l-2 border-red-500/50 pl-6 text-left text-xs">The requested entity has been purged or never existed.</p>
+          <h1 className="text-5xl font-display font-extrabold text-white mb-6 uppercase tracking-tighter">
+            Records
+            <br />
+            <span className="text-red-500">Absent</span>
+          </h1>
+          <p className="text-zinc-500 font-sans uppercase tracking-[0.2em] mb-10 border-l-2 border-red-500/50 pl-6 text-left text-xs">
+            The requested entity has been purged or never existed.
+          </p>
           <Link
             to="/"
             className="inline-block brutal-btn-brand w-full text-center"
@@ -68,8 +80,8 @@ function DatasetDetail() {
       prev.map((d) =>
         d.id === datasetId
           ? { ...d, measurements: [...d.measurements, newMeasurement] }
-          : d
-      )
+          : d,
+      ),
     );
 
     setIsAddMeasurementOpen(false);
@@ -81,8 +93,8 @@ function DatasetDetail() {
       prev.map((d) =>
         d.id === datasetId
           ? { ...d, measurements: d.measurements.filter((m) => m.id !== id) }
-          : d
-      )
+          : d,
+      ),
     );
   };
 
@@ -91,10 +103,8 @@ function DatasetDetail() {
 
     setAllDatasets((prev) =>
       prev.map((d) =>
-        d.id === datasetId
-          ? { ...d, views: [...d.views, view] }
-          : d
-      )
+        d.id === datasetId ? { ...d, views: [...d.views, view] } : d,
+      ),
     );
     setActiveView(view);
     setIsAddViewOpen(false);
@@ -105,8 +115,8 @@ function DatasetDetail() {
       prev.map((d) =>
         d.id === datasetId
           ? { ...d, views: d.views.filter((v) => v !== view) }
-          : d
-      )
+          : d,
+      ),
     );
     if (activeView === view) {
       const remainingViews = dataset.views.filter((v) => v !== view);
@@ -114,12 +124,24 @@ function DatasetDetail() {
     }
   };
 
-  const availableViewTypes: ViewType[] = ["line", "bar", "area", "pie", "scatter"];
+  const availableViewTypes: ViewType[] = [
+    "line",
+    "bar",
+    "area",
+    "pie",
+    "scatter",
+  ];
 
   return (
     <div className="min-h-screen bg-[#050505] pb-32 selection:bg-brand selection:text-white relative">
-      <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-[100]" style={{ backgroundImage: 'url("https://grainy-gradients.vercel.app/noise.svg")' }}></div>
-      
+      <div
+        className="fixed inset-0 pointer-events-none opacity-[0.03] z-[100]"
+        style={{
+          backgroundImage:
+            'url("https://grainy-gradients.vercel.app/noise.svg")',
+        }}
+      ></div>
+
       {/* Detail Header */}
       <header className="bg-[#050505]/80 backdrop-blur-xl border-b border-white/5 relative z-50 sticky top-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-24 flex items-center justify-between">
@@ -131,13 +153,15 @@ function DatasetDetail() {
               <ArrowLeft className="w-5 h-5 stroke-[2.5]" />
             </Link>
             <div>
-              <h1 className="text-2xl sm:text-3xl font-display font-bold text-white uppercase tracking-tight">{dataset.title}</h1>
+              <h1 className="text-2xl sm:text-3xl font-display font-bold text-white uppercase tracking-tight">
+                {dataset.title}
+              </h1>
               <p className="text-[10px] font-sans font-bold text-brand uppercase tracking-[0.4em] mt-2 ml-1">
                 {dataset.unit}
               </p>
             </div>
           </div>
-          
+
           <button
             onClick={() => setIsAddMeasurementOpen(true)}
             className="hidden sm:flex items-center gap-3 px-6 py-3 bg-brand text-white font-bold uppercase tracking-widest text-xs rounded-xl shadow-lg shadow-brand/20 hover:brightness-110 transition-all active:scale-95"
@@ -145,7 +169,7 @@ function DatasetDetail() {
             <Plus className="w-4 h-4 stroke-[3]" />
             <span>Inject Data</span>
           </button>
-          
+
           <button
             onClick={() => setIsAddMeasurementOpen(true)}
             className="sm:hidden flex items-center justify-center w-12 h-12 bg-brand text-white rounded-xl shadow-lg shadow-brand/20 active:scale-95"
@@ -173,7 +197,7 @@ function DatasetDetail() {
                   onRemoveView={setConfirmRemoveView}
                 />
               </div>
-              
+
               <div className="flex-1 min-h-0 bg-black/40 rounded-3xl overflow-hidden border border-white/5">
                 {activeView ? (
                   <DatasetGraph
@@ -193,7 +217,9 @@ function DatasetDetail() {
           {/* Table Section */}
           <section className="flex flex-col gap-10">
             <div className="flex items-center justify-between border-l-2 border-brand/50 pl-6">
-              <h2 className="text-xl font-display font-bold text-white uppercase tracking-tight">Sequence Log</h2>
+              <h2 className="text-xl font-display font-bold text-white uppercase tracking-tight">
+                Sequence Log
+              </h2>
               <span className="text-[10px] font-bold font-sans text-zinc-500 uppercase tracking-[0.3em] px-4 py-2 bg-white/5 rounded-full border border-white/5">
                 Entries: {dataset.measurements.length}
               </span>
@@ -215,7 +241,9 @@ function DatasetDetail() {
       >
         <form onSubmit={handleAddMeasurement} className="flex flex-col gap-8">
           <div className="flex flex-col gap-2">
-            <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] ml-1">Magnitude ({dataset.unit})</label>
+            <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] ml-1">
+              Magnitude ({dataset.unit})
+            </label>
             <input
               autoFocus
               type="number"
@@ -228,7 +256,9 @@ function DatasetDetail() {
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] ml-1">Timestamp</label>
+            <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] ml-1">
+              Timestamp
+            </label>
             <input
               type="datetime-local"
               required
@@ -237,10 +267,7 @@ function DatasetDetail() {
               onChange={(e) => setNewTimestamp(e.target.value)}
             />
           </div>
-          <button
-            type="submit"
-            className="mt-4 brutal-btn-brand py-4 w-full"
-          >
+          <button type="submit" className="mt-4 brutal-btn-brand py-4 w-full">
             Append Log
           </button>
         </form>
@@ -270,7 +297,9 @@ function DatasetDetail() {
               >
                 <span>{view} Processor</span>
                 {isAlreadyAdded ? (
-                  <span className="text-[8px] bg-white/5 text-zinc-600 px-3 py-1 rounded-full">Active</span>
+                  <span className="text-[8px] bg-white/5 text-zinc-600 px-3 py-1 rounded-full">
+                    Active
+                  </span>
                 ) : (
                   <Plus className="w-4 h-4 text-brand opacity-0 group-hover:opacity-100 transition-opacity" />
                 )}
@@ -283,7 +312,10 @@ function DatasetDetail() {
       <ConfirmDialog
         isOpen={!!confirmDeleteMeasurement}
         onClose={() => setConfirmDeleteMeasurement(null)}
-        onConfirm={() => confirmDeleteMeasurement && handleDeleteMeasurement(confirmDeleteMeasurement)}
+        onConfirm={() =>
+          confirmDeleteMeasurement &&
+          handleDeleteMeasurement(confirmDeleteMeasurement)
+        }
         title="Purge Entry"
         message="Are you certain you wish to purge this data point? This operation permanently modifies the sequence log."
         confirmText="Confirm Purge"
@@ -293,7 +325,9 @@ function DatasetDetail() {
       <ConfirmDialog
         isOpen={!!confirmRemoveView}
         onClose={() => setConfirmRemoveView(null)}
-        onConfirm={() => confirmRemoveView && handleRemoveView(confirmRemoveView)}
+        onConfirm={() =>
+          confirmRemoveView && handleRemoveView(confirmRemoveView)
+        }
         title="Deactivate Module"
         message={`Confirm deactivation of the ${confirmRemoveView?.toUpperCase()} renderer from this dataset.`}
         confirmText="Deactivate"

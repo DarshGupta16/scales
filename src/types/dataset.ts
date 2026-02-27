@@ -40,4 +40,5 @@ export type Dataset = {
   unit: Unit;
   views: ViewType[]; // persisted configuration
   measurements: Measurement[];
+  slug: string;
 };

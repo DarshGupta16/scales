@@ -3,6 +3,7 @@ import type { Dataset } from "../types/dataset";
 export const mockDatasets: Dataset[] = [
   {
     id: "running-distance",
+    slug: "running-distance",
     title: "Morning Run Progress",
     description: "Daily running distance tracked over the last two weeks.",
     unit: "kilometers",
@@ -26,8 +27,10 @@ export const mockDatasets: Dataset[] = [
   },
   {
     id: "cpu-usage",
+    slug: "cpu-usage",
     title: "Server CPU Load",
-    description: "Real-time CPU utilization percentage for the main production cluster.",
+    description:
+      "Real-time CPU utilization percentage for the main production cluster.",
     unit: "percentage",
     views: ["area", "scatter"],
     measurements: [
@@ -50,8 +53,10 @@ export const mockDatasets: Dataset[] = [
   },
   {
     id: "monthly-revenue",
+    slug: "monthly-revenue",
     title: "SaaS Revenue (MRR)",
-    description: "Monthly recurring revenue growth for the current fiscal year.",
+    description:
+      "Monthly recurring revenue growth for the current fiscal year.",
     unit: "dollars",
     views: ["bar", "line", "pie"],
     measurements: [

@@ -44,9 +44,14 @@ export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
     if (active && payload && payload.length) {
       return (
         <div className="bg-zinc-900/90 backdrop-blur-md p-4 border border-white/10 rounded-2xl shadow-2xl">
-          <p className="text-[10px] font-bold text-zinc-500 mb-2 uppercase tracking-[0.2em]">{label}</p>
+          <p className="text-[10px] font-bold text-zinc-500 mb-2 uppercase tracking-[0.2em]">
+            {label}
+          </p>
           <p className="text-xl font-display font-extrabold text-brand uppercase">
-            {payload[0].value} <span className="text-white/50 text-xs tracking-widest">{unit}</span>
+            {payload[0].value}{" "}
+            <span className="text-white/50 text-xs tracking-widest">
+              {unit}
+            </span>
           </p>
         </div>
       );
@@ -59,10 +64,44 @@ export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
     margin: { top: 20, right: 20, left: 0, bottom: 0 },
   };
 
-  const xAxis = <XAxis dataKey="displayDate" stroke="rgba(255,255,255,0.1)" tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 10, fontFamily: 'JetBrains Mono' }} tickLine={false} axisLine={false} />;
-  const yAxis = <YAxis stroke="rgba(255,255,255,0.1)" tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 10, fontFamily: 'JetBrains Mono' }} tickLine={false} axisLine={false} />;
-  const cartesianGrid = <CartesianGrid strokeDasharray="5 5" vertical={false} stroke="rgba(255,255,255,0.05)" />;
-  const tooltip = <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(139, 92, 246, 0.2)', strokeWidth: 2 }} />;
+  const xAxis = (
+    <XAxis
+      dataKey="displayDate"
+      stroke="rgba(255,255,255,0.1)"
+      tick={{
+        fill: "rgba(255,255,255,0.4)",
+        fontSize: 10,
+        fontFamily: "JetBrains Mono",
+      }}
+      tickLine={false}
+      axisLine={false}
+    />
+  );
+  const yAxis = (
+    <YAxis
+      stroke="rgba(255,255,255,0.1)"
+      tick={{
+        fill: "rgba(255,255,255,0.4)",
+        fontSize: 10,
+        fontFamily: "JetBrains Mono",
+      }}
+      tickLine={false}
+      axisLine={false}
+    />
+  );
+  const cartesianGrid = (
+    <CartesianGrid
+      strokeDasharray="5 5"
+      vertical={false}
+      stroke="rgba(255,255,255,0.05)"
+    />
+  );
+  const tooltip = (
+    <Tooltip
+      content={<CustomTooltip />}
+      cursor={{ stroke: "rgba(139, 92, 246, 0.2)", strokeWidth: 2 }}
+    />
+  );
 
   const renderChart = () => {
     switch (viewType) {
@@ -79,7 +118,12 @@ export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
               stroke="#8b5cf6"
               strokeWidth={3}
               dot={{ r: 4, fill: "#8b5cf6", strokeWidth: 2, stroke: "#000" }}
-              activeDot={{ r: 6, strokeWidth: 3, stroke: "#fff", fill: "#8b5cf6" }}
+              activeDot={{
+                r: 6,
+                strokeWidth: 3,
+                stroke: "#fff",
+                fill: "#8b5cf6",
+              }}
               animationDuration={1500}
             />
           </LineChart>
@@ -139,7 +183,10 @@ export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
               cornerRadius={10}
             >
               {chartData.map((_, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                <Cell
+                  key={`cell-${index}`}
+                  fill={COLORS[index % COLORS.length]}
+                />
               ))}
             </Pie>
             {tooltip}
@@ -149,8 +196,20 @@ export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
         return (
           <ScatterChart {...commonProps}>
             {cartesianGrid}
-            <XAxis type="category" dataKey="displayDate" name="Time" stroke="rgba(255,255,255,0.1)" tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 10 }} />
-            <YAxis type="number" dataKey="value" name="Value" stroke="rgba(255,255,255,0.1)" tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 10 }} />
+            <XAxis
+              type="category"
+              dataKey="displayDate"
+              name="Time"
+              stroke="rgba(255,255,255,0.1)"
+              tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 10 }}
+            />
+            <YAxis
+              type="number"
+              dataKey="value"
+              name="Value"
+              stroke="rgba(255,255,255,0.1)"
+              tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 10 }}
+            />
             {tooltip}
             <Scatter
               name="Measurements"
@@ -167,7 +226,12 @@ export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
 
   return (
     <div className="w-full h-full min-h-[400px] min-w-0 bg-[#070707] rounded-3xl p-6 relative">
-      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+      <ResponsiveContainer
+        width="100%"
+        height="100%"
+        minWidth={0}
+        minHeight={0}
+      >
         {renderChart()}
       </ResponsiveContainer>
     </div>

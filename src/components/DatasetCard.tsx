@@ -26,7 +26,13 @@ export function DatasetCard({ dataset }: DatasetCardProps) {
         return (
           <AreaChart data={previewData}>
             <defs>
-              <linearGradient id={`gradient-${dataset.id}`} x1="0" y1="0" x2="0" y2="1">
+              <linearGradient
+                id={`gradient-${dataset.id}`}
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="1"
+              >
                 <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
                 <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
               </linearGradient>
@@ -83,7 +89,12 @@ export function DatasetCard({ dataset }: DatasetCardProps) {
         </div>
 
         <div className="h-28 w-full mb-6 bg-white/[0.02] border border-white/5 rounded-2xl p-2 min-h-0 relative overflow-hidden group-hover:border-brand/20 transition-colors">
-          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+          <ResponsiveContainer
+            width="100%"
+            height="100%"
+            minWidth={0}
+            minHeight={0}
+          >
             {renderPreviewChart()}
           </ResponsiveContainer>
         </div>
