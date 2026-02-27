@@ -2,6 +2,12 @@ import { initTRPC } from "@trpc/server";
 import { z } from "zod";
 import { db } from "../db";
 import { datasetSchema } from "@/types/zodSchemas";
+import { type Dataset as DatasetModelType } from "generated/prisma/client";
+import {
+  type Dataset as DatasetType,
+  type Measurement,
+  type ViewType,
+} from "@/types/dataset";
 
 /**
  * Initialization of tRPC backend
@@ -30,7 +36,32 @@ export const appRouter = router({
     }),
 
   getDatasets: publicProcedure.query(async () => {
-    return await db.dataset.findMany();
+    const prismaDatasets: DatasetModelType[] = await db.dataset.findMany();
+    const returnDatasets: DatasetType[] = await Promise.all(
+      prismaDatasets.map(async (dataset) => {
+        const views: ViewType[] = (
+          await db.datasetView.findMany({
+            where: { datasetId: dataset.id },
+          })
+        ).map((view) => view.type);
+        const measurements: Measurement[] = (
+          await db.measurement.findMany({
+            where: { datasetId: dataset.id },
+          })
+        ).map((measurement) => ({
+          ...measurement,
+          timestamp: new Date(measurement.timestamp).toISOString(),
+        }));
+
+        return {
+          ...dataset,
+          views,
+          measurements,
+          description: dataset.description || undefined,
+        };
+      }),
+    );
+    return returnDatasets;
   }),
 
   upsertDataset: publicProcedure

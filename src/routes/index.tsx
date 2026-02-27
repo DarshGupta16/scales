@@ -24,7 +24,9 @@ function Index() {
 
   useEffect(() => {
     if (getDatasets.isFetched) {
-      console.log(getDatasets.data);
+      const datasets: Dataset[] = getDatasets.data as Dataset[];
+      console.log(datasets);
+      setDatasets(datasets);
     }
   }, [getDatasets]);
 
