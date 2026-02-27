@@ -17,7 +17,7 @@ import {
   Cell,
 } from "recharts";
 import type { ViewType, Measurement } from "../types/dataset";
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 
 interface DatasetGraphProps {
   data: Measurement[];
@@ -28,6 +28,11 @@ interface DatasetGraphProps {
 const COLORS = ["#8b5cf6", "#a78bfa", "#c4b5fd", "#ddd6fe", "#ede9fe"];
 
 export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   const chartData = useMemo(() => {
     return data.map((m) => ({
       ...m,
@@ -226,14 +231,16 @@ export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
 
   return (
     <div className="w-full h-full min-h-[400px] min-w-0 bg-[#070707] rounded-3xl p-6 relative">
-      <ResponsiveContainer
-        width="100%"
-        height="100%"
-        minWidth={0}
-        minHeight={0}
-      >
-        {renderChart()}
-      </ResponsiveContainer>
+      {isClient && (
+        <ResponsiveContainer
+          width="100%"
+          height="100%"
+          minWidth={0}
+          minHeight={0}
+        >
+          {renderChart()}
+        </ResponsiveContainer>
+      )}
     </div>
   );
 }

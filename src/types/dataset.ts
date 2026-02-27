@@ -41,4 +41,5 @@ export type Dataset = {
   views: ViewType[]; // persisted configuration
   measurements: Measurement[];
   slug: string;
+  isOptimistic?: boolean;
 };

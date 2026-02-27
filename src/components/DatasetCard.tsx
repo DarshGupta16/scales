@@ -10,17 +10,25 @@ import {
   Bar,
 } from "recharts";
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 
 interface DatasetCardProps {
   dataset: Dataset;
 }
 
 export function DatasetCard({ dataset }: DatasetCardProps) {
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   // Use the last 7 measurements for the preview chart
   const previewData = dataset.measurements.slice(-7);
   const viewType = dataset.views[0] || "line";
 
   const renderPreviewChart = () => {
+    if (!isClient) return null;
+
     switch (viewType) {
       case "area":
         return (
@@ -74,7 +82,7 @@ export function DatasetCard({ dataset }: DatasetCardProps) {
     >
       <Link
         to="/datasets/$datasetId"
-        params={{ datasetId: dataset.id }}
+        params={{ datasetId: dataset.slug }}
         className="block h-full brutal-card group"
       >
         <div className="flex justify-between items-start mb-6">

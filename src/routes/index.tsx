@@ -1,46 +1,52 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo, useEffect } from "react";
-import { mockDatasets } from "../data/mockDatasets";
 import { TopBar } from "../components/TopBar";
 import { DatasetGrid } from "../components/DatasetGrid";
 import { AddDatasetFAB } from "../components/AddDatasetFAB";
 import { AddDatasetModal } from "../components/AddDatasetModal";
 import type { Dataset } from "../types/dataset";
-import { useTRPC } from "../trpc/client";
+import { useTRPC, trpc } from "../trpc/client";
 
 export const Route = createFileRoute("/")({
   component: Index,
+  loader: async ({ context: { queryClient } }) => {
+    await queryClient.ensureQueryData({
+      ...trpc.getDatasets.queryOptions(),
+      staleTime: 1000 * 60 * 5,
+      gcTime: 1000 * 60 * 30,
+    });
+  },
 });
 
 function Index() {
-  const [datasets, setDatasets] = useState<Dataset[]>(mockDatasets);
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   // tRPC state
   const trpc = useTRPC();
-  const getDatasets = useQuery(trpc.getDatasets.queryOptions());
-
-  useEffect(() => {
-    if (getDatasets.isFetched) {
-      const datasets: Dataset[] = getDatasets.data as Dataset[];
-      console.log(datasets);
-      setDatasets(datasets);
-    }
-  }, [getDatasets]);
+  const { data: datasets } = useQuery({
+    ...trpc.getDatasets.queryOptions(),
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 30,
+  });
 
   const filteredDatasets = useMemo(() => {
-    return datasets.filter(
+    return ((datasets as Dataset[]) || []).filter(
       (dataset) =>
         dataset.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         dataset.unit.toLowerCase().includes(searchQuery.toLowerCase()),
     );
   }, [datasets, searchQuery]);
 
-  const handleDatasetCreated = (newDataset: Dataset) => {
-    setDatasets([newDataset, ...datasets]);
-  };
+  if (!isMounted) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen pb-24 bg-[#050505] relative selection:bg-brand selection:text-white">
@@ -62,7 +68,7 @@ function Index() {
       <AddDatasetModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        onDatasetCreated={handleDatasetCreated}
+        onDatasetCreated={() => {}}
       />
     </div>
   );

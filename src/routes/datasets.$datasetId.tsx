@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useMemo } from "react";
-import { mockDatasets } from "../data/mockDatasets";
+import { useState, useMemo, useEffect } from "react";
 import { DatasetGraph } from "../components/DatasetGraph";
 import { ViewSwitcher } from "../components/ViewSwitcher";
 import { DatasetTable } from "../components/DatasetTable";
@@ -8,24 +7,54 @@ import { Modal } from "../components/Modal";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { ArrowLeft, Plus } from "lucide-react";
 import type { ViewType, Measurement } from "../types/dataset";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { trpc } from "../trpc/client";
 
 export const Route = createFileRoute("/datasets/$datasetId")({
   component: DatasetDetail,
+  loader: async ({ context: { queryClient }, params: { datasetId: _datasetId } }) => {
+    await queryClient.ensureQueryData({
+      ...trpc.getDatasets.queryOptions(),
+      staleTime: 1000 * 60 * 5,
+      gcTime: 1000 * 60 * 30,
+    });
+  },
 });
 
 function DatasetDetail() {
-  const { datasetId } = Route.useParams();
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
-  // In a real app, this would be managed by TanStack Query
-  const [allDatasets, setAllDatasets] = useState(mockDatasets);
+  const { datasetId } = Route.useParams();
+  const queryClient = useQueryClient();
+
+  // Fetch data using TanStack Query + tRPC
+  const { data: datasets } = useQuery({
+    ...trpc.getDatasets.queryOptions(),
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 30,
+  });
 
   const dataset = useMemo(() => {
-    return allDatasets.find((d) => d.id === datasetId);
-  }, [allDatasets, datasetId]);
+    return (datasets || []).find((d) => d.slug === datasetId);
+  }, [datasets, datasetId]);
 
-  const [activeView, setActiveView] = useState<ViewType | null>(
-    dataset?.views[0] || "line",
-  );
+  const upsertMutation = useMutation(trpc.upsertDataset.mutationOptions({
+    onSuccess: () => {
+      queryClient.invalidateQueries(trpc.getDatasets.queryOptions());
+    }
+  }));
+
+  const [activeView, setActiveView] = useState<ViewType | null>(null);
+
+  // Set initial active view once dataset is loaded
+  useEffect(() => {
+    if (dataset && !activeView) {
+      setActiveView(dataset.views[0] || "line");
+    }
+  }, [dataset, activeView]);
 
   // Modals state
   const [isAddMeasurementOpen, setIsAddMeasurementOpen] = useState(false);
@@ -42,6 +71,10 @@ function DatasetDetail() {
   const [newTimestamp, setNewTimestamp] = useState(
     new Date().toISOString().slice(0, 16),
   );
+
+  if (!isMounted) {
+    return null;
+  }
 
   if (!dataset) {
     return (
@@ -68,7 +101,7 @@ function DatasetDetail() {
 
   const handleAddMeasurement = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newValue || isNaN(Number(newValue))) return;
+    if (!newValue || isNaN(Number(newValue)) || !dataset) return;
 
     const newMeasurement: Measurement = {
       id: Math.random().toString(36).substring(7),
@@ -76,51 +109,43 @@ function DatasetDetail() {
       value: Number(newValue),
     };
 
-    setAllDatasets((prev) =>
-      prev.map((d) =>
-        d.id === datasetId
-          ? { ...d, measurements: [...d.measurements, newMeasurement] }
-          : d,
-      ),
-    );
+    upsertMutation.mutate({
+      ...dataset,
+      measurements: [...dataset.measurements, newMeasurement]
+    });
 
     setIsAddMeasurementOpen(false);
     setNewValue("");
   };
 
   const handleDeleteMeasurement = (id: string) => {
-    setAllDatasets((prev) =>
-      prev.map((d) =>
-        d.id === datasetId
-          ? { ...d, measurements: d.measurements.filter((m) => m.id !== id) }
-          : d,
-      ),
-    );
+    if (!dataset) return;
+    upsertMutation.mutate({
+      ...dataset,
+      measurements: dataset.measurements.filter((m) => m.id !== id)
+    });
   };
 
   const handleAddView = (view: ViewType) => {
-    if (dataset.views.includes(view)) return;
+    if (!dataset || dataset.views.includes(view)) return;
 
-    setAllDatasets((prev) =>
-      prev.map((d) =>
-        d.id === datasetId ? { ...d, views: [...d.views, view] } : d,
-      ),
-    );
+    upsertMutation.mutate({
+      ...dataset,
+      views: [...dataset.views, view]
+    });
     setActiveView(view);
     setIsAddViewOpen(false);
   };
 
   const handleRemoveView = (view: ViewType) => {
-    setAllDatasets((prev) =>
-      prev.map((d) =>
-        d.id === datasetId
-          ? { ...d, views: d.views.filter((v) => v !== view) }
-          : d,
-      ),
-    );
+    if (!dataset) return;
+    const updatedViews = dataset.views.filter((v) => v !== view);
+    upsertMutation.mutate({
+      ...dataset,
+      views: updatedViews
+    });
     if (activeView === view) {
-      const remainingViews = dataset.views.filter((v) => v !== view);
-      setActiveView(remainingViews[0] || null);
+      setActiveView(updatedViews[0] || null);
     }
   };
 
