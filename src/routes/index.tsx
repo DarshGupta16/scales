@@ -11,7 +11,7 @@ import { useTRPC, trpc } from "../trpc/client";
 export const Route = createFileRoute("/")({
   component: Index,
   loader: async ({ context: { queryClient } }) => {
-    await queryClient.ensureQueryData({
+    return await queryClient.ensureQueryData({
       ...trpc.getDatasets.queryOptions(),
       staleTime: 1000 * 60 * 5,
       gcTime: 1000 * 60 * 30,
@@ -20,33 +20,29 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  // tRPC state
-  const trpc = useTRPC();
+  // Get data synchronously from the loader
+  const initialDatasets = Route.useLoaderData();
+
+  // tRPC state with useQuery as a background sync/fallback
+  const trpcClient = useTRPC();
   const { data: datasets } = useQuery({
-    ...trpc.getDatasets.queryOptions(),
+    ...trpcClient.getDatasets.queryOptions(),
+    initialData: initialDatasets,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 30,
   });
 
   const filteredDatasets = useMemo(() => {
-    return ((datasets as Dataset[]) || []).filter(
+    const activeData = (datasets || initialDatasets) as Dataset[];
+    return (activeData || []).filter(
       (dataset) =>
         dataset.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         dataset.unit.toLowerCase().includes(searchQuery.toLowerCase()),
     );
-  }, [datasets, searchQuery]);
-
-  if (!isMounted) {
-    return null;
-  }
+  }, [datasets, initialDatasets, searchQuery]);
 
   return (
     <div className="min-h-screen pb-24 bg-[#050505] relative selection:bg-brand selection:text-white">
