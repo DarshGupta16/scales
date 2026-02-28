@@ -16,3 +16,5 @@ todos.json
 
 /generated/prisma
 scales.db
+
+snapshots.txt

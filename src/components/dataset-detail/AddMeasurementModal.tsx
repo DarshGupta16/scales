@@ -1,8 +1,6 @@
 import { Modal } from "../Modal";
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { useTRPC } from "@/trpc/client";
-import { useQueryClient } from "@tanstack/react-query";
+import { useDatasetMutations } from "../../hooks/useMutations";
 
 interface AddMeasurementModalProps {
   isOpen: boolean;
@@ -22,62 +20,18 @@ export function AddMeasurementModal({
     new Date().toISOString().slice(0, 16),
   );
 
-  const trpc = useTRPC();
-  const queryClient = useQueryClient();
-
-  const addMeasurement = useMutation(
-    trpc.addMeasurement.mutationOptions({
-      onMutate: async (variables) => {
-        const queryKey = trpc.getDatasets.queryKey();
-
-        await queryClient.cancelQueries({ queryKey });
-
-        const previousDatasets = queryClient.getQueryData(queryKey) || [];
-        queryClient.setQueryData(queryKey, () => {
-          return previousDatasets.map((dataset) => {
-            if (dataset.slug === datasetSlug)
-              return {
-                ...dataset,
-                measurements: [
-                  ...dataset.measurements,
-                  {
-                    ...variables,
-                    id: "temp-id",
-                  },
-                ],
-              };
-            else return dataset;
-          });
-        });
-
-        return { previousDatasets };
-      },
-
-      onError: (err, _newDataset, context) => {
-        const queryKey = trpc.getDatasets.queryKey();
-
-        queryClient.setQueryData(queryKey, context?.previousDatasets);
-
-        console.error("Failed to add measurement:", err);
-      },
-
-      onSettled: () => {
-        queryClient.invalidateQueries({
-          queryKey: trpc.getDatasets.queryKey(),
-        });
-      },
-    }),
-  );
+  const { addMeasurement } = useDatasetMutations();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newValue || isNaN(Number(newValue))) return;
-    addMeasurement.mutate({
+    
+    addMeasurement({
       value: Number(newValue),
       timestamp: new Date(newTimestamp).toISOString(),
       datasetSlug,
     });
-    // onAdd(Number(newValue), new Date(newTimestamp).toISOString());
+    
     setNewValue("");
     onClose();
   };

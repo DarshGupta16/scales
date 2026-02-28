@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { ConfirmDialog } from "../components/ConfirmDialog";
-import type { ViewType, Measurement } from "../types/dataset";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { ViewType } from "../types/dataset";
 import { trpc } from "../trpc/client";
+import { checkLocalReady } from "../utils/ssr-skip";
+import { useDataset } from "../hooks/useDataset";
+import { useDatasetMutations } from "../hooks/useMutations";
 
 // Sub-components
 import { DatasetDetailNotFound } from "../components/dataset-detail/DatasetDetailNotFound";
@@ -19,7 +21,10 @@ export const Route = createFileRoute("/datasets/$datasetId")({
     context: { queryClient },
     params: { datasetId: _datasetId },
   }) => {
-    await queryClient.ensureQueryData({
+    const isLocalReady = await checkLocalReady();
+    if (isLocalReady) return [];
+
+    return await queryClient.ensureQueryData({
       ...trpc.getDatasets.queryOptions(),
       staleTime: 1000 * 60 * 5,
       gcTime: 1000 * 60 * 30,
@@ -34,26 +39,15 @@ function DatasetDetail() {
   }, []);
 
   const { datasetId } = Route.useParams();
-  const queryClient = useQueryClient();
 
-  // Fetch data using TanStack Query + tRPC
-  const { data: datasets } = useQuery({
-    ...trpc.getDatasets.queryOptions(),
-    staleTime: 1000 * 60 * 5,
-    gcTime: 1000 * 60 * 30,
-  });
+  // Get initial data from loader (only if it wasn't skipped)
+  const initialDatasets = Route.useLoaderData();
 
-  const dataset = useMemo(() => {
-    return (datasets || []).find((d) => d.slug === datasetId);
-  }, [datasets, datasetId]);
+  // Unified Reactive Data Hook for single dataset
+  const { dataset } = useDataset(datasetId, initialDatasets);
 
-  const upsertMutation = useMutation(
-    trpc.upsertDataset.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries(trpc.getDatasets.queryOptions());
-      },
-    }),
-  );
+  // Unified Mutation Hook
+  const { upsertDataset } = useDatasetMutations();
 
   const [activeView, setActiveView] = useState<ViewType | null>(null);
 
@@ -99,7 +93,7 @@ function DatasetDetail() {
 
   const handleDeleteMeasurement = (id: string) => {
     if (!dataset) return;
-    upsertMutation.mutate({
+    upsertDataset({
       ...dataset,
       measurements: dataset.measurements.filter((m) => m.id !== id),
     });
@@ -108,7 +102,7 @@ function DatasetDetail() {
   const handleAddView = (view: ViewType) => {
     if (!dataset || dataset.views.includes(view)) return;
 
-    upsertMutation.mutate({
+    upsertDataset({
       ...dataset,
       views: [...dataset.views, view],
     });
@@ -119,7 +113,7 @@ function DatasetDetail() {
   const handleRemoveView = (view: ViewType) => {
     if (!dataset) return;
     const updatedViews = dataset.views.filter((v) => v !== view);
-    upsertMutation.mutate({
+    upsertDataset({
       ...dataset,
       views: updatedViews,
     });
