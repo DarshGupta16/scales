@@ -7,6 +7,7 @@ import { AddDatasetFAB } from "../components/AddDatasetFAB";
 import { AddDatasetModal } from "../components/AddDatasetModal";
 import type { Dataset } from "../types/dataset";
 import { useTRPC, trpc } from "../trpc/client";
+import { useRouter } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -20,6 +21,20 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const router = useRouter();
+  useEffect(() => {
+    const preloadRoutes = async () => {
+      for (const dataset of initialDatasets) {
+        router.preloadRoute({
+          to: "/datasets/$datasetId",
+          params: { datasetId: dataset.slug },
+        });
+      }
+    };
+
+    preloadRoutes();
+  }, []);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
