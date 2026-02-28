@@ -15,7 +15,10 @@ import { AddViewModal } from "../components/dataset-detail/AddViewModal";
 
 export const Route = createFileRoute("/datasets/$datasetId")({
   component: DatasetDetail,
-  loader: async ({ context: { queryClient }, params: { datasetId: _datasetId } }) => {
+  loader: async ({
+    context: { queryClient },
+    params: { datasetId: _datasetId },
+  }) => {
     await queryClient.ensureQueryData({
       ...trpc.getDatasets.queryOptions(),
       staleTime: 1000 * 60 * 5,
@@ -44,11 +47,13 @@ function DatasetDetail() {
     return (datasets || []).find((d) => d.slug === datasetId);
   }, [datasets, datasetId]);
 
-  const upsertMutation = useMutation(trpc.upsertDataset.mutationOptions({
-    onSuccess: () => {
-      queryClient.invalidateQueries(trpc.getDatasets.queryOptions());
-    }
-  }));
+  const upsertMutation = useMutation(
+    trpc.upsertDataset.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries(trpc.getDatasets.queryOptions());
+      },
+    }),
+  );
 
   const [activeView, setActiveView] = useState<ViewType | null>(null);
 
@@ -77,26 +82,26 @@ function DatasetDetail() {
     return <DatasetDetailNotFound />;
   }
 
-  const handleAddMeasurement = (value: number, timestamp: string) => {
-    if (!dataset) return;
+  // const handleAddMeasurement = (value: number, timestamp: string) => {
+  //   if (!dataset) return;
 
-    const newMeasurement: Measurement = {
-      id: Math.random().toString(36).substring(7),
-      timestamp,
-      value,
-    };
+  //   const newMeasurement: Measurement = {
+  //     id: Math.random().toString(36).substring(7),
+  //     timestamp,
+  //     value,
+  //   };
 
-    upsertMutation.mutate({
-      ...dataset,
-      measurements: [...dataset.measurements, newMeasurement]
-    });
-  };
+  //   upsertMutation.mutate({
+  //     ...dataset,
+  //     measurements: [...dataset.measurements, newMeasurement],
+  //   });
+  // };
 
   const handleDeleteMeasurement = (id: string) => {
     if (!dataset) return;
     upsertMutation.mutate({
       ...dataset,
-      measurements: dataset.measurements.filter((m) => m.id !== id)
+      measurements: dataset.measurements.filter((m) => m.id !== id),
     });
   };
 
@@ -105,7 +110,7 @@ function DatasetDetail() {
 
     upsertMutation.mutate({
       ...dataset,
-      views: [...dataset.views, view]
+      views: [...dataset.views, view],
     });
     setActiveView(view);
     setIsAddViewOpen(false);
@@ -116,7 +121,7 @@ function DatasetDetail() {
     const updatedViews = dataset.views.filter((v) => v !== view);
     upsertMutation.mutate({
       ...dataset,
-      views: updatedViews
+      views: updatedViews,
     });
     if (activeView === view) {
       setActiveView(updatedViews[0] || null);
@@ -162,8 +167,9 @@ function DatasetDetail() {
       <AddMeasurementModal
         isOpen={isAddMeasurementOpen}
         onClose={() => setIsAddMeasurementOpen(false)}
-        onAdd={handleAddMeasurement}
+        // onAdd={handleAddMeasurement}
         unit={dataset.unit}
+        datasetSlug={dataset.slug}
       />
 
       <AddViewModal

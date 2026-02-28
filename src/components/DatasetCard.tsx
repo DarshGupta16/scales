@@ -8,9 +8,11 @@ import {
   Area,
   BarChart,
   Bar,
+  XAxis,
+  Tooltip,
 } from "recharts";
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 
 interface DatasetCardProps {
   dataset: Dataset;
@@ -22,12 +24,51 @@ export function DatasetCard({ dataset }: DatasetCardProps) {
     setIsClient(true);
   }, []);
 
-  // Use the last 7 measurements for the preview chart
-  const previewData = dataset.measurements.slice(-7);
+  // Use the last 7 measurements for the preview chart, sorted chronologically
+  const previewData = useMemo(() => {
+    return dataset.measurements
+      .slice(-7)
+      .map((m, index) => ({
+        ...m,
+        tooltipId: `${m.id || index}-${m.timestamp}`,
+        displayDate: new Date(m.timestamp).toLocaleDateString(undefined, {
+          month: "short",
+          day: "numeric",
+        }),
+      }));
+  }, [dataset.measurements]);
+
   const viewType = dataset.views[0] || "line";
+
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-zinc-900 border border-white/20 p-2 rounded-lg shadow-xl pointer-events-none">
+          <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider leading-none mb-1">
+            {payload[0].payload.displayDate}
+          </p>
+          <p className="text-sm font-display font-black text-brand leading-none">
+            {payload[0].value}
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
 
   const renderPreviewChart = () => {
     if (!isClient) return null;
+
+    const commonAxis = (
+      <XAxis dataKey="tooltipId" hide />
+    );
+    const tooltip = (
+      <Tooltip
+        content={<CustomTooltip />}
+        cursor={{ stroke: "rgba(139, 92, 246, 0.2)", strokeWidth: 2 }}
+        isAnimationActive={false}
+      />
+    );
 
     switch (viewType) {
       case "area":
@@ -45,30 +86,43 @@ export function DatasetCard({ dataset }: DatasetCardProps) {
                 <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
               </linearGradient>
             </defs>
+            {commonAxis}
+            {tooltip}
             <Area
               type="monotone"
               dataKey="value"
               stroke="#8b5cf6"
               fill={`url(#gradient-${dataset.id})`}
               strokeWidth={2}
+              isAnimationActive={false}
             />
           </AreaChart>
         );
       case "bar":
         return (
           <BarChart data={previewData}>
-            <Bar dataKey="value" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+            {commonAxis}
+            {tooltip}
+            <Bar
+              dataKey="value"
+              fill="#8b5cf6"
+              radius={[4, 4, 0, 0]}
+              isAnimationActive={false}
+            />
           </BarChart>
         );
       default:
         return (
           <LineChart data={previewData}>
+            {commonAxis}
+            {tooltip}
             <Line
               type="monotone"
               dataKey="value"
               stroke="#8b5cf6"
               strokeWidth={2.5}
               dot={false}
+              isAnimationActive={false}
             />
           </LineChart>
         );

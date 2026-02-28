@@ -1,7 +1,7 @@
 import { initTRPC } from "@trpc/server";
 import { z } from "zod";
 import { db } from "../db";
-import { datasetSchema } from "@/types/zodSchemas";
+import { datasetSchema, measurementSchema } from "@/types/zodSchemas";
 import { type Dataset as DatasetModelType } from "generated/prisma/client";
 import {
   type Dataset as DatasetType,
@@ -47,6 +47,7 @@ export const appRouter = router({
         const measurements: Measurement[] = (
           await db.measurement.findMany({
             where: { datasetId: dataset.id },
+            orderBy: { timestamp: "asc" },
           })
         ).map((measurement) => ({
           ...measurement,
@@ -101,6 +102,20 @@ export const appRouter = router({
               value: m.value,
               timestamp: new Date(m.timestamp),
             })),
+          },
+        },
+      });
+    }),
+
+  addMeasurement: publicProcedure
+    .input(measurementSchema)
+    .mutation(async ({ input: measurement }) => {
+      return await db.measurement.create({
+        data: {
+          value: measurement.value,
+          timestamp: measurement.timestamp,
+          dataset: {
+            connect: { slug: measurement.datasetSlug },
           },
         },
       });

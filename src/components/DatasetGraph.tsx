@@ -34,8 +34,9 @@ export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
   }, []);
 
   const chartData = useMemo(() => {
-    return data.map((m) => ({
+    return data.map((m, index) => ({
       ...m,
+      tooltipId: `${m.id || index}-${m.timestamp}`,
       displayDate: new Date(m.timestamp).toLocaleDateString(undefined, {
         month: "short",
         day: "numeric",
@@ -45,12 +46,12 @@ export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
     }));
   }, [data]);
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-zinc-900/90 backdrop-blur-md p-4 border border-white/10 rounded-2xl shadow-2xl">
           <p className="text-[10px] font-bold text-zinc-500 mb-2 uppercase tracking-[0.2em]">
-            {label}
+            {payload[0].payload.displayDate}
           </p>
           <p className="text-xl font-display font-extrabold text-brand uppercase">
             {payload[0].value}{" "}
@@ -71,7 +72,8 @@ export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
 
   const xAxis = (
     <XAxis
-      dataKey="displayDate"
+      dataKey="tooltipId"
+      tickFormatter={(value, index) => chartData[index]?.displayDate || ""}
       stroke="rgba(255,255,255,0.1)"
       tick={{
         fill: "rgba(255,255,255,0.4)",
@@ -174,7 +176,7 @@ export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
         );
       case "pie":
         return (
-          <PieChart>
+          <PieChart {...commonProps}>
             <Pie
               data={chartData}
               cx="50%"
@@ -201,20 +203,8 @@ export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
         return (
           <ScatterChart {...commonProps}>
             {cartesianGrid}
-            <XAxis
-              type="category"
-              dataKey="displayDate"
-              name="Time"
-              stroke="rgba(255,255,255,0.1)"
-              tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 10 }}
-            />
-            <YAxis
-              type="number"
-              dataKey="value"
-              name="Value"
-              stroke="rgba(255,255,255,0.1)"
-              tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 10 }}
-            />
+            {xAxis}
+            {yAxis}
             {tooltip}
             <Scatter
               name="Measurements"
