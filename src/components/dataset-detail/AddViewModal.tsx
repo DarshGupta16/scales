@@ -24,11 +24,7 @@ export function AddViewModal({
   existingViews,
 }: AddViewModalProps) {
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Initialize Module"
-    >
+    <Modal isOpen={isOpen} onClose={onClose} title="Initialize Module">
       <div className="grid grid-cols-1 gap-4">
         {AVAILABLE_VIEW_TYPES.map((view) => {
           const isAlreadyAdded = existingViews.includes(view);

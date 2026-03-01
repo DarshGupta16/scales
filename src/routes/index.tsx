@@ -40,13 +40,11 @@ function Index() {
   });
 
   // 3. Sync Server Data -> Local Dexie DB
-  // When network brings fresh data, wipe the local table and replace it.
-  // We wipe first because we're using auto-increment `++index` instead of `id` for primary keys.
+  // Use bulkPut to efficiently upsert server data based on the 'id' primary key.
   useEffect(() => {
     if (serverDatasets && serverDatasets.length > 0) {
       const syncToDexie = async () => {
-        await dexieDb.datasets.clear();
-        await dexieDb.datasets.bulkAdd(serverDatasets);
+        await dexieDb.datasets.bulkPut(serverDatasets);
       };
       syncToDexie();
     }

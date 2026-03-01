@@ -39,7 +39,7 @@ export function DatasetGrid({ datasets }: DatasetGridProps) {
             >
               <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-6">
                 <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto">
-                   <Info className="w-8 h-8 text-zinc-600" />
+                  <Info className="w-8 h-8 text-zinc-600" />
                 </div>
               </div>
               <h3 className="text-xl font-display font-bold text-white mb-2 uppercase tracking-tight">

@@ -26,16 +26,14 @@ export function DatasetCard({ dataset }: DatasetCardProps) {
 
   // Use the last 7 measurements for the preview chart, sorted chronologically
   const previewData = useMemo(() => {
-    return dataset.measurements
-      .slice(-7)
-      .map((m, index) => ({
-        ...m,
-        tooltipId: `${m.id || index}-${m.timestamp}`,
-        displayDate: new Date(m.timestamp).toLocaleDateString(undefined, {
-          month: "short",
-          day: "numeric",
-        }),
-      }));
+    return dataset.measurements.slice(-7).map((m, index) => ({
+      ...m,
+      tooltipId: `${m.id || index}-${m.timestamp}`,
+      displayDate: new Date(m.timestamp).toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+      }),
+    }));
   }, [dataset.measurements]);
 
   const viewType = dataset.views[0] || "line";
@@ -59,9 +57,7 @@ export function DatasetCard({ dataset }: DatasetCardProps) {
   const renderPreviewChart = () => {
     if (!isClient) return null;
 
-    const commonAxis = (
-      <XAxis dataKey="tooltipId" hide />
-    );
+    const commonAxis = <XAxis dataKey="tooltipId" hide />;
     const tooltip = (
       <Tooltip
         content={<CustomTooltip />}

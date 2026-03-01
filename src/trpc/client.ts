@@ -1,5 +1,8 @@
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
-import { createTRPCContext, createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
+import {
+  createTRPCContext,
+  createTRPCOptionsProxy,
+} from "@trpc/tanstack-react-query";
 import type { AppRouter } from "./server";
 
 export function getBaseUrl() {
