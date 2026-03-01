@@ -1,193 +1,82 @@
-Welcome to your new TanStack Start app! 
+# Scales | Brutal Metrics
 
-# Getting Started
+A high-performance, local-first web application designed to track, visualize, and analyze your personal metrics and data over time. Built with an uncompromising "brutal" dark-mode aesthetic, Scales offers an instantaneous, offline-capable experience that syncs seamlessly in the background.
 
-To run this application:
+## 🚀 Key Features
+
+- **Instantaneous Local-First Experience**: Data is read and written instantly to a local Dexie.js (IndexedDB) cache. The app feels incredibly fast because it never waits on the network to render your data.
+- **PWA & Offline Support**: Fully installable as a Progressive Web App (PWA). Powered by a custom Serwist service worker, the application caches its UI shell and assets, allowing you to view and log metrics even without an internet connection.
+- **Background Synchronization**: While you interact with the local data, tRPC and TanStack Query silently sync your changes with the SQLite backend in the background.
+- **Brutal & Immersive UI**: High-contrast, dark-mode aesthetic featuring JetBrains Mono typography, custom SVG grain overlays, fluid Framer Motion animations, and a distinctive "Booting Matrix" initial load sequence.
+- **Advanced Visualizations**: Render your datasets using a highly modular Recharts implementation supporting Line, Bar, Area, Pie, and Scatter charts with custom tooltips and styling.
+
+## 🛠️ Tech Stack
+
+### Frontend
+- **Framework**: React 19 via [TanStack Start](https://tanstack.com/start)
+- **Routing & State**: [TanStack Router](https://tanstack.com/router) & [TanStack Query](https://tanstack.com/query)
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/) & [Framer Motion](https://motion.dev/)
+- **Charts**: [Recharts](https://recharts.org/)
+- **Local Database**: [Dexie.js](https://dexie.org/)
+- **PWA/Service Worker**: [Serwist](https://serwist.build/)
+
+### Backend & Tooling
+- **API Engine**: [tRPC](https://trpc.io/)
+- **Database**: [LibSQL](https://turso.tech/libsql) (SQLite) via [Prisma ORM](https://www.prisma.io/)
+- **Runtime**: [Bun](https://bun.sh/)
+- **Type Safety**: End-to-end TypeScript
+
+## 📦 Getting Started
+
+### Prerequisites
+Make sure you have [Bun](https://bun.sh/) installed on your machine.
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/DarshGupta16/scales.git
+   cd scales
+   ```
+
+2. Install dependencies:
+   ```bash
+   bun install
+   ```
+
+3. Generate the Prisma Client and migrate the local database:
+   ```bash
+   bunx prisma generate
+   bunx prisma db push
+   ```
+
+### Development
+
+To start the development server with Hot Module Replacement (HMR):
+```bash
+bun run dev
+```
+The application will be available at `http://localhost:3000`.
+
+*Note: In development mode, the Service Worker is intentionally disabled to allow HMR to function correctly. The local Dexie database will still work as expected.*
+
+### Production Build & PWA Testing
+
+To test the exact production environment with full Service Worker caching and PWA installability:
 
 ```bash
-bun install
-bun --bun run dev
+# Build the client, server, and inject the Service Worker
+bun run build
+
+# Preview the production build locally
+bun run preview
 ```
 
-# Building For Production
+## 🧠 Architecture Notes
 
-To build this application for production:
+- **Optimistic Updates**: When logging a new measurement, the UI updates instantly by mutating the TanStack Query cache. If the server request fails, it rolls back gracefully.
+- **Hydration Suspense**: Custom shimmering skeleton loaders are used during initial React hydration to prevent layout shift and hide the empty state before Dexie successfully mounts.
+- **SW Build Hook**: Because TanStack Start utilizes complex nested Vite environment builds, the Service Worker is generated using a dedicated Node script (`scripts/build-sw.ts`) immediately following the standard build.
 
-```bash
-bun --bun run build
-```
-
-## Testing
-
-This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:
-
-```bash
-bun --bun run test
-```
-
-## Styling
-
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
-
-### Removing Tailwind CSS
-
-If you prefer not to use Tailwind CSS:
-
-1. Remove the demo pages in `src/routes/demo/`
-2. Replace the Tailwind import in `src/styles.css` with your own styles
-3. Remove `tailwindcss()` from the plugins array in `vite.config.ts`
-4. Uninstall the packages: `bun install @tailwindcss/vite tailwindcss -D`
-
-
-
-## Routing
-
-This project uses [TanStack Router](https://tanstack.com/router) with file-based routing. Routes are managed as files in `src/routes`.
-
-### Adding A Route
-
-To add a new route to your application just add a new file in the `./src/routes` directory.
-
-TanStack will automatically generate the content of the route file for you.
-
-Now that you have two routes you can use a `Link` component to navigate between them.
-
-### Adding Links
-
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
-
-```tsx
-import { Link } from "@tanstack/react-router";
-```
-
-Then anywhere in your JSX you can use it like so:
-
-```tsx
-<Link to="/about">About</Link>
-```
-
-This will create a link that will navigate to the `/about` route.
-
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
-
-### Using A Layout
-
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you render `{children}` in the `shellComponent`.
-
-Here is an example layout that includes a header:
-
-```tsx
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
-
-export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'My App' },
-    ],
-  }),
-  shellComponent: ({ children }) => (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        <header>
-          <nav>
-            <Link to="/">Home</Link>
-            <Link to="/about">About</Link>
-          </nav>
-        </header>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  ),
-})
-```
-
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
-
-## Server Functions
-
-TanStack Start provides server functions that allow you to write server-side code that seamlessly integrates with your client components.
-
-```tsx
-import { createServerFn } from '@tanstack/react-start'
-
-const getServerTime = createServerFn({
-  method: 'GET',
-}).handler(async () => {
-  return new Date().toISOString()
-})
-
-// Use in a component
-function MyComponent() {
-  const [time, setTime] = useState('')
-  
-  useEffect(() => {
-    getServerTime().then(setTime)
-  }, [])
-  
-  return <div>Server time: {time}</div>
-}
-```
-
-## API Routes
-
-You can create API routes by using the `server` property in your route definitions:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-import { json } from '@tanstack/react-start'
-
-export const Route = createFileRoute('/api/hello')({
-  server: {
-    handlers: {
-      GET: () => json({ message: 'Hello, World!' }),
-    },
-  },
-})
-```
-
-## Data Fetching
-
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
-
-For example:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-
-export const Route = createFileRoute('/people')({
-  loader: async () => {
-    const response = await fetch('https://swapi.dev/api/people')
-    return response.json()
-  },
-  component: PeopleComponent,
-})
-
-function PeopleComponent() {
-  const data = Route.useLoaderData()
-  return (
-    <ul>
-      {data.results.map((person) => (
-        <li key={person.name}>{person.name}</li>
-      ))}
-    </ul>
-  )
-}
-```
-
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-# Demo files
-
-Files prefixed with `demo` can be safely deleted. They are there to provide a starting point for you to play around with the features you've installed.
-
-# Learn More
-
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
-
-For TanStack Start specific documentation, visit [TanStack Start](https://tanstack.com/start).
+## 📜 License
+MIT License
