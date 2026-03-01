@@ -5,7 +5,7 @@ interface DexieDataset extends Dataset {
   index: number;
 }
 
-const dexieDb = new Dexie("FriendsDatabase") as Dexie & {
+const dexieDb = new Dexie("ScalesDexieLocal") as Dexie & {
   datasets: EntityTable<
     DexieDataset,
     "index" // primary key "id" (for the typings only)

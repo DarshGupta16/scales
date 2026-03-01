@@ -16,9 +16,9 @@ export function LoadingScreen({ isVisible }: LoadingScreenProps) {
           clearInterval(interval);
           return 100;
         }
-        return prev + Math.random() * 15;
+        return prev + Math.random() * 30 + 20;
       });
-    }, 100);
+    }, 30);
     return () => clearInterval(interval);
   }, [isVisible]);
 

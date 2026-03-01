@@ -14,8 +14,8 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Artificial delay to ensure hydration and Recharts rendering can happen 
-    // behind the scenes before we reveal the UI.
-    const timer = setTimeout(() => setIsLoading(false), 1500)
+    // behind the scenes before we reveal the UI on first load.
+    const timer = setTimeout(() => setIsLoading(false), 200)
     return () => clearTimeout(timer)
   }, [])
 
