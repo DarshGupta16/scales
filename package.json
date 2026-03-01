@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "bun --bun vite dev --port 3000",
-    "build": "bun --bun vite build",
+    "build": "bun --bun vite build && bun run scripts/build-sw.ts",
     "preview": "bun --bun vite preview",
     "test": "vitest run"
   },
@@ -45,6 +45,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@serwist/vite": "^9.5.6",
     "@tanstack/devtools-vite": "^0.3.11",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/react": "^16.2.0",
@@ -53,9 +54,9 @@
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^5.0.4",
     "jsdom": "^27.0.0",
+    "serwist": "^9.5.6",
     "typescript": "^5.7.2",
     "vite": "^7.1.7",
-    "vite-plugin-pwa": "^1.2.0",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^3.0.5"
   }
