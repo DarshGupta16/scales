@@ -29,8 +29,12 @@
     "@trpc/react-query": "^11.10.0",
     "@trpc/server": "^11.10.0",
     "@trpc/tanstack-react-query": "^11.10.0",
+    "@types/js-cookie": "^3.0.6",
+    "dexie": "^4.3.0",
+    "dexie-react-hooks": "^4.2.0",
     "dotenv": "^17.3.1",
     "framer-motion": "^12.34.3",
+    "js-cookie": "^3.0.5",
     "lucide-react": "^0.545.0",
     "prisma": "^7.4.1",
     "react": "^19.2.0",
@@ -51,6 +55,7 @@
     "jsdom": "^27.0.0",
     "typescript": "^5.7.2",
     "vite": "^7.1.7",
+    "vite-plugin-pwa": "^1.2.0",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^3.0.5"
   }
