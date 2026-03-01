@@ -73,7 +73,7 @@ export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
   const xAxis = (
     <XAxis
       dataKey="tooltipId"
-      tickFormatter={(value, index) => chartData[index]?.displayDate || ""}
+      tickFormatter={(_, index) => chartData[index]?.displayDate || ""}
       stroke="rgba(255,255,255,0.1)"
       tick={{
         fill: "rgba(255,255,255,0.4)",
