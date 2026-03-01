@@ -7,7 +7,11 @@ interface TableSectionProps {
   onDeleteMeasurement: (id: string) => void;
 }
 
-export function TableSection({ measurements, unit, onDeleteMeasurement }: TableSectionProps) {
+export function TableSection({
+  measurements,
+  unit,
+  onDeleteMeasurement,
+}: TableSectionProps) {
   return (
     <section className="flex flex-col gap-10">
       <div className="flex items-center justify-between border-l-2 border-brand/50 pl-6">

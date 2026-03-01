@@ -4,7 +4,7 @@ import { createQueryClient } from "./trpc/queryClient";
 
 export function getRouter() {
   const queryClient = createQueryClient();
-  
+
   const router = createTanStackRouter({
     routeTree,
     context: {

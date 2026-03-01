@@ -16,9 +16,9 @@ export function LoadingScreen({ isVisible }: LoadingScreenProps) {
           clearInterval(interval);
           return 100;
         }
-        return prev + Math.random() * 15;
+        return prev + Math.random() * 30 + 20;
       });
-    }, 100);
+    }, 30);
     return () => clearInterval(interval);
   }, [isVisible]);
 
@@ -28,9 +28,9 @@ export function LoadingScreen({ isVisible }: LoadingScreenProps) {
         <motion.div
           key="loading-screen"
           initial={{ opacity: 1 }}
-          exit={{ 
+          exit={{
             opacity: 0,
-            transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] }
+            transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] },
           }}
           className="fixed inset-0 z-[1000] bg-[#050505] flex flex-col items-center justify-center font-mono selection:bg-brand selection:text-white"
         >
@@ -42,18 +42,18 @@ export function LoadingScreen({ isVisible }: LoadingScreenProps) {
                   key={i}
                   initial={{ y: -100 }}
                   animate={{ y: 1000 }}
-                  transition={{ 
-                    duration: Math.random() * 3 + 2, 
-                    repeat: Infinity, 
+                  transition={{
+                    duration: Math.random() * 3 + 2,
+                    repeat: Infinity,
                     ease: "linear",
-                    delay: Math.random() * 2 
+                    delay: Math.random() * 2,
                   }}
                   className="text-brand text-[8px] leading-none whitespace-nowrap"
-                  style={{ writingMode: 'vertical-rl' }}
+                  style={{ writingMode: "vertical-rl" }}
                 >
-                  {Array.from({ length: 50 }).map(() => 
-                    String.fromCharCode(0x30A0 + Math.random() * 96)
-                  ).join('')}
+                  {Array.from({ length: 50 })
+                    .map(() => String.fromCharCode(0x30a0 + Math.random() * 96))
+                    .join("")}
                 </motion.div>
               ))}
             </div>
@@ -67,7 +67,8 @@ export function LoadingScreen({ isVisible }: LoadingScreenProps) {
                   System Initialization
                 </p>
                 <h2 className="text-xl font-black text-white uppercase tracking-tighter">
-                  Booting Matrix<span className="animate-pulse text-brand">_</span>
+                  Booting Matrix
+                  <span className="animate-pulse text-brand">_</span>
                 </h2>
               </div>
               <div className="text-right">
@@ -94,18 +95,20 @@ export function LoadingScreen({ isVisible }: LoadingScreenProps) {
                 "Calibrating Neural Pathways",
                 "Synchronizing Data Streams",
                 "Initializing Visual Renderers",
-                "Establishing secure handshake"
+                "Establishing secure handshake",
               ].map((text, i) => (
                 <motion.div
                   key={i}
                   initial={{ opacity: 0, x: -10 }}
-                  animate={{ 
-                    opacity: progress > (i + 1) * 20 ? 1 : 0.2, 
-                    x: progress > (i + 1) * 20 ? 0 : -10 
+                  animate={{
+                    opacity: progress > (i + 1) * 20 ? 1 : 0.2,
+                    x: progress > (i + 1) * 20 ? 0 : -10,
                   }}
                   className="flex items-center gap-3"
                 >
-                  <div className={`w-1 h-1 rounded-full ${progress > (i + 1) * 20 ? 'bg-brand' : 'bg-zinc-800'}`} />
+                  <div
+                    className={`w-1 h-1 rounded-full ${progress > (i + 1) * 20 ? "bg-brand" : "bg-zinc-800"}`}
+                  />
                   <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-[0.2em]">
                     {text}
                   </span>

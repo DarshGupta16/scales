@@ -7,7 +7,11 @@ interface DatasetDetailHeaderProps {
   onAddMeasurement: () => void;
 }
 
-export function DatasetDetailHeader({ title, unit, onAddMeasurement }: DatasetDetailHeaderProps) {
+export function DatasetDetailHeader({
+  title,
+  unit,
+  onAddMeasurement,
+}: DatasetDetailHeaderProps) {
   return (
     <header className="bg-[#050505]/80 backdrop-blur-xl border-b border-white/5 relative z-50 sticky top-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-24 flex items-center justify-between">

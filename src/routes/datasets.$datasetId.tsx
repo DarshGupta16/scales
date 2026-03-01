@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo, useEffect } from "react";
 import { ConfirmDialog } from "../components/ConfirmDialog";
-import type { ViewType, Measurement } from "../types/dataset";
+import type { ViewType } from "../types/dataset";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { trpc } from "../trpc/client";
 
