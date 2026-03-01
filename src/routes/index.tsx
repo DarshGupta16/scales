@@ -8,56 +8,75 @@ import { AddDatasetModal } from "../components/AddDatasetModal";
 import type { Dataset } from "../types/dataset";
 import { useTRPC, trpc } from "../trpc/client";
 import { useRouter } from "@tanstack/react-router";
+import { useLiveQuery } from "dexie-react-hooks";
+import { dexieDb } from "../dexieDb";
 
 export const Route = createFileRoute("/")({
   component: Index,
   loader: async ({ context: { queryClient } }) => {
-    return await queryClient.ensureQueryData({
+    // We intentionally ignore the server fetching block to ensure the shell loads instantly
+    // We will initiate the query client fetch but not block on it.
+    queryClient.ensureQueryData({
       ...trpc.getDatasets.queryOptions(),
       staleTime: 1000 * 60 * 5,
       gcTime: 1000 * 60 * 30,
     });
+    return undefined;
   },
 });
 
 function Index() {
   const router = useRouter();
+
+  // 1. Get instantaneous offline data from Dexie
+  const localDatasets = useLiveQuery(() => dexieDb.datasets.toArray()) || [];
+
+  // 2. Background sync with server
+  const trpcClient = useTRPC();
+  const { data: serverDatasets } = useQuery({
+    ...trpcClient.getDatasets.queryOptions(),
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 30,
+  });
+
+  // 3. Sync Server Data -> Local Dexie DB
+  // When network brings fresh data, wipe the local table and replace it.
+  // We wipe first because we're using auto-increment `++index` instead of `id` for primary keys.
+  useEffect(() => {
+    if (serverDatasets && serverDatasets.length > 0) {
+      const syncToDexie = async () => {
+        await dexieDb.datasets.clear();
+        await dexieDb.datasets.bulkAdd(serverDatasets);
+      };
+      syncToDexie();
+    }
+  }, [serverDatasets]);
+
+  // Preload routes using whatever data is currently available (local or server)
+  const activeDatasets = serverDatasets || localDatasets;
+
   useEffect(() => {
     const preloadRoutes = async () => {
-      for (const dataset of initialDatasets) {
+      for (const dataset of activeDatasets) {
         router.preloadRoute({
           to: "/datasets/$datasetId",
           params: { datasetId: dataset.slug },
         });
       }
     };
-
-    preloadRoutes();
-  }, []);
+    if (activeDatasets.length > 0) preloadRoutes();
+  }, [activeDatasets, router]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  // Get data synchronously from the loader
-  const initialDatasets = Route.useLoaderData();
-
-  // tRPC state with useQuery as a background sync/fallback
-  const trpcClient = useTRPC();
-  const { data: datasets } = useQuery({
-    ...trpcClient.getDatasets.queryOptions(),
-    initialData: initialDatasets,
-    staleTime: 1000 * 60 * 5,
-    gcTime: 1000 * 60 * 30,
-  });
-
   const filteredDatasets = useMemo(() => {
-    const activeData = (datasets || initialDatasets) as Dataset[];
-    return (activeData || []).filter(
-      (dataset) =>
+    return (activeDatasets || []).filter(
+      (dataset: Dataset) =>
         dataset.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         dataset.unit.toLowerCase().includes(searchQuery.toLowerCase()),
     );
-  }, [datasets, initialDatasets, searchQuery]);
+  }, [activeDatasets, searchQuery]);
 
   return (
     <div className="min-h-screen pb-24 bg-[#050505] relative selection:bg-brand selection:text-white">
