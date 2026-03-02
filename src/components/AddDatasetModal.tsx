@@ -2,9 +2,7 @@ import { useState } from "react";
 import { Modal } from "./Modal";
 import { UnitSelector } from "./UnitSelector";
 import type { Dataset, Unit } from "../types/dataset";
-import { useTRPC } from "../trpc/client";
-import { useMutation } from "@tanstack/react-query";
-import { useQueryClient } from "@tanstack/react-query";
+import { useDatasets } from "../hooks/useDatasets";
 
 interface AddDatasetModalProps {
   isOpen: boolean;
@@ -17,42 +15,7 @@ export function AddDatasetModal({
   onClose,
   onDatasetCreated,
 }: AddDatasetModalProps) {
-  const trpc = useTRPC();
-  const queryClient = useQueryClient();
-  const upsertDataset = useMutation(
-    trpc.upsertDataset.mutationOptions({
-      onMutate: async (newDataset) => {
-        const queryKey = trpc.getDatasets.queryKey();
-
-        await queryClient.cancelQueries({ queryKey });
-
-        const previousDatasets = queryClient.getQueryData(queryKey);
-
-        queryClient.setQueryData(queryKey, (old: any) => {
-          return [
-            ...(old || []),
-            { ...newDataset, id: "temp-id", isOptimistic: true },
-          ];
-        });
-
-        return { previousDatasets };
-      },
-
-      onError: (err, _newDataset, context) => {
-        const queryKey = trpc.getDatasets.queryKey();
-
-        queryClient.setQueryData(queryKey, context?.previousDatasets);
-
-        console.error("Failed to add dataset:", err);
-      },
-
-      onSettled: () => {
-        queryClient.invalidateQueries({
-          queryKey: trpc.getDatasets.queryKey(),
-        });
-      },
-    }),
-  );
+  const { upsertDataset } = useDatasets();
 
   // Form State
   const [title, setTitle] = useState("");

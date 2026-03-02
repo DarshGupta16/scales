@@ -1,15 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useState, useMemo, useEffect } from "react";
 import { TopBar } from "../components/TopBar";
 import { DatasetGrid } from "../components/DatasetGrid";
 import { AddDatasetFAB } from "../components/AddDatasetFAB";
 import { AddDatasetModal } from "../components/AddDatasetModal";
 import type { Dataset } from "../types/dataset";
-import { useTRPC, trpc } from "../trpc/client";
-import { useRouter } from "@tanstack/react-router";
-import { useLiveQuery } from "dexie-react-hooks";
-import { dexieDb } from "../dexieDb";
+import { useDatasets } from "../hooks/useDatasets";
+import { trpc } from "../trpc/client";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -28,33 +25,13 @@ export const Route = createFileRoute("/")({
 function Index() {
   const router = useRouter();
 
-  // 1. Get instantaneous offline data from Dexie
-  const localDatasets = useLiveQuery(() => dexieDb.datasets.toArray()) || [];
+  // Background sync and local fallback are now handled inside the hook
+  const { datasets: activeDatasets } = useDatasets();
 
-  // 2. Background sync with server
-  const trpcClient = useTRPC();
-  const { data: serverDatasets } = useQuery({
-    ...trpcClient.getDatasets.queryOptions(),
-    staleTime: 1000 * 60 * 5,
-    gcTime: 1000 * 60 * 30,
-  });
-
-  // 3. Sync Server Data -> Local Dexie DB
-  // Use bulkPut to efficiently upsert server data based on the 'id' primary key.
-  useEffect(() => {
-    if (serverDatasets && serverDatasets.length > 0) {
-      const syncToDexie = async () => {
-        await dexieDb.datasets.bulkPut(serverDatasets);
-      };
-      syncToDexie();
-    }
-  }, [serverDatasets]);
-
-  // Preload routes using whatever data is currently available (local or server)
-  const activeDatasets = serverDatasets || localDatasets;
-
+  // Preload routes using whatever data is currently available
   useEffect(() => {
     const preloadRoutes = async () => {
+      if (!activeDatasets) return;
       for (const dataset of activeDatasets) {
         router.preloadRoute({
           to: "/datasets/$datasetId",
@@ -62,7 +39,7 @@ function Index() {
         });
       }
     };
-    if (activeDatasets.length > 0) preloadRoutes();
+    if (activeDatasets && activeDatasets.length > 0) preloadRoutes();
   }, [activeDatasets, router]);
 
   const [searchQuery, setSearchQuery] = useState("");

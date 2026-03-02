@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import type { ViewType } from "../types/dataset";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useDataset } from "../hooks/useDatasets";
 import { trpc } from "../trpc/client";
 
 // Sub-components
@@ -34,57 +34,7 @@ function DatasetDetail() {
   }, []);
 
   const { datasetId } = Route.useParams();
-  const queryClient = useQueryClient();
-
-  // Fetch data using TanStack Query + tRPC
-  const { data: dataset } = useQuery({
-    ...trpc.getDataset.queryOptions(datasetId),
-    staleTime: 1000 * 60 * 5,
-    gcTime: 1000 * 60 * 30,
-  });
-
-  // const upsertMutation = useMutation(
-  //   trpc.upsertDataset.mutationOptions({
-  //     onSuccess: () => {
-  //       queryClient.invalidateQueries(trpc.getDatasets.queryOptions());
-  //     },
-  //   }),
-  // );
-
-  const removeMeasurementMutation = useMutation(
-    trpc.removeMeasurement.mutationOptions({
-      onMutate: async (measurementId) => {
-        const queryKey = trpc.getDataset.queryKey(datasetId);
-
-        await queryClient.cancelQueries({ queryKey });
-
-        const previousDataset = queryClient.getQueryData(queryKey);
-
-        queryClient.setQueryData(queryKey, (old) => {
-          if (!old) return old;
-          return {
-            ...old,
-            measurements: old.measurements.filter(
-              (measurement) => measurement.id !== measurementId,
-            ),
-          };
-        });
-
-        return { previousDataset };
-      },
-      onError: (err, measurementId, context) => {
-        if (context?.previousDataset) {
-          queryClient.setQueryData(
-            trpc.getDataset.queryKey(datasetId),
-            context.previousDataset,
-          );
-        }
-      },
-      onSuccess: () => {
-        queryClient.invalidateQueries(trpc.getDatasets.queryOptions());
-      },
-    }),
-  );
+  const { dataset, removeMeasurement } = useDataset(datasetId);
 
   const [activeView, setActiveView] = useState<ViewType | null>(null);
 
@@ -115,7 +65,7 @@ function DatasetDetail() {
 
   const handleDeleteMeasurement = (id: string) => {
     if (!dataset) return;
-    removeMeasurementMutation.mutate(id);
+    removeMeasurement.mutate(id);
   };
 
   const handleAddView = (view: ViewType) => {
