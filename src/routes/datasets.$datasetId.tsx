@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import type { ViewType } from "../types/dataset";
-import { useDataset } from "../hooks/useDatasets";
+import { useData } from "../hooks/useData";
 import { trpc } from "../trpc/client";
 
 // Sub-components
@@ -34,7 +34,7 @@ function DatasetDetail() {
   }, []);
 
   const { datasetId } = Route.useParams();
-  const { dataset, removeMeasurement } = useDataset(datasetId);
+  const { dataset, removeMeasurement } = useData(datasetId);
 
   const [activeView, setActiveView] = useState<ViewType | null>(null);
 

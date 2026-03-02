@@ -1,6 +1,6 @@
 import { Modal } from "../Modal";
 import { useState } from "react";
-import { useDataset } from "../../hooks/useDatasets";
+import { useData } from "../../hooks/useData";
 
 interface AddMeasurementModalProps {
   isOpen: boolean;
@@ -20,7 +20,7 @@ export function AddMeasurementModal({
     new Date().toISOString().slice(0, 16),
   );
 
-  const { addMeasurement } = useDataset(datasetSlug);
+  const { addMeasurement } = useData(datasetSlug);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
