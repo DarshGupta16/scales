@@ -11,8 +11,9 @@ const dexieDb = new Dexie("ScalesDexieLocal") as Dexie & {
 };
 
 // Schema declaration:
-dexieDb.version(2).stores({
-  datasets: "id, title, description, unit, views, slug, isOptimistic", // primary key "id" (for the runtime!)
+dexieDb.version(3).stores({
+  datasets:
+    "id, title, description, unit, views, slug, isOptimistic, measurements", // primary key "id" (for the runtime!)
 });
 
 export { dexieDb };

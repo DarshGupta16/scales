@@ -65,6 +65,33 @@ export const appRouter = router({
     return returnDatasets;
   }),
 
+  getDataset: publicProcedure
+    .input(z.string())
+    .query(async ({ input: slug }) => {
+      const dataset = await db.dataset.findFirst({ where: { slug } });
+
+      const views: ViewType[] = (
+        await db.datasetView.findMany({
+          where: { datasetId: dataset?.id },
+        })
+      ).map((view) => view.type);
+
+      const measurements: Measurement[] = (
+        await db.measurement.findMany({
+          where: { datasetId: dataset?.id },
+        })
+      ).map((measurement) => ({
+        ...measurement,
+        timestamp: new Date(measurement.timestamp).toISOString(),
+      }));
+
+      return {
+        ...dataset,
+        views,
+        measurements,
+      };
+    }),
+
   upsertDataset: publicProcedure
     .input(datasetSchema)
     .mutation(async ({ input: dataset }) => {
@@ -119,6 +146,12 @@ export const appRouter = router({
           },
         },
       });
+    }),
+
+  removeMeasurement: publicProcedure
+    .input(z.string())
+    .mutation(async ({ input: id }) => {
+      return await db.measurement.delete({ where: { id } });
     }),
 });
 

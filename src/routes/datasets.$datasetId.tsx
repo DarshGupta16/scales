@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import type { ViewType } from "../types/dataset";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -37,18 +37,49 @@ function DatasetDetail() {
   const queryClient = useQueryClient();
 
   // Fetch data using TanStack Query + tRPC
-  const { data: datasets } = useQuery({
-    ...trpc.getDatasets.queryOptions(),
+  const { data: dataset } = useQuery({
+    ...trpc.getDataset.queryOptions(datasetId),
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 30,
   });
 
-  const dataset = useMemo(() => {
-    return (datasets || []).find((d) => d.slug === datasetId);
-  }, [datasets, datasetId]);
+  // const upsertMutation = useMutation(
+  //   trpc.upsertDataset.mutationOptions({
+  //     onSuccess: () => {
+  //       queryClient.invalidateQueries(trpc.getDatasets.queryOptions());
+  //     },
+  //   }),
+  // );
 
-  const upsertMutation = useMutation(
-    trpc.upsertDataset.mutationOptions({
+  const removeMeasurementMutation = useMutation(
+    trpc.removeMeasurement.mutationOptions({
+      onMutate: async (measurementId) => {
+        const queryKey = trpc.getDataset.queryKey(datasetId);
+
+        await queryClient.cancelQueries({ queryKey });
+
+        const previousDataset = queryClient.getQueryData(queryKey);
+
+        queryClient.setQueryData(queryKey, (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            measurements: old.measurements.filter(
+              (measurement) => measurement.id !== measurementId,
+            ),
+          };
+        });
+
+        return { previousDataset };
+      },
+      onError: (err, measurementId, context) => {
+        if (context?.previousDataset) {
+          queryClient.setQueryData(
+            trpc.getDataset.queryKey(datasetId),
+            context.previousDataset,
+          );
+        }
+      },
       onSuccess: () => {
         queryClient.invalidateQueries(trpc.getDatasets.queryOptions());
       },
@@ -82,36 +113,18 @@ function DatasetDetail() {
     return <DatasetDetailNotFound />;
   }
 
-  // const handleAddMeasurement = (value: number, timestamp: string) => {
-  //   if (!dataset) return;
-
-  //   const newMeasurement: Measurement = {
-  //     id: Math.random().toString(36).substring(7),
-  //     timestamp,
-  //     value,
-  //   };
-
-  //   upsertMutation.mutate({
-  //     ...dataset,
-  //     measurements: [...dataset.measurements, newMeasurement],
-  //   });
-  // };
-
   const handleDeleteMeasurement = (id: string) => {
     if (!dataset) return;
-    upsertMutation.mutate({
-      ...dataset,
-      measurements: dataset.measurements.filter((m) => m.id !== id),
-    });
+    removeMeasurementMutation.mutate(id);
   };
 
   const handleAddView = (view: ViewType) => {
     if (!dataset || dataset.views.includes(view)) return;
 
-    upsertMutation.mutate({
-      ...dataset,
-      views: [...dataset.views, view],
-    });
+    // upsertMutation.mutate({
+    //   ...dataset,
+    //   views: [...dataset.views, view],
+    // });
     setActiveView(view);
     setIsAddViewOpen(false);
   };
@@ -119,10 +132,10 @@ function DatasetDetail() {
   const handleRemoveView = (view: ViewType) => {
     if (!dataset) return;
     const updatedViews = dataset.views.filter((v) => v !== view);
-    upsertMutation.mutate({
-      ...dataset,
-      views: updatedViews,
-    });
+    // upsertMutation.mutate({
+    //   ...dataset,
+    //   views: updatedViews,
+    // });
     if (activeView === view) {
       setActiveView(updatedViews[0] || null);
     }
@@ -139,8 +152,8 @@ function DatasetDetail() {
       ></div>
 
       <DatasetDetailHeader
-        title={dataset.title}
-        unit={dataset.unit}
+        title={dataset.title as string}
+        unit={dataset.unit as string}
         onAddMeasurement={() => setIsAddMeasurementOpen(true)}
       />
 
@@ -148,7 +161,7 @@ function DatasetDetail() {
         <div className="grid grid-cols-1 gap-20">
           <GraphSection
             measurements={dataset.measurements}
-            unit={dataset.unit}
+            unit={dataset.unit as string}
             views={dataset.views}
             activeView={activeView}
             onViewChange={setActiveView}
@@ -158,7 +171,7 @@ function DatasetDetail() {
 
           <TableSection
             measurements={dataset.measurements}
-            unit={dataset.unit}
+            unit={dataset.unit as string}
             onDeleteMeasurement={setConfirmDeleteMeasurement}
           />
         </div>
@@ -168,8 +181,8 @@ function DatasetDetail() {
         isOpen={isAddMeasurementOpen}
         onClose={() => setIsAddMeasurementOpen(false)}
         // onAdd={handleAddMeasurement}
-        unit={dataset.unit}
-        datasetSlug={dataset.slug}
+        unit={dataset.unit as string}
+        datasetSlug={dataset.slug as string}
       />
 
       <AddViewModal

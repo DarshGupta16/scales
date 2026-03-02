@@ -77,7 +77,7 @@ export function AddMeasurementModal({
       timestamp: new Date(newTimestamp).toISOString(),
       datasetSlug,
     });
-    // onAdd(Number(newValue), new Date(newTimestamp).toISOString());
+
     setNewValue("");
     onClose();
   };
