@@ -38,24 +38,27 @@ export function useDatasetCollection() {
 
         const previousDatasets = queryClient.getQueryData(queryKey);
 
-        queryClient.setQueryData(queryKey, (old: any) => {
-          const optimisticDataset: Dataset = {
-            id: newDataset.id,
-            title: newDataset.title,
-            description: newDataset.description ?? undefined,
-            unit: newDataset.unit as any,
-            views: newDataset.views as any,
-            measurements: (newDataset.measurements as any[]).map((m) => ({
-              id: m.id || "temp-id",
-              timestamp: m.timestamp,
-              value: m.value,
-            })),
-            slug: newDataset.slug,
-            isOptimistic: true,
-          };
+        const optimisticDataset: Dataset = {
+          id: newDataset.id,
+          title: newDataset.title,
+          description: newDataset.description ?? undefined,
+          unit: newDataset.unit as any,
+          views: newDataset.views as any,
+          measurements: (newDataset.measurements as any[]).map((m) => ({
+            id: m.id || "temp-id",
+            timestamp: m.timestamp,
+            value: m.value,
+          })),
+          slug: newDataset.slug,
+          isOptimistic: true,
+        };
 
-          return [...(old || []), optimisticDataset];
-        });
+        queryClient.setQueryData(queryKey, (old: any) => [
+          ...(old || []),
+          optimisticDataset,
+        ]);
+
+        dexieDb.datasets.put(optimisticDataset);
 
         return { previousDatasets };
       },

@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { trpc } from "../../trpc/client";
 import type { Measurement } from "../../types/dataset";
+import { dexieDb } from "../../dexieDb";
 
 /**
  * Sub-hook for managing measurements for a specific dataset.
@@ -45,10 +46,13 @@ export function useMeasurements(datasetId: string) {
         // Optimistically update the specific dataset detail
         queryClient.setQueryData(datasetDetailKey, (old: any) => {
           if (!old) return old;
-          return {
+          const updated = {
             ...old,
             measurements: [...old.measurements, newMeasurement],
           };
+          // Sync to Dexie
+          dexieDb.datasets.put(updated as any);
+          return updated;
         });
 
         return { previousDatasets, previousDatasetDetail };
@@ -92,12 +96,15 @@ export function useMeasurements(datasetId: string) {
         // Update Detail Cache
         queryClient.setQueryData(queryKey, (old: any) => {
           if (!old) return old;
-          return {
+          const updated = {
             ...old,
             measurements: old.measurements.filter(
               (m: any) => m.id !== measurementId,
             ),
           };
+          // Sync to Dexie
+          dexieDb.datasets.put(updated as any);
+          return updated;
         });
 
         // Update List Cache
