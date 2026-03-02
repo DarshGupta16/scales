@@ -34,31 +34,6 @@ export function LoadingScreen({ isVisible }: LoadingScreenProps) {
           }}
           className="fixed inset-0 z-[1000] bg-[#050505] flex flex-col items-center justify-center font-mono selection:bg-brand selection:text-white"
         >
-          {/* Matrix Rain Effect Placeholder (Subtle) */}
-          <div className="absolute inset-0 opacity-[0.05] pointer-events-none overflow-hidden">
-            <div className="flex justify-around w-full">
-              {Array.from({ length: 20 }).map((_, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ y: -100 }}
-                  animate={{ y: 1000 }}
-                  transition={{
-                    duration: Math.random() * 3 + 2,
-                    repeat: Infinity,
-                    ease: "linear",
-                    delay: Math.random() * 2,
-                  }}
-                  className="text-brand text-[8px] leading-none whitespace-nowrap"
-                  style={{ writingMode: "vertical-rl" }}
-                >
-                  {Array.from({ length: 50 })
-                    .map(() => String.fromCharCode(0x30a0 + Math.random() * 96))
-                    .join("")}
-                </motion.div>
-              ))}
-            </div>
-          </div>
-
           <div className="relative z-10 w-full max-w-md px-12">
             {/* Status Header */}
             <div className="flex justify-between items-end mb-4">
