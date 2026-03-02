@@ -20,7 +20,7 @@ export const Route = createFileRoute("/datasets/$datasetId")({
     params: { datasetId: _datasetId },
   }) => {
     await queryClient.ensureQueryData({
-      ...trpc.getDatasets.queryOptions(),
+      ...trpc.getDataset.queryOptions(_datasetId),
       staleTime: 1000 * 60 * 5,
       gcTime: 1000 * 60 * 30,
     });

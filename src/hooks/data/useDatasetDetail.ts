@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { trpc } from "../../trpc/client";
 import type { Dataset } from "../../types/dataset";
 import { useLiveQuery } from "dexie-react-hooks";
@@ -10,6 +10,15 @@ import { dexieDb } from "../../dexieDb";
  * Handles fetching simple details and syncing to local DB.
  */
 export function useDatasetDetail(datasetId: string) {
+  const queryClient = useQueryClient();
+
+  // Instant fallback: find the dataset in the already-cached collection query
+  // (the route loader awaits getDatasets, so this is populated on navigation)
+  const cachedDatasets = queryClient.getQueryData(trpc.getDatasets.queryKey());
+  const cachedDataset = (cachedDatasets as Dataset[] | undefined)?.find(
+    (d) => d.slug === datasetId,
+  );
+
   const localDataset = useLiveQuery(
     () => dexieDb.datasets.where("slug").equals(datasetId).first(),
     [datasetId],
@@ -32,8 +41,10 @@ export function useDatasetDetail(datasetId: string) {
   }, [serverDataset]);
 
   return {
-    dataset: (serverDataset || localDataset) as Dataset | undefined,
-    isDetailLoading: datasetQuery.isLoading && !localDataset,
+    dataset: (serverDataset || cachedDataset || localDataset) as
+      | Dataset
+      | undefined,
+    isDetailLoading: datasetQuery.isLoading && !cachedDataset && !localDataset,
     detailError: datasetQuery.error,
   };
 }
