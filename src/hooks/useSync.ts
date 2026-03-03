@@ -222,7 +222,8 @@ export function useSync() {
 
     window.addEventListener("online", handleOnline);
     return () => window.removeEventListener("online", handleOnline);
-  }, [sync]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Helper to record an operation
   const recordOperation = useCallback(
@@ -239,9 +240,12 @@ export function useSync() {
       await dexieDb.syncLogs.put(log);
 
       // Trigger sync to push it
+      // Don't await it, let it run in background
       sync();
     },
-    [sync],
+    // We purposefully omit `sync` from the dependency array to prevent the returned `recordOperation` reference from changing constantly
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
   );
 
   return {

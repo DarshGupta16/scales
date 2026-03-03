@@ -16,7 +16,7 @@ export function useData(datasetId?: string) {
     datasets,
     isCollectionLoading,
     collectionError,
-    upsertDataset,
+    createDataset,
     isUpsertPending,
   } = useDatasetCollection();
 
@@ -30,7 +30,7 @@ export function useData(datasetId?: string) {
   return {
     // Collection Exports
     datasets,
-    upsertDataset,
+    createDataset,
     isCollectionLoading,
     collectionError,
     isUpsertPending,

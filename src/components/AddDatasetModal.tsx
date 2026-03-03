@@ -15,7 +15,7 @@ export function AddDatasetModal({
   onClose,
   onDatasetCreated,
 }: AddDatasetModalProps) {
-  const { upsertDataset } = useData();
+  const { createDataset } = useData();
 
   // Form State
   const [title, setTitle] = useState("");
@@ -28,16 +28,16 @@ export function AddDatasetModal({
 
     const slug = title.toLowerCase().replace(/\s+/g, "-");
     const newDataset: Dataset = {
-      id: `${slug}-${Math.random().toString(36).substring(7)}`,
+      id: `temp-${Math.random().toString(36).substring(7)}`,
       slug,
       title,
-      description,
+      description: description || undefined,
       unit,
       views: ["line"],
       measurements: [],
     };
 
-    upsertDataset(newDataset);
+    createDataset(newDataset);
     onDatasetCreated(newDataset);
 
     // Reset and close

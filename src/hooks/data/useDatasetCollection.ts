@@ -1,16 +1,17 @@
-import { useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { trpc } from "../../trpc/client";
 import type { Dataset } from "../../types/dataset";
 import { useLiveQuery } from "dexie-react-hooks";
 import { dexieDb } from "../../dexieDb";
+import { useSync } from "../useSync";
+import { SyncOperation } from "../../types/syncOperations";
 
 /**
  * Sub-hook for managing the collection of datasets.
  * Handles fetching the list, syncing to local DB, and adding new datasets.
  */
 export function useDatasetCollection() {
-  const queryClient = useQueryClient();
+  const { recordOperation } = useSync();
 
   const localDatasets = useLiveQuery(() => dexieDb.datasets.toArray()) || [];
 
@@ -22,75 +23,24 @@ export function useDatasetCollection() {
 
   const serverDatasets = datasetsQuery.data;
 
-  // Sync Server Data -> Local Dexie DB
-  useEffect(() => {
-    if (serverDatasets && serverDatasets.length > 0) {
-      dexieDb.datasets.bulkPut(serverDatasets as any);
-    }
-  }, [serverDatasets]);
+  // Removed instant bulkPut to prevent infinite loops. The sync engine handles hydrating Dexie.
 
-  const upsertDatasetMutation = useMutation(
-    trpc.upsertDataset.mutationOptions({
-      onMutate: async (newDataset) => {
-        const queryKey = trpc.getDatasets.queryKey();
-
-        await queryClient.cancelQueries({ queryKey });
-
-        const previousDatasets = queryClient.getQueryData(queryKey);
-
-        const optimisticDataset: Dataset = {
-          id: newDataset.id,
-          title: newDataset.title,
-          description: newDataset.description ?? undefined,
-          unit: newDataset.unit as any,
-          views: newDataset.views as any,
-          measurements: (newDataset.measurements as any[]).map((m) => ({
-            id: m.id || "temp-id",
-            timestamp: m.timestamp,
-            value: m.value,
-          })),
-          slug: newDataset.slug,
-          isOptimistic: true,
-        };
-
-        queryClient.setQueryData(queryKey, (old: any) => [
-          ...(old || []),
-          optimisticDataset,
-        ]);
-
-        return { previousDatasets };
-      },
-
-      onError: (err, _newDataset, context) => {
-        const queryKey = trpc.getDatasets.queryKey();
-        queryClient.setQueryData(queryKey, context?.previousDatasets);
-        console.error("Failed to add dataset:", err);
-      },
-
-      onSettled: () => {
-        queryClient.invalidateQueries({
-          queryKey: trpc.getDatasets.queryKey(),
-        });
-      },
-    }),
-  );
-
-  const upsertDataset = (newDataset: Dataset) => {
-    // Fire Dexie update
-    dexieDb.datasets.put({
+  const createDataset = async (newDataset: Dataset) => {
+    // Fire Dexie update immediately
+    await dexieDb.datasets.put({
       ...newDataset,
-      isOptimistic: true,
+      isOptimistic: false, // Local-first, no longer "optimistic"
     } as any);
 
-    // Fire tRPC mutation
-    upsertDatasetMutation.mutate(newDataset);
+    // Record the operation which automatically triggers a sync to the server
+    await recordOperation(SyncOperation.CREATE_DATASET, newDataset);
   };
 
   return {
     datasets: serverDatasets || localDatasets,
     isCollectionLoading: datasetsQuery.isLoading && localDatasets.length === 0,
     collectionError: datasetsQuery.error,
-    upsertDataset,
-    isUpsertPending: upsertDatasetMutation.isPending,
+    createDataset,
+    isUpsertPending: false, // Sync runs in background
   };
 }
