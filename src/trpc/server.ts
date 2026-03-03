@@ -1,7 +1,12 @@
 import { initTRPC } from "@trpc/server";
 import { z } from "zod";
 import { db } from "../db";
-import { datasetSchema, measurementSchema } from "@/types/zodSchemas";
+import {
+  datasetSchema,
+  measurementSchema,
+  syncLogSchema,
+} from "@/types/zodSchemas";
+import { SyncOperation } from "@/types/syncOperations";
 import { type Dataset as DatasetModelType } from "generated/prisma/client";
 import {
   type Dataset as DatasetType,
@@ -92,29 +97,11 @@ export const appRouter = router({
       };
     }),
 
-  upsertDataset: publicProcedure
+  createDataset: publicProcedure
     .input(datasetSchema)
     .mutation(async ({ input: dataset }) => {
-      return await db.dataset.upsert({
-        where: { slug: dataset.slug },
-        update: {
-          title: dataset.title,
-          description: dataset.description,
-          unit: dataset.unit,
-          views: {
-            deleteMany: {},
-            create: dataset.views.map((type) => ({ type })),
-          },
-          measurements: {
-            deleteMany: {},
-            create: dataset.measurements.map((m) => ({
-              id: m.id,
-              value: m.value,
-              timestamp: new Date(m.timestamp),
-            })),
-          },
-        },
-        create: {
+      return await db.dataset.create({
+        data: {
           id: dataset.id,
           slug: dataset.slug,
           title: dataset.title,
@@ -152,6 +139,144 @@ export const appRouter = router({
     .input(z.string())
     .mutation(async ({ input: id }) => {
       return await db.measurement.delete({ where: { id } });
+    }),
+
+  // --- Sync Procedures ---
+
+  getSyncLogs: publicProcedure
+    .input(z.object({ after: z.number() }))
+    .query(async ({ input }) => {
+      const logs = await db.syncLog.findMany({
+        where: { timestamp: { gt: input.after } },
+        orderBy: { timestamp: "asc" },
+      });
+      // Convert BigInt to number for JSON serialization
+      return logs.map((log) => ({
+        ...log,
+        timestamp: Number(log.timestamp),
+      }));
+    }),
+
+  pushSyncLogs: publicProcedure
+    .input(z.array(syncLogSchema))
+    .mutation(async ({ input: logs }) => {
+      if (logs.length === 0) return { success: true, count: 0 };
+
+      // 1. Insert logs into server DB (SQLite doesn't support skipDuplicates on createMany)
+      for (const log of logs) {
+        try {
+          await db.syncLog.create({
+            data: {
+              id: log.id,
+              timestamp: log.timestamp,
+              operation: log.operation,
+              payload: log.payload,
+            },
+          });
+        } catch (ignored) {
+          // Log probably already exists, which is fine
+        }
+      }
+
+      // 2. Replay operations on the server DB
+      let applied = 0;
+      for (const log of logs) {
+        try {
+          const payload = JSON.parse(log.payload);
+          switch (log.operation as SyncOperation) {
+            case SyncOperation.CREATE_DATASET:
+              await db.dataset.upsert({
+                where: { id: payload.id },
+                update: {
+                  title: payload.title,
+                  description: payload.description,
+                  unit: payload.unit,
+                  slug: payload.slug,
+                },
+                create: {
+                  id: payload.id,
+                  slug: payload.slug,
+                  title: payload.title,
+                  description: payload.description,
+                  unit: payload.unit,
+                },
+              });
+              break;
+            case SyncOperation.UPDATE_DATASET:
+              await db.dataset.update({
+                where: { id: payload.id },
+                data: {
+                  title: payload.title,
+                  description: payload.description,
+                  unit: payload.unit,
+                  slug: payload.slug,
+                },
+              });
+              break;
+            case SyncOperation.DELETE_DATASET:
+              await db.dataset.delete({ where: { id: payload.id } });
+              break;
+            case SyncOperation.ADD_MEASUREMENT:
+              await db.measurement.upsert({
+                where: { id: payload.id },
+                update: {
+                  value: payload.value,
+                  timestamp: payload.timestamp,
+                },
+                create: {
+                  id: payload.id,
+                  value: payload.value,
+                  timestamp: payload.timestamp,
+                  dataset: { connect: { slug: payload.datasetSlug } },
+                },
+              });
+              break;
+            case SyncOperation.UPDATE_MEASUREMENT:
+              await db.measurement.update({
+                where: { id: payload.id },
+                data: {
+                  value: payload.value,
+                  timestamp: payload.timestamp,
+                },
+              });
+              break;
+            case SyncOperation.REMOVE_MEASUREMENT:
+              await db.measurement.delete({ where: { id: payload.id } });
+              break;
+            case SyncOperation.ADD_VIEW:
+              await db.datasetView.create({
+                data: {
+                  id: payload.id,
+                  type: payload.type,
+                  dataset: { connect: { id: payload.datasetId } },
+                },
+              });
+              break;
+            case SyncOperation.REMOVE_VIEW:
+              await db.datasetView.delete({ where: { id: payload.id } });
+              break;
+          }
+          applied++;
+        } catch (error) {
+          // Silently ignore replay errors (e.g. deleting already deleted record)
+          console.warn(
+            `[Sync Replay Error] ${log.operation} (${log.id}):`,
+            error,
+          );
+        }
+      }
+      return { success: true, count: applied };
+    }),
+
+  pruneOldLogs: publicProcedure
+    .input(z.object({ thresholdDays: z.number().default(10) }))
+    .mutation(async ({ input }) => {
+      const thresholdMs =
+        Date.now() - input.thresholdDays * 24 * 60 * 60 * 1000;
+      const result = await db.syncLog.deleteMany({
+        where: { timestamp: { lt: thresholdMs } },
+      });
+      return { success: true, deletedCount: result.count };
     }),
 });
 
