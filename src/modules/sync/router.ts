@@ -9,31 +9,11 @@ import type { SyncPayloads } from "./types";
 /**
  * tRPC procedures for synchronization operations.
  * 
- * Includes logic for fetching sync logs, pushing new logs from the client,
+ * Includes logic for pushing new logs from the client,
  * and pruning old logs. This is the server-side counterpart to the
  * background sync engine.
  */
 export const syncProcedures = {
-  /**
-   * Fetches sync logs after a specific timestamp.
-   * 
-   * Note: SQLite/Prisma BigInts must be converted to Numbers for JSON serialization.
-   */
-  getSyncLogs: publicProcedure
-    .input(z.object({ after: z.number().default(0) }))
-    .query(async ({ input }) => {
-      const logs = await db.syncLog.findMany({
-        where: { timestamp: { gt: BigInt(input.after) } },
-        orderBy: { timestamp: "asc" },
-      });
-      
-      // Convert BigInt timestamp to Number for JSON serialization
-      return logs.map(log => ({
-        ...log,
-        timestamp: Number(log.timestamp),
-      })) as SyncLogEntry[];
-    }),
-
   /**
    * Pushes a batch of sync logs from the client to the server.
    * 

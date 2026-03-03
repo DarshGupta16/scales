@@ -1,7 +1,8 @@
-import { Loader2, LayoutGrid } from "lucide-react";
+import { Loader2, Activity } from "lucide-react";
 import { SearchBar } from "./SearchBar";
 import { useTRPC } from "../trpc/client";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 
 interface TopBarProps {
   searchQuery: string;
@@ -41,10 +42,13 @@ export function TopBar({ searchQuery, setSearchQuery }: TopBarProps) {
         <SearchBar value={searchQuery} onChange={setSearchQuery} />
 
         <div className="flex items-center gap-2">
-          <button className="hidden sm:flex items-center gap-2 px-4 py-2 text-zinc-400 hover:text-white transition-colors font-bold uppercase tracking-widest text-xs h-full">
-            <LayoutGrid className="w-4 h-4" />
-            <span>Grid</span>
-          </button>
+          <Link
+            to="/logs"
+            className="hidden sm:flex items-center gap-2 px-4 py-2 text-zinc-400 hover:text-white transition-colors font-bold uppercase tracking-widest text-xs h-full"
+          >
+            <Activity className="w-4 h-4" />
+            <span>Logs</span>
+          </Link>
         </div>
       </div>
     </header>

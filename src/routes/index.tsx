@@ -30,17 +30,18 @@ function Index() {
   // Preload routes using whatever data is currently available.
   useEffect(() => {
     const preloadRoutes = () => {
-      if (!activeDatasets) return;
-      for (const dataset of activeDatasets) {
-        void router.preloadRoute({
-          to: "/datasets/$datasetId",
-          params: { datasetId: dataset.slug },
-        });
+      void router.preloadRoute({ to: "/logs" });
+      if (activeDatasets && activeDatasets.length > 0) {
+        for (const dataset of activeDatasets) {
+          void router.preloadRoute({
+            to: "/datasets/$datasetId",
+            params: { datasetId: dataset.slug },
+          });
+        }
       }
     };
-    if (activeDatasets && activeDatasets.length > 0) {
-      preloadRoutes();
-    }
+
+    preloadRoutes();
   }, [activeDatasets, router]);
 
   const [searchQuery, setSearchQuery] = useState("");

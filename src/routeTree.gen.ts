@@ -9,10 +9,16 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as LogsRouteImport } from './routes/logs'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DatasetsDatasetIdRouteImport } from './routes/datasets.$datasetId'
 import { Route as ApiTrpcSplatRouteImport } from './routes/api.trpc.$'
 
+const LogsRoute = LogsRouteImport.update({
+  id: '/logs',
+  path: '/logs',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -31,36 +37,47 @@ const ApiTrpcSplatRoute = ApiTrpcSplatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/logs': typeof LogsRoute
   '/datasets/$datasetId': typeof DatasetsDatasetIdRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/logs': typeof LogsRoute
   '/datasets/$datasetId': typeof DatasetsDatasetIdRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/logs': typeof LogsRoute
   '/datasets/$datasetId': typeof DatasetsDatasetIdRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/datasets/$datasetId' | '/api/trpc/$'
+  fullPaths: '/' | '/logs' | '/datasets/$datasetId' | '/api/trpc/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/datasets/$datasetId' | '/api/trpc/$'
-  id: '__root__' | '/' | '/datasets/$datasetId' | '/api/trpc/$'
+  to: '/' | '/logs' | '/datasets/$datasetId' | '/api/trpc/$'
+  id: '__root__' | '/' | '/logs' | '/datasets/$datasetId' | '/api/trpc/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  LogsRoute: typeof LogsRoute
   DatasetsDatasetIdRoute: typeof DatasetsDatasetIdRoute
   ApiTrpcSplatRoute: typeof ApiTrpcSplatRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/logs': {
+      id: '/logs'
+      path: '/logs'
+      fullPath: '/logs'
+      preLoaderRoute: typeof LogsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -87,6 +104,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  LogsRoute: LogsRoute,
   DatasetsDatasetIdRoute: DatasetsDatasetIdRoute,
   ApiTrpcSplatRoute: ApiTrpcSplatRoute,
 }
