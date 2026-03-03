@@ -1,44 +1,232 @@
-# Implementing Offline Support and PWA
+# Offline Sync System — Local-First Dexie ↔ SQLite Synchronization
 
-The goal is to make the app act as a Progressive Web App (PWA) with offline capabilities, achieving an "instant" feel regardless of network speed. We are restoring the Dexie-based local caching as requested, but combining it with a Service Worker to provide true offline reliability.
+**Branch**: `feat/offline-sync`  
+**Philosophy**: Dexie is the primary, instant, local-first database. SQLite serves as a universal consolidator and bookkeeper across devices. Every user action executes on Dexie first, then syncs to the server in the background. The app is **single-user, multi-device**.
+
+## Core Concept
+
+1. Every mutation executes **immediately on Dexie**, then a **sync log** is recorded locally.
+2. `recordOperation()` logs the operation in Dexie's `syncLogs`, then calls `sync()` to push the log to the server.
+3. `sync()` compares client and server logs — if they already match, it short-circuits. Otherwise it finds the **last common log**, collects all logs after that from both sides, merges them by timestamp, and **replays** the divergent ones on both Dexie and SQLite.
+4. Sync is **event-driven**: fires after every mutation and when the browser comes back online. No polling.
+5. Errors during replay (e.g. deleting something already gone) are silently ignored.
+6. Logs older than a configurable threshold (default 10 days) are pruned once confirmed synced.
+
+---
 
 ## Proposed Changes
 
-### 1. Restore Dexie Local Database [DONE]
+### Schema & Database Layer
 
-We have already restored [src/dexieDb.ts](file:///c:/Users/Darsh%20Gupta/Documents/Darsh/Websites%20and%20Web%20Apps/scales/src/dexieDb.ts) to exactly match your previous setup (`++index` primary key). We also updated [src/routes/index.tsx](file:///c:/Users/Darsh%20Gupta/Documents/Darsh/Websites%20and%20Web%20Apps/scales/src/routes/index.tsx) to read from Dexie instantly using `useLiveQuery` while syncing with the server in the background.
+#### [MODIFY] [schema.prisma](file:///c:/Users/Darsh%20Gupta/Documents/Darsh/Websites%20and%20Web%20Apps/scales/prisma/schema.prisma)
 
-### 2. Configure PWA functionality (Migrating to `@serwist/vite`)
+Add `SyncLog` model:
 
-*Issue Identified:* `vite-plugin-pwa` has known compatibility issues with TanStack Start because TanStack Start uses the new Vite 6 Environment APIs for SSR and client builds. The PWA plugin fails to inject the service worker registry properly into the TanStack Start routing tree.
-*Solution:* We will use `@serwist/vite` (the modern successor to Workbox) which gives us raw control over the service worker generation and is compatible with modern SSR frameworks.
+```prisma
+model SyncLog {
+  id        String @id @default(cuid())
+  timestamp BigInt            // new Date().getTime()
+  operation String            // SyncOperation enum value
+  payload   String            // JSON-serialized operation data
+  @@index([timestamp])
+}
+```
 
-#### [NEW] `src/sw.ts`
-- Create a manual Service Worker entry point using Serwist.
-- Configure it to precache the assets injected by Vite during the build step.
-- Set up runtime caching strategies (NetworkFirst, CacheFirst) for navigation requests and static assets.
+#### [MODIFY] [dexieDb.ts](file:///c:/Users/Darsh%20Gupta/Documents/Darsh/Websites%20and%20Web%20Apps/scales/src/dexieDb.ts)
 
-#### [MODIFY] [vite.config.ts](file:///c:/Users/Darsh%20Gupta/Documents/Darsh/Websites%20and%20Web%20Apps/scales/vite.config.ts)
-- Remove `vite-plugin-pwa`.
-- Add `@serwist/vite` plugin.
-- Configure Serwist to point to `src/sw.ts` and output to `public/sw.js`.
+Bump version to 4, add `syncLogs` table, and export `SyncLogEntry` interface:
 
-#### [MODIFY] [src/routes/__root.tsx](file:///c:/Users/Darsh%20Gupta/Documents/Darsh/Websites%20and%20Web%20Apps/scales/src/routes/__root.tsx)
-- We already added the `manifest.webmanifest` link.
-- We will add a small inline script to `<Scripts />` or `useEffect` to manually register the compiled Service Worker (`/sw.js`) when the app boots up on the client.
+```ts
+export interface SyncLogEntry {
+  id: string;
+  timestamp: number;
+  operation: SyncOperation;
+  payload: string;
+}
 
-### 3. Ensure `/manifest.webmanifest` is served
-- We will create a `public/manifest.webmanifest` file to hold the JSON manifest (since we removed the auto-generating plugin).
+dexieDb.version(4).stores({
+  datasets:
+    "id, title, description, unit, views, slug, isOptimistic, measurements",
+  syncLogs: "id, timestamp, operation",
+});
+```
+
+---
+
+### Types
+
+#### [NEW] [syncOperations.ts](file:///c:/Users/Darsh%20Gupta/Documents/Darsh/Websites%20and%20Web%20Apps/scales/src/types/syncOperations.ts)
+
+A proper enum of all possible operations (including ones not yet implemented in the UI):
+
+```ts
+export enum SyncOperation {
+  // Dataset operations
+  CREATE_DATASET = "CREATE_DATASET",
+  UPDATE_DATASET = "UPDATE_DATASET",
+  DELETE_DATASET = "DELETE_DATASET",
+
+  // Measurement operations
+  ADD_MEASUREMENT = "ADD_MEASUREMENT",
+  UPDATE_MEASUREMENT = "UPDATE_MEASUREMENT",
+  REMOVE_MEASUREMENT = "REMOVE_MEASUREMENT",
+
+  // View operations
+  ADD_VIEW = "ADD_VIEW",
+  REMOVE_VIEW = "REMOVE_VIEW",
+}
+```
+
+#### [MODIFY] [zodSchemas.ts](file:///c:/Users/Darsh%20Gupta/Documents/Darsh/Websites%20and%20Web%20Apps/scales/src/types/zodSchemas.ts)
+
+Add sync log Zod schema:
+
+```ts
+export const syncLogSchema = z.object({
+  id: z.string(),
+  timestamp: z.number(),
+  operation: z.string(),
+  payload: z.string(),
+});
+```
+
+---
+
+### Server (tRPC)
+
+#### [MODIFY] [server.ts](file:///c:/Users/Darsh%20Gupta/Documents/Darsh/Websites%20and%20Web%20Apps/scales/src/trpc/server.ts)
+
+Add three sync-related procedures:
+
+1. **`getSyncLogs`** — returns all logs after a given timestamp.
+2. **`pushSyncLogs`** — receives client logs, inserts them into the server's `SyncLog` table, then replays each operation on the server DB via a `replayOnServer(log)` helper. Errors during replay are caught and silently ignored.
+3. **`pruneOldLogs`** — deletes logs older than the configurable threshold. Called at the end of a successful sync.
+
+`replayOnServer` handles each `SyncOperation`:
+
+- `CREATE_DATASET` → `db.dataset.create(...)` with the payload data
+- `UPDATE_DATASET` → `db.dataset.update(...)` with partial payload
+- `DELETE_DATASET` → `db.dataset.delete(...)` by id
+- `ADD_MEASUREMENT` → `db.measurement.create(...)` connecting to dataset
+- `UPDATE_MEASUREMENT` → `db.measurement.update(...)` by id
+- `REMOVE_MEASUREMENT` → `db.measurement.delete(...)` by id
+- `ADD_VIEW` → `db.datasetView.create(...)` connecting to dataset
+- `REMOVE_VIEW` → `db.datasetView.delete(...)` by id
+
+All wrapped in try/catch — errors are no-ops.
+
+---
+
+### Client Sync Hook
+
+#### [NEW] [useSync.ts](file:///c:/Users/Darsh%20Gupta/Documents/Darsh/Websites%20and%20Web%20Apps/scales/src/hooks/useSync.ts)
+
+**`recordOperation(operation, payload)`**
+
+- Generates `id` (cuid) and `timestamp` (`new Date().getTime()`).
+- Inserts into Dexie's `syncLogs` table.
+- Calls `sync()` to push the log to the server.
+
+**`sync()`**
+
+- **Early exit**: fetch the latest server log timestamp via `getSyncLogs({ after: 0 })` and compare against local logs. If the latest log ID and timestamp match on both sides, return immediately — nothing to do.
+- Fetch all server logs and all local (Dexie) logs.
+- Find the **last common log** by ID (matching by `id` since timestamps could collide).
+- Collect **client-only** logs (IDs not on server) and **server-only** logs (IDs not on client).
+- If neither set has entries, short-circuit.
+- **Push** client-only logs to the server via `pushSyncLogs` (server replays them).
+- **Replay** server-only logs on Dexie via `replayOnDexie(log)`.
+- After successful sync, call `pruneOldLogs` if applicable.
+
+**`replayOnDexie(log)`**
+
+- `CREATE_DATASET` → `dexieDb.datasets.put(payload)`
+- `UPDATE_DATASET` → `dexieDb.datasets.update(id, payload)` (partial, measurement-level)
+- `DELETE_DATASET` → `dexieDb.datasets.delete(id)`
+- `ADD_MEASUREMENT` → find dataset by slug, append measurement to its array
+- `UPDATE_MEASUREMENT` → find dataset by slug, replace the measurement in the array
+- `REMOVE_MEASUREMENT` → find dataset by slug, filter out the measurement
+- `ADD_VIEW` / `REMOVE_VIEW` → similar array manipulation on the dataset's `views`
+- All try/catch — errors silently ignored.
+
+**Event-driven triggers** (no polling):
+
+- `window.addEventListener('online', sync)` to sync when browser reconnects.
+- `sync()` is called by `recordOperation()` after every mutation.
+- Cleanup listener on unmount.
+
+**Exports**: `{ sync, recordOperation, isSyncing, lastSyncedAt }`
+
+---
+
+### Wiring Into Existing Hooks
+
+#### [MODIFY] [useDatasetCollection.ts](file:///c:/Users/Darsh%20Gupta/Documents/Darsh/Websites%20and%20Web%20Apps/scales/src/hooks/data/useDatasetCollection.ts)
+
+- Rename `upsertDataset` → `createDataset` (both the function and the internal mutation). This will only handle dataset **creation**, not updates.
+- After the Dexie `put` call:
+  ```ts
+  recordOperation(SyncOperation.CREATE_DATASET, JSON.stringify(newDataset));
+  ```
+- Remove the direct tRPC `mutate` call — the sync system handles server communication now.
+
+#### [MODIFY] [useMeasurements.ts](file:///c:/Users/Darsh%20Gupta/Documents/Darsh/Websites%20and%20Web%20Apps/scales/src/hooks/data/useMeasurements.ts)
+
+In `addMeasurement`:
+
+```ts
+recordOperation(
+  SyncOperation.ADD_MEASUREMENT,
+  JSON.stringify({ ...newMeasurement, datasetSlug }),
+);
+```
+
+In `removeMeasurement`:
+
+```ts
+recordOperation(
+  SyncOperation.REMOVE_MEASUREMENT,
+  JSON.stringify({ id: measurementId, datasetSlug }),
+);
+```
+
+Similarly, remove the direct tRPC mutation calls — sync handles it.
+
+#### [MODIFY] [useData.ts](file:///c:/Users/Darsh%20Gupta/Documents/Darsh/Websites%20and%20Web%20Apps/scales/src/hooks/useData.ts)
+
+Update exports to reflect `createDataset` rename (was `upsertDataset`).
+
+---
+
+### Callers of `upsertDataset`
+
+Any component calling `upsertDataset` from `useData()` will need its reference updated to `createDataset`. I'll grep for these and update them during execution.
+
+---
+
+## Commit Strategy
+
+All work on `feat/offline-sync`. Commits after each logical chunk:
+
+1. Schema + Dexie + types
+2. tRPC sync procedures
+3. `useSync` hook
+4. Hook wiring + rename
+5. Cleanup + type check
+
+---
 
 ## Verification Plan
 
-### Automated/Local Tests
-1. **PWA Generation:** Run `bun run build` to ensure the service worker (`sw.js`) is successfully generated in the `public` or `dist/client` directory.
-2. **Offline Testing (Manual via Browser):**
-   - We will need you to test this.
-   - Run `bun dev`.
-   - Open DevTools -> Application -> Service Workers and verify the Serwist service worker is installed.
-   - Go to the Network tab, set throttling to "Offline".
-   - Refresh the page. The app shell and cached data (via Dexie) should still load instantly.
+### Automated
 
-Would you like me to proceed with ripping out `vite-plugin-pwa` and implementing the `Serwist` manual service worker approach?
+```bash
+bunx tsc --noEmit
+```
+
+### Manual
+
+1. Run `bun run dev`, create a dataset → confirm sync log in both Dexie (`Application` → `IndexedDB`) and SQLite.
+2. Go offline → add measurement → confirm Dexie log exists, no server error crashes the app.
+3. Go online → confirm `sync()` fires, log pushed to server, measurement appears in SQLite.
+4. Check log compaction after 10 days threshold.
