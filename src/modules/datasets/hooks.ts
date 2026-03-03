@@ -5,14 +5,17 @@ import { trpc } from "@/trpc/client";
 import { dexieDb } from "@/dexieDb";
 import { SyncOperation } from "@/types/syncOperations";
 import type { Dataset } from "@/types/dataset";
-// We import useSync from its new location, or the old one until it moves.
-// PLAN.md says to update useSync imports across files at the end. For now we use the old path or the new one?
-// Wait, the plan says Phase 2 creates hooks, Phase 5 moves useSync. We will just use new path or old path. Let's use old path for now and let tsc pass, or just new path. The plan says "Phase 5 Update useSync imports". Let's use the current path `src/hooks/useSync` so Phase 2 tests pass, then update it later, OR just update it all at the end.
 import { useSync } from "@/modules/sync/useSync";
 
 /**
- * Sub-hook for managing the collection of datasets.
- * Handles fetching the list, syncing to local DB, and adding new datasets.
+ * Hook for managing the collection of all datasets.
+ * 
+ * This hook seamlessly merges local-first Dexie.js state with the remote 
+ * tRPC server state. It returns a combined list of datasets, preferring the 
+ * server data if available, but falling back to local data instantly for 
+ * offline or immediate rendering.
+ * 
+ * @returns Object containing the dataset list, loading states, and the `createDataset` mutation function.
  */
 export function useDatasetCollection() {
   const { recordOperation } = useSync();
@@ -27,12 +30,21 @@ export function useDatasetCollection() {
 
   const serverDatasets = datasetsQuery.data;
 
+  /**
+   * Creates a new dataset.
+   * 
+   * Operation is instant: it writes to the local Dexie DB and records a sync 
+   * operation. The background sync engine will process the queue and push the 
+   * creation event to the server.
+   * 
+   * @param newDataset The complete dataset object to create.
+   */
   const createDataset = async (newDataset: Dataset) => {
     // Fire Dexie update immediately
     await dexieDb.datasets.put({
       ...newDataset,
       isOptimistic: false, // Local-first, no longer "optimistic"
-    } as any);
+    });
 
     // Record the operation which automatically triggers a sync to the server
     await recordOperation(SyncOperation.CREATE_DATASET, newDataset);
@@ -48,8 +60,15 @@ export function useDatasetCollection() {
 }
 
 /**
- * Sub-hook for managing a single dataset's detailed data.
- * Handles fetching simple details and syncing to local DB.
+ * Hook for managing a single dataset's detailed data.
+ * 
+ * Uses a tiered data resolution strategy to ensure instant loading:
+ * 1. Checks for server data from its own query.
+ * 2. Checks the query cache from the `getDatasets` collection query.
+ * 3. Checks the local Dexie database.
+ * 
+ * @param datasetId The slug of the dataset to retrieve.
+ * @returns Object containing the dataset, loading states, and any errors.
  */
 export function useDatasetDetail(datasetId: string) {
   const queryClient = useQueryClient();
@@ -78,7 +97,7 @@ export function useDatasetDetail(datasetId: string) {
   // Sync Detail Data -> Local Dexie DB
   useEffect(() => {
     if (serverDataset) {
-      dexieDb.datasets.put(serverDataset as any);
+      void dexieDb.datasets.put(serverDataset);
     }
   }, [serverDataset]);
 

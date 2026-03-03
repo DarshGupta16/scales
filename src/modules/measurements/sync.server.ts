@@ -2,7 +2,12 @@ import { SyncOperation } from "@/types/syncOperations";
 import { db } from "@/db";
 import type { ServerReplayHandler } from "@/modules/sync/types";
 
-export const serverHandlers: Record<string, ServerReplayHandler> = {
+export const serverHandlers: {
+  [K in
+    | SyncOperation.ADD_MEASUREMENT
+    | SyncOperation.UPDATE_MEASUREMENT
+    | SyncOperation.REMOVE_MEASUREMENT]: ServerReplayHandler<K>;
+} = {
   [SyncOperation.ADD_MEASUREMENT]: async (payload) => {
     await db.measurement.upsert({
       where: { id: payload.id },

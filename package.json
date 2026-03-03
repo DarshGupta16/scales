@@ -9,7 +9,9 @@
     "dev": "bun --bun vite dev --port 3000",
     "build": "bun --bun vite build && bun run scripts/build-sw.ts",
     "preview": "bun --bun vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "dependencies": {
     "@libsql/client": "^0.17.0",

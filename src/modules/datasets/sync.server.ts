@@ -2,7 +2,12 @@ import { SyncOperation } from "@/types/syncOperations";
 import { db } from "@/db";
 import type { ServerReplayHandler } from "@/modules/sync/types";
 
-export const serverHandlers: Record<string, ServerReplayHandler> = {
+export const serverHandlers: {
+  [K in
+    | SyncOperation.CREATE_DATASET
+    | SyncOperation.UPDATE_DATASET
+    | SyncOperation.DELETE_DATASET]: ServerReplayHandler<K>;
+} = {
   [SyncOperation.CREATE_DATASET]: async (payload) => {
     await db.dataset.upsert({
       where: { id: payload.id },

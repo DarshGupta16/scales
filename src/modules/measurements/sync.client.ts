@@ -2,7 +2,12 @@ import { SyncOperation } from "@/types/syncOperations";
 import { dexieDb } from "@/dexieDb";
 import type { ClientReplayHandler } from "@/modules/sync/types";
 
-export const clientHandlers: Record<string, ClientReplayHandler> = {
+export const clientHandlers: {
+  [K in
+    | SyncOperation.ADD_MEASUREMENT
+    | SyncOperation.UPDATE_MEASUREMENT
+    | SyncOperation.REMOVE_MEASUREMENT]: ClientReplayHandler<K>;
+} = {
   [SyncOperation.ADD_MEASUREMENT]: async (payload) => {
     const dsAdd = await dexieDb.datasets
       .where("slug")
@@ -24,7 +29,7 @@ export const clientHandlers: Record<string, ClientReplayHandler> = {
       );
       await dexieDb.datasets.update(dsAdd.id, {
         measurements: newMeasurements,
-      } as any);
+      });
     }
   },
   [SyncOperation.UPDATE_MEASUREMENT]: async (payload) => {
@@ -35,12 +40,12 @@ export const clientHandlers: Record<string, ClientReplayHandler> = {
         const newM = [...ds.measurements];
         newM[mIndex] = {
           ...newM[mIndex],
-          value: payload.value,
-          timestamp: payload.timestamp,
+          value: payload.value ?? newM[mIndex].value,
+          timestamp: payload.timestamp ?? newM[mIndex].timestamp,
         };
         await dexieDb.datasets.update(ds.id, {
           measurements: newM,
-        } as any);
+        });
         break;
       }
     }
@@ -51,7 +56,7 @@ export const clientHandlers: Record<string, ClientReplayHandler> = {
       if (ds.measurements.some((m) => m.id === payload.id)) {
         await dexieDb.datasets.update(ds.id, {
           measurements: ds.measurements.filter((m) => m.id !== payload.id),
-        } as any);
+        });
         break;
       }
     }

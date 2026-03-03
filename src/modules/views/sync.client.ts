@@ -2,7 +2,9 @@ import { SyncOperation } from "@/types/syncOperations";
 import { dexieDb } from "@/dexieDb";
 import type { ClientReplayHandler } from "@/modules/sync/types";
 
-export const clientHandlers: Record<string, ClientReplayHandler> = {
+export const clientHandlers: {
+  [K in SyncOperation.ADD_VIEW | SyncOperation.REMOVE_VIEW]: ClientReplayHandler<K>;
+} = {
   [SyncOperation.ADD_VIEW]: async (payload) => {
     const dsVAdd = await dexieDb.datasets
       .where("id")
@@ -11,7 +13,7 @@ export const clientHandlers: Record<string, ClientReplayHandler> = {
     if (dsVAdd && !dsVAdd.views.includes(payload.type)) {
       await dexieDb.datasets.update(dsVAdd.id, {
         views: [...dsVAdd.views, payload.type],
-      } as any);
+      });
     }
   },
   [SyncOperation.REMOVE_VIEW]: async (payload) => {
@@ -22,7 +24,7 @@ export const clientHandlers: Record<string, ClientReplayHandler> = {
     if (dsVRem) {
       await dexieDb.datasets.update(dsVRem.id, {
         views: dsVRem.views.filter((v) => v !== payload.type),
-      } as any);
+      });
     }
   },
 };
