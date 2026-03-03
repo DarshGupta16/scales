@@ -1,8 +1,5 @@
 import { Dexie, type EntityTable } from "dexie";
 import { type Dataset } from "./types/dataset";
-
-interface DexieDataset extends Dataset {}
-
 import { type SyncOperation } from "./types/syncOperations";
 
 export interface SyncLogEntry {
@@ -12,18 +9,28 @@ export interface SyncLogEntry {
   payload: string;
 }
 
-const dexieDb = new Dexie("ScalesDexieLocal") as Dexie & {
-  datasets: EntityTable<
-    DexieDataset,
-    "id" // primary key "id" (for the typings only)
-  >;
+/**
+ * Dexie.js initialization with SSR-safety.
+ * 
+ * We only instantiate the Dexie instance if we are in a browser environment
+ * where IndexedDB is available. On the server, we return a mock object
+ * to prevent crashes during SSR.
+ */
+const isBrowser = typeof window !== "undefined";
+
+const dexieDb = (isBrowser
+  ? new Dexie("ScalesDexieLocal")
+  : ({} as unknown)) as Dexie & {
+  datasets: EntityTable<Dataset, "id">;
   syncLogs: EntityTable<SyncLogEntry, "id">;
 };
 
-// Schema declaration:
-dexieDb.version(4).stores({
-  datasets: "id, title, description, unit, views, slug, measurements", // Cannot change this string from v3 without complex migrations
-  syncLogs: "id, timestamp, operation",
-});
+if (isBrowser) {
+  // Schema declaration:
+  dexieDb.version(4).stores({
+    datasets: "id, title, description, unit, views, slug, measurements",
+    syncLogs: "id, timestamp, operation",
+  });
+}
 
 export { dexieDb };

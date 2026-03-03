@@ -18,6 +18,11 @@ import {
 } from "recharts";
 import type { ViewType, Measurement } from "../types/dataset";
 import { useMemo, useState, useEffect } from "react";
+import type { TooltipProps } from "recharts";
+import type {
+  NameType,
+  ValueType,
+} from "recharts/types/component/DefaultTooltipContent";
 
 interface DatasetGraphProps {
   data: Measurement[];
@@ -25,30 +30,43 @@ interface DatasetGraphProps {
   unit: string;
 }
 
+interface ChartData extends Measurement {
+  tooltipId: string;
+  displayDate: string;
+}
+
 const COLORS = ["#8b5cf6", "#a78bfa", "#c4b5fd", "#ddd6fe", "#ede9fe"];
 
-const CustomTooltip = ({ active, payload, unit }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-zinc-900/90 backdrop-blur-md p-4 border border-white/10 rounded-2xl shadow-2xl">
-        <p className="text-[10px] font-bold text-zinc-500 mb-2 uppercase tracking-[0.2em]">
-          {payload[0].payload.displayDate}
-        </p>
-        <p className="text-xl font-display font-extrabold text-brand uppercase">
-          {payload[0].value}{" "}
-          <span className="text-white/50 text-xs tracking-widest">{unit}</span>
-        </p>
-      </div>
-    );
+const CustomTooltip = ({
+  active,
+  payload,
+  unit,
+}: TooltipProps<ValueType, NameType> & { unit: string }) => {
+  if (active && payload && payload.length > 0) {
+    const firstPayload = payload[0];
+    if (firstPayload?.payload) {
+      const data = firstPayload.payload as ChartData;
+      return (
+        <div className="bg-zinc-900/90 backdrop-blur-md p-4 border border-white/10 rounded-2xl shadow-2xl">
+          <p className="text-[10px] font-bold text-zinc-500 mb-2 uppercase tracking-[0.2em]">
+            {data.displayDate}
+          </p>
+          <p className="text-xl font-display font-extrabold text-brand uppercase">
+            {firstPayload.value}{" "}
+            <span className="text-white/50 text-xs tracking-widest">{unit}</span>
+          </p>
+        </div>
+      );
+    }
   }
   return null;
 };
 
 // Reusable Chart Elements
-const renderXAxis = (chartData: any[]) => (
+const renderXAxis = (chartData: ChartData[]) => (
   <XAxis
     dataKey="tooltipId"
-    tickFormatter={(_, index) => chartData[index]?.displayDate || ""}
+    tickFormatter={(_, index) => chartData[index]?.displayDate ?? ""}
     stroke="rgba(255,255,255,0.1)"
     tick={{
       fill: "rgba(255,255,255,0.4)",
@@ -88,8 +106,14 @@ const renderTooltip = (unit: string) => (
   />
 );
 
+interface ChartRendererProps {
+  viewType: ViewType;
+  chartData: ChartData[];
+  unit: string;
+}
+
 // Modular Chart Renderers
-const ChartRenderer = ({ viewType, chartData, unit }: any) => {
+const ChartRenderer = ({ viewType, chartData, unit }: ChartRendererProps) => {
   const commonProps = {
     data: chartData,
     margin: { top: 20, right: 20, left: 0, bottom: 0 },
@@ -173,7 +197,7 @@ const ChartRenderer = ({ viewType, chartData, unit }: any) => {
             stroke="none"
             cornerRadius={10}
           >
-            {chartData.map((_: any, index: number) => (
+            {chartData.map((_, index) => (
               <Cell
                 key={`cell-${index}`}
                 fill={COLORS[index % COLORS.length]}
@@ -209,10 +233,10 @@ export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
     setIsClient(true);
   }, []);
 
-  const chartData = useMemo(() => {
+  const chartData = useMemo<ChartData[]>(() => {
     return data.map((m, index) => ({
       ...m,
-      tooltipId: `${m.id || index}-${m.timestamp}`,
+      tooltipId: `${m.id || index.toString()}-${m.timestamp}`,
       displayDate: new Date(m.timestamp).toLocaleDateString(undefined, {
         month: "short",
         day: "numeric",
@@ -223,13 +247,11 @@ export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
   }, [data]);
 
   return (
-    <div className="w-full h-full min-h-[400px] min-w-0 bg-[#070707] rounded-3xl p-6 relative">
+    <div className="w-full h-[400px] min-w-0 bg-[#070707] rounded-3xl p-6 relative">
       {isClient && (
         <ResponsiveContainer
           width="100%"
           height="100%"
-          minWidth={0}
-          minHeight={0}
         >
           <ChartRenderer
             viewType={viewType}

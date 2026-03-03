@@ -2,7 +2,6 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { dexieDb, type SyncLogEntry } from "@/dexieDb";
 import { trpcClient } from "@/trpc/client";
 import { SyncOperation } from "@/types/syncOperations";
-import { allClientHandlers } from "./registry.client";
 import type { SyncPayloads } from "./types";
 
 /**
@@ -15,13 +14,16 @@ import type { SyncPayloads } from "./types";
  */
 export function useSync() {
   const [isSyncing, setIsSyncing] = useState(false);
-  // We use a ref to track syncing state without triggering effect re-runs
-  // which prevents infinite loop issues.
   const isSyncingRef = useRef(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
 
+  /**
+   * Triggers a one-time synchronization event.
+   * This is made SSR-safe with dynamic imports for client-only registries.
+   */
   const sync = useCallback(async () => {
-    if (isSyncingRef.current) return;
+    // Only run if we are in the browser and not already syncing.
+    if (typeof window === "undefined" || isSyncingRef.current) return;
     
     isSyncingRef.current = true;
     setIsSyncing(true);
@@ -35,18 +37,16 @@ export function useSync() {
       const localLogs = await dexieDb.syncLogs.orderBy("timestamp").toArray();
 
       // 3. Early Exit / Short-circuit
-      // If both sides have logs and the latest log IDs match, we are fully synced.
       if (serverLogs.length > 0 && localLogs.length > 0) {
         const latestServerLog = serverLogs[serverLogs.length - 1];
         const latestLocalLog = localLogs[localLogs.length - 1];
         if (latestServerLog.id === latestLocalLog.id) {
           setLastSyncedAt(new Date());
-          return; // Already synced!
+          return;
         }
       }
 
       // 4. Find the last common log ID (moving backwards)
-      // This helps us determine which logs are new on the client and server.
       let commonLogId: string | null = null;
       let commonServerIndex = -1;
 
@@ -86,23 +86,29 @@ export function useSync() {
       }
 
       // 7. Replay server-only logs on Dexie (Local DB)
-      for (const log of serverOnlyLogs) {
-        try {
-          const payload = JSON.parse(log.payload) as SyncPayloads[SyncOperation];
-          const handler = allClientHandlers[log.operation];
-          if (handler) {
-            await handler(payload);
+      if (serverOnlyLogs.length > 0) {
+        // SSR-Safe Dynamic Import:registry.client imports Dexie and other client-only files.
+        // We only load this in the browser during an active sync.
+        const { allClientHandlers } = await import("./registry.client");
+        
+        for (const log of serverOnlyLogs) {
+          try {
+            const payload = JSON.parse(log.payload) as SyncPayloads[SyncOperation];
+            const handler = allClientHandlers[log.operation as SyncOperation];
+            if (handler) {
+              await handler(payload);
+            }
+            await dexieDb.syncLogs.put(log);
+          } catch (error) {
+            console.warn(
+              `[Local Replay Error] ${log.operation} (${log.id}):`,
+              error,
+            );
           }
-          await dexieDb.syncLogs.put(log);
-        } catch (error) {
-          console.warn(
-            `[Local Replay Error] ${log.operation} (${log.id}):`,
-            error,
-          );
         }
       }
 
-      // 8. Prune old logs on the server to prevent the sync table from growing infinitely
+      // 8. Prune old logs on the server
       await trpcClient.pruneOldLogs.mutate({ thresholdDays: 10 });
 
       setLastSyncedAt(new Date());
@@ -114,26 +120,14 @@ export function useSync() {
     }
   }, []);
 
-  // Event-driven online sync
-  useEffect(() => {
-    const handleOnline = () => {
-      console.log("Browser went online. Triggering sync.");
-      void sync();
-    };
-
-    // Initial sync on mount
-    void sync();
-
-    window.addEventListener("online", handleOnline);
-    return () => window.removeEventListener("online", handleOnline);
-  }, [sync]);
-
   /**
-   * Helper to record a new operation (e.g. creating a dataset, adding a measurement)
-   * This immediately saves the log locally and triggers a background sync.
+   * Helper to record a new operation.
+   * Immediately writes to local Dexie and triggers a background sync.
    */
   const recordOperation = useCallback(
     async <T extends SyncOperation>(operation: T, payloadObject: SyncPayloads[T]) => {
+      if (typeof window === "undefined") return;
+      
       const log: SyncLogEntry = {
         id: crypto.randomUUID(),
         timestamp: new Date().getTime(),
@@ -148,4 +142,33 @@ export function useSync() {
   );
 
   return { sync, recordOperation, isSyncing, lastSyncedAt };
+}
+
+/**
+ * SyncManager component
+ * 
+ * A dedicated component that should be rendered ONCE at the root of the app.
+ * It handles the event-driven synchronization logic (mount-sync and online-sync).
+ * Separating this prevents the sync logic from firing multiple times if the hook
+ * is used in multiple child components.
+ */
+export function SyncManager() {
+  const { sync } = useSync();
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleOnline = () => {
+      console.log("Browser went online. Triggering sync.");
+      void sync();
+    };
+
+    // Trigger initial sync on mount
+    void sync();
+
+    window.addEventListener("online", handleOnline);
+    return () => window.removeEventListener("online", handleOnline);
+  }, [sync]);
+
+  return null;
 }

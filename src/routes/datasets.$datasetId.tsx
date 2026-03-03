@@ -17,10 +17,10 @@ export const Route = createFileRoute("/datasets/$datasetId")({
   component: DatasetDetail,
   loader: async ({
     context: { queryClient },
-    params: { datasetId: _datasetId },
+    params: { datasetId },
   }) => {
     await queryClient.ensureQueryData({
-      ...trpc.getDataset.queryOptions(_datasetId),
+      ...trpc.getDataset.queryOptions(datasetId),
       staleTime: 1000 * 60 * 5,
       gcTime: 1000 * 60 * 30,
     });
@@ -41,7 +41,7 @@ function DatasetDetail() {
   // Set initial active view once dataset is loaded
   useEffect(() => {
     if (dataset && !activeView) {
-      setActiveView(dataset.views[0] || "line");
+      setActiveView(dataset.views[0] ?? "line");
     }
   }, [dataset, activeView]);
 
@@ -64,30 +64,20 @@ function DatasetDetail() {
   }
 
   const handleDeleteMeasurement = (id: string) => {
-    if (!dataset) return;
-    removeMeasurement(id);
+    void removeMeasurement(id);
   };
 
   const handleAddView = (view: ViewType) => {
     if (!dataset || dataset.views.includes(view)) return;
 
-    // upsertMutation.mutate({
-    //   ...dataset,
-    //   views: [...dataset.views, view],
-    // });
     setActiveView(view);
     setIsAddViewOpen(false);
   };
 
   const handleRemoveView = (view: ViewType) => {
-    if (!dataset) return;
     const updatedViews = dataset.views.filter((v) => v !== view);
-    // upsertMutation.mutate({
-    //   ...dataset,
-    //   views: updatedViews,
-    // });
     if (activeView === view) {
-      setActiveView(updatedViews[0] || null);
+      setActiveView(updatedViews[0] ?? null);
     }
   };
 
@@ -102,8 +92,8 @@ function DatasetDetail() {
       ></div>
 
       <DatasetDetailHeader
-        title={dataset.title as string}
-        unit={dataset.unit as string}
+        title={dataset.title}
+        unit={dataset.unit}
         onAddMeasurement={() => setIsAddMeasurementOpen(true)}
       />
 
@@ -111,7 +101,7 @@ function DatasetDetail() {
         <div className="grid grid-cols-1 gap-20">
           <GraphSection
             measurements={dataset.measurements}
-            unit={dataset.unit as string}
+            unit={dataset.unit}
             views={dataset.views}
             activeView={activeView}
             onViewChange={setActiveView}
@@ -121,7 +111,7 @@ function DatasetDetail() {
 
           <TableSection
             measurements={dataset.measurements}
-            unit={dataset.unit as string}
+            unit={dataset.unit}
             onDeleteMeasurement={setConfirmDeleteMeasurement}
           />
         </div>
@@ -130,9 +120,8 @@ function DatasetDetail() {
       <AddMeasurementModal
         isOpen={isAddMeasurementOpen}
         onClose={() => setIsAddMeasurementOpen(false)}
-        // onAdd={handleAddMeasurement}
-        unit={dataset.unit as string}
-        datasetSlug={dataset.slug as string}
+        unit={dataset.unit}
+        datasetSlug={dataset.slug}
       />
 
       <AddViewModal

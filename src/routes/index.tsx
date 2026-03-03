@@ -10,10 +10,9 @@ import { trpc } from "../trpc/client";
 
 export const Route = createFileRoute("/")({
   component: Index,
-  loader: async ({ context: { queryClient } }) => {
-    // We intentionally ignore the server fetching block to ensure the shell loads instantly
-    // We will initiate the query client fetch but not block on it.
-    queryClient.ensureQueryData({
+  loader: ({ context: { queryClient } }) => {
+    // We initiate the query client fetch but don't block on it to ensure instant shell loading.
+    void queryClient.ensureQueryData({
       ...trpc.getDatasets.queryOptions(),
       staleTime: 1000 * 60 * 5,
       gcTime: 1000 * 60 * 30,
@@ -25,28 +24,30 @@ export const Route = createFileRoute("/")({
 function Index() {
   const router = useRouter();
 
-  // Background sync and local fallback are now handled inside the central hook
+  // Background sync and local fallback are handled inside the central hook.
   const { datasets: activeDatasets } = useData();
 
-  // Preload routes using whatever data is currently available
+  // Preload routes using whatever data is currently available.
   useEffect(() => {
-    const preloadRoutes = async () => {
+    const preloadRoutes = () => {
       if (!activeDatasets) return;
       for (const dataset of activeDatasets) {
-        router.preloadRoute({
+        void router.preloadRoute({
           to: "/datasets/$datasetId",
           params: { datasetId: dataset.slug },
         });
       }
     };
-    if (activeDatasets && activeDatasets.length > 0) preloadRoutes();
+    if (activeDatasets && activeDatasets.length > 0) {
+      preloadRoutes();
+    }
   }, [activeDatasets, router]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const filteredDatasets = useMemo(() => {
-    return (activeDatasets || []).filter(
+    return (activeDatasets ?? []).filter(
       (dataset: Dataset) =>
         dataset.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         dataset.unit.toLowerCase().includes(searchQuery.toLowerCase()),
@@ -73,7 +74,9 @@ function Index() {
       <AddDatasetModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        onDatasetCreated={() => {}}
+        onDatasetCreated={() => {
+          // Log dataset creation success if needed
+        }}
       />
     </div>
   );

@@ -38,6 +38,7 @@ export const serverHandlers: {
     });
   },
   [SyncOperation.DELETE_DATASET]: async (payload) => {
-    await db.dataset.delete({ where: { id: payload.id } });
+    // Use deleteMany to avoid crashing if the record was already deleted
+    await db.dataset.deleteMany({ where: { id: payload.id } });
   },
 };

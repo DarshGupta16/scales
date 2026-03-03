@@ -33,6 +33,7 @@ export const serverHandlers: {
     });
   },
   [SyncOperation.REMOVE_MEASUREMENT]: async (payload) => {
-    await db.measurement.delete({ where: { id: payload.id } });
+    // Use deleteMany to avoid crashing (P2025) if the record is missing
+    await db.measurement.deleteMany({ where: { id: payload.id } });
   },
 };

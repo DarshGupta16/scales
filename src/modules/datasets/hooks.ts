@@ -20,7 +20,7 @@ import { useSync } from "@/modules/sync/useSync";
 export function useDatasetCollection() {
   const { recordOperation } = useSync();
 
-  const localDatasets = useLiveQuery(() => dexieDb.datasets.toArray()) || [];
+  const localDatasets = useLiveQuery(() => dexieDb.datasets.toArray()) ?? [];
 
   const datasetsQuery = useQuery({
     ...trpc.getDatasets.queryOptions(),
@@ -41,17 +41,14 @@ export function useDatasetCollection() {
    */
   const createDataset = async (newDataset: Dataset) => {
     // Fire Dexie update immediately
-    await dexieDb.datasets.put({
-      ...newDataset,
-      isOptimistic: false, // Local-first, no longer "optimistic"
-    });
+    await dexieDb.datasets.put(newDataset);
 
     // Record the operation which automatically triggers a sync to the server
     await recordOperation(SyncOperation.CREATE_DATASET, newDataset);
   };
 
   return {
-    datasets: serverDatasets || localDatasets,
+    datasets: (serverDatasets ?? localDatasets),
     isCollectionLoading: datasetsQuery.isLoading && localDatasets.length === 0,
     collectionError: datasetsQuery.error,
     createDataset,
@@ -97,12 +94,14 @@ export function useDatasetDetail(datasetId: string) {
   // Sync Detail Data -> Local Dexie DB
   useEffect(() => {
     if (serverDataset) {
-      void dexieDb.datasets.put(serverDataset);
+      // Cast to Dataset to satisfy Dexie's InsertType, which might be picky about
+      // optional fields or extra server-side fields (like createdAt).
+      void dexieDb.datasets.put(serverDataset as Dataset);
     }
   }, [serverDataset]);
 
   return {
-    dataset: (serverDataset || cachedDataset || localDataset) as
+    dataset: (serverDataset ?? cachedDataset ?? localDataset) as
       | Dataset
       | undefined,
     isDetailLoading: datasetQuery.isLoading && !cachedDataset && !localDataset,

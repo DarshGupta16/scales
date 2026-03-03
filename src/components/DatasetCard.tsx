@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import type { Dataset } from "../types/dataset";
+import type { Dataset, Measurement } from "../types/dataset";
 import {
   LineChart,
   Line,
@@ -11,11 +11,21 @@ import {
   XAxis,
   Tooltip,
 } from "recharts";
+import type { TooltipProps } from "recharts";
+import type {
+  NameType,
+  ValueType,
+} from "recharts/types/component/DefaultTooltipContent";
 import { motion } from "framer-motion";
 import { useEffect, useState, useMemo } from "react";
 
 interface DatasetCardProps {
   dataset: Dataset;
+}
+
+interface PreviewData extends Measurement {
+  tooltipId: string;
+  displayDate: string;
 }
 
 export function DatasetCard({ dataset }: DatasetCardProps) {
@@ -25,10 +35,10 @@ export function DatasetCard({ dataset }: DatasetCardProps) {
   }, []);
 
   // Use the last 7 measurements for the preview chart, sorted chronologically
-  const previewData = useMemo(() => {
+  const previewData = useMemo<PreviewData[]>(() => {
     return dataset.measurements.slice(-7).map((m, index) => ({
       ...m,
-      tooltipId: `${m.id || index}-${m.timestamp}`,
+      tooltipId: `${m.id || index.toString()}-${m.timestamp}`,
       displayDate: new Date(m.timestamp).toLocaleDateString(undefined, {
         month: "short",
         day: "numeric",
@@ -36,20 +46,27 @@ export function DatasetCard({ dataset }: DatasetCardProps) {
     }));
   }, [dataset.measurements]);
 
-  const viewType = dataset.views[0] || "line";
+  const viewType = dataset.views[0] ?? "line";
 
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-zinc-900 border border-white/20 p-2 rounded-lg shadow-xl pointer-events-none">
-          <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider leading-none mb-1">
-            {payload[0].payload.displayDate}
-          </p>
-          <p className="text-sm font-display font-black text-brand leading-none">
-            {payload[0].value}
-          </p>
-        </div>
-      );
+  const CustomTooltip = ({
+    active,
+    payload,
+  }: TooltipProps<ValueType, NameType>) => {
+    if (active && payload && payload.length > 0) {
+      const firstPayload = payload[0];
+      if (firstPayload?.payload) {
+        const data = firstPayload.payload as PreviewData;
+        return (
+          <div className="bg-zinc-900 border border-white/20 p-2 rounded-lg shadow-xl pointer-events-none">
+            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider leading-none mb-1">
+              {data.displayDate}
+            </p>
+            <p className="text-sm font-display font-black text-brand leading-none">
+              {firstPayload.value}
+            </p>
+          </div>
+        );
+      }
     }
     return null;
   };
@@ -158,7 +175,7 @@ export function DatasetCard({ dataset }: DatasetCardProps) {
         </div>
 
         <p className="text-xs font-sans text-zinc-500 line-clamp-2 leading-relaxed uppercase tracking-wider">
-          {dataset.description || "Refined tracking parameters."}
+          {dataset.description ?? "Refined tracking parameters."}
         </p>
       </Link>
     </motion.div>

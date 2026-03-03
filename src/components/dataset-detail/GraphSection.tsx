@@ -1,6 +1,6 @@
-import { ViewSwitcher } from "../ViewSwitcher";
+import type { Measurement, ViewType } from "@/types/dataset";
 import { DatasetGraph } from "../DatasetGraph";
-import type { ViewType, Measurement } from "../../types/dataset";
+import { ViewSwitcher } from "../ViewSwitcher";
 
 interface GraphSectionProps {
   measurements: Measurement[];
@@ -12,6 +12,12 @@ interface GraphSectionProps {
   onRemoveView: (view: ViewType) => void;
 }
 
+/**
+ * GraphSection component
+ * 
+ * Displays the main visualization for a dataset. Includes the graph itself
+ * and the view switcher to toggle between different chart types (line, bar, etc.).
+ */
 export function GraphSection({
   measurements,
   unit,
@@ -22,35 +28,26 @@ export function GraphSection({
   onRemoveView,
 }: GraphSectionProps) {
   return (
-    <section className="flex flex-col gap-8">
-      <div className="bg-[#0a0a0a] p-8 sm:p-12 border border-white/5 rounded-[3rem] shadow-2xl min-h-[550px] flex flex-col">
-        <div className="flex flex-wrap items-center justify-between gap-8 mb-12 border-b border-white/5 pb-8">
-          <h2 className="text-xl font-display font-bold text-white uppercase tracking-tight flex items-center gap-4">
-            <div className="w-2 h-2 rounded-full bg-brand animate-pulse"></div>
-            Neural Matrix
-          </h2>
-          <ViewSwitcher
-            views={views}
-            activeView={activeView || "line"}
-            onViewChange={onViewChange}
-            onAddView={onAddView}
-            onRemoveView={onRemoveView}
-          />
-        </div>
+    <section>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+        <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.4em]">
+          Telemetry visualization
+        </h2>
+        <ViewSwitcher
+          views={views}
+          activeView={activeView ?? "line"}
+          onViewChange={onViewChange}
+          onAddView={onAddView}
+          onRemoveView={onRemoveView}
+        />
+      </div>
 
-        <div className="flex-1 min-h-0 bg-black/40 rounded-3xl overflow-hidden border border-white/5">
-          {activeView ? (
-            <DatasetGraph
-              data={measurements}
-              viewType={activeView}
-              unit={unit}
-            />
-          ) : (
-            <div className="h-full flex flex-col items-center justify-center text-zinc-700 font-sans uppercase tracking-[0.3em] font-bold text-xs">
-              [ SYSTEM STANDBY. SELECT MODULE. ]
-            </div>
-          )}
-        </div>
+      <div className="brutal-card p-2">
+        <DatasetGraph
+          data={measurements}
+          viewType={activeView ?? "line"}
+          unit={unit}
+        />
       </div>
     </section>
   );
