@@ -25,7 +25,7 @@ export function AddMeasurementModal({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newValue || isNaN(Number(newValue))) return;
-    addMeasurement.mutate({
+    addMeasurement({
       value: Number(newValue),
       timestamp: new Date(newTimestamp).toISOString(),
       datasetSlug,
@@ -60,7 +60,7 @@ export function AddMeasurementModal({
           <input
             type="datetime-local"
             required
-            className="brutal-input [color-scheme:dark]"
+            className="brutal-input scheme-dark"
             value={newTimestamp}
             onChange={(e) => setNewTimestamp(e.target.value)}
           />

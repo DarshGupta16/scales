@@ -65,7 +65,7 @@ function DatasetDetail() {
 
   const handleDeleteMeasurement = (id: string) => {
     if (!dataset) return;
-    removeMeasurement.mutate(id);
+    removeMeasurement(id);
   };
 
   const handleAddView = (view: ViewType) => {

@@ -37,7 +37,7 @@ export function AddDatasetModal({
       measurements: [],
     };
 
-    upsertDataset.mutate(newDataset);
+    upsertDataset(newDataset);
     onDatasetCreated(newDataset);
 
     // Reset and close

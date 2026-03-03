@@ -12,16 +12,20 @@ import { useMeasurements } from "./data/useMeasurements";
  */
 export function useData(datasetId?: string) {
   // Collection logic - Shared everywhere
-  const { datasets, isCollectionLoading, collectionError, upsertDataset } =
-    useDatasetCollection();
+  const {
+    datasets,
+    isCollectionLoading,
+    collectionError,
+    upsertDataset,
+    isUpsertPending,
+  } = useDatasetCollection();
 
   // Detail & Measurements logic - Only active if datasetId is provided
   const { dataset, isDetailLoading, detailError } = useDatasetDetail(
     datasetId || "",
   );
-  const { addMeasurement, removeMeasurement } = useMeasurements(
-    datasetId || "",
-  );
+  const { addMeasurement, removeMeasurement, isAddPending, isRemovePending } =
+    useMeasurements(datasetId || "");
 
   return {
     // Collection Exports
@@ -29,6 +33,7 @@ export function useData(datasetId?: string) {
     upsertDataset,
     isCollectionLoading,
     collectionError,
+    isUpsertPending,
 
     // Detail Exports
     dataset,
@@ -38,5 +43,7 @@ export function useData(datasetId?: string) {
     // Measurement Exports
     addMeasurement,
     removeMeasurement,
+    isAddPending,
+    isRemovePending,
   };
 }

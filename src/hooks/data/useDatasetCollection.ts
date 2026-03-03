@@ -29,7 +29,7 @@ export function useDatasetCollection() {
     }
   }, [serverDatasets]);
 
-  const upsertDataset = useMutation(
+  const upsertDatasetMutation = useMutation(
     trpc.upsertDataset.mutationOptions({
       onMutate: async (newDataset) => {
         const queryKey = trpc.getDatasets.queryKey();
@@ -58,8 +58,6 @@ export function useDatasetCollection() {
           optimisticDataset,
         ]);
 
-        dexieDb.datasets.put(optimisticDataset);
-
         return { previousDatasets };
       },
 
@@ -77,10 +75,22 @@ export function useDatasetCollection() {
     }),
   );
 
+  const upsertDataset = (newDataset: Dataset) => {
+    // Fire Dexie update
+    dexieDb.datasets.put({
+      ...newDataset,
+      isOptimistic: true,
+    } as any);
+
+    // Fire tRPC mutation
+    upsertDatasetMutation.mutate(newDataset);
+  };
+
   return {
     datasets: serverDatasets || localDatasets,
     isCollectionLoading: datasetsQuery.isLoading && localDatasets.length === 0,
     collectionError: datasetsQuery.error,
     upsertDataset,
+    isUpsertPending: upsertDatasetMutation.isPending,
   };
 }

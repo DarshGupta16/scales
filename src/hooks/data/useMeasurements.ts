@@ -10,7 +10,7 @@ import { dexieDb } from "../../dexieDb";
 export function useMeasurements(datasetId: string) {
   const queryClient = useQueryClient();
 
-  const addMeasurement = useMutation(
+  const addMeasurementMutation = useMutation(
     trpc.addMeasurement.mutationOptions({
       onMutate: async (variables) => {
         const datasetsKey = trpc.getDatasets.queryKey();
@@ -46,13 +46,10 @@ export function useMeasurements(datasetId: string) {
         // Optimistically update the specific dataset detail
         queryClient.setQueryData(datasetDetailKey, (old: any) => {
           if (!old) return old;
-          const updated = {
+          return {
             ...old,
             measurements: [...old.measurements, newMeasurement],
           };
-          // Sync to Dexie
-          dexieDb.datasets.put(updated as any);
-          return updated;
         });
 
         return { previousDatasets, previousDatasetDetail };
@@ -81,7 +78,7 @@ export function useMeasurements(datasetId: string) {
     }),
   );
 
-  const removeMeasurement = useMutation(
+  const removeMeasurementMutation = useMutation(
     trpc.removeMeasurement.mutationOptions({
       onMutate: async (measurementId) => {
         const queryKey = trpc.getDataset.queryKey(datasetId);
@@ -96,15 +93,12 @@ export function useMeasurements(datasetId: string) {
         // Update Detail Cache
         queryClient.setQueryData(queryKey, (old: any) => {
           if (!old) return old;
-          const updated = {
+          return {
             ...old,
             measurements: old.measurements.filter(
               (m: any) => m.id !== measurementId,
             ),
           };
-          // Sync to Dexie
-          dexieDb.datasets.put(updated as any);
-          return updated;
         });
 
         // Update List Cache
@@ -151,8 +145,58 @@ export function useMeasurements(datasetId: string) {
     }),
   );
 
+  const addMeasurement = (variables: {
+    value: number;
+    timestamp: string;
+    datasetSlug?: string;
+    id?: string;
+  }) => {
+    const id = variables.id || `temp-${Math.random().toString(36).slice(2, 9)}`;
+    const newMeasurement = { ...variables, id };
+
+    // Fire Dexie update
+    dexieDb.datasets
+      .where("slug")
+      .equals(datasetId)
+      .first()
+      .then((dataset) => {
+        if (dataset) {
+          dexieDb.datasets.put({
+            ...dataset,
+            measurements: [...dataset.measurements, newMeasurement],
+          } as any);
+        }
+      });
+
+    // Fire tRPC mutation
+    addMeasurementMutation.mutate(newMeasurement);
+  };
+
+  const removeMeasurement = (measurementId: string) => {
+    // Fire Dexie update
+    dexieDb.datasets
+      .where("slug")
+      .equals(datasetId)
+      .first()
+      .then((dataset) => {
+        if (dataset) {
+          dexieDb.datasets.put({
+            ...dataset,
+            measurements: dataset.measurements.filter(
+              (m) => m.id !== measurementId,
+            ),
+          } as any);
+        }
+      });
+
+    // Fire tRPC mutation
+    removeMeasurementMutation.mutate(measurementId);
+  };
+
   return {
     addMeasurement,
     removeMeasurement,
+    isAddPending: addMeasurementMutation.isPending,
+    isRemovePending: removeMeasurementMutation.isPending,
   };
 }
