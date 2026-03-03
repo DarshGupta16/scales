@@ -2,7 +2,7 @@ import {
   useDatasetCollection,
   useDatasetDetail,
 } from "@/modules/datasets/hooks";
-import { useMeasurements } from "./data/useMeasurements";
+import { useMeasurements } from "@/modules/measurements/hooks";
 
 /**
  * Universal data management hook.
