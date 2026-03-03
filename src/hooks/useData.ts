@@ -1,5 +1,7 @@
-import { useDatasetCollection } from "./data/useDatasetCollection";
-import { useDatasetDetail } from "./data/useDatasetDetail";
+import {
+  useDatasetCollection,
+  useDatasetDetail,
+} from "@/modules/datasets/hooks";
 import { useMeasurements } from "./data/useMeasurements";
 
 /**
