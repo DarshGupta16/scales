@@ -1,5 +1,5 @@
 import { dexieDb } from "@/dexieDb";
-import { useSync } from "@/hooks/useSync";
+import { useSync } from "@/modules/sync/useSync";
 import { SyncOperation } from "@/types/syncOperations";
 
 /**

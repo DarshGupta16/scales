@@ -8,7 +8,7 @@ import type { Dataset } from "@/types/dataset";
 // We import useSync from its new location, or the old one until it moves.
 // PLAN.md says to update useSync imports across files at the end. For now we use the old path or the new one?
 // Wait, the plan says Phase 2 creates hooks, Phase 5 moves useSync. We will just use new path or old path. Let's use old path for now and let tsc pass, or just new path. The plan says "Phase 5 Update useSync imports". Let's use the current path `src/hooks/useSync` so Phase 2 tests pass, then update it later, OR just update it all at the end.
-import { useSync } from "@/hooks/useSync";
+import { useSync } from "@/modules/sync/useSync";
 
 /**
  * Sub-hook for managing the collection of datasets.
