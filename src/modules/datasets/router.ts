@@ -7,9 +7,9 @@ import {
   type Measurement,
   type ViewType,
 } from "@/types/dataset";
-import { router, publicProcedure } from "@/trpc/init";
+import { publicProcedure } from "@/trpc/init";
 
-export const datasetsRouter = router({
+export const datasetsProcedures = {
   getDatasets: publicProcedure.query(async () => {
     const prismaDatasets: DatasetModelType[] = await db.dataset.findMany();
     const returnDatasets: DatasetType[] = await Promise.all(
@@ -90,4 +90,4 @@ export const datasetsRouter = router({
         },
       });
     }),
-});
+};

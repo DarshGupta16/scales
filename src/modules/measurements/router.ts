@@ -1,9 +1,9 @@
 import { z } from "zod";
 import { db } from "@/db";
 import { measurementSchema } from "@/types/zodSchemas";
-import { router, publicProcedure } from "@/trpc/init";
+import { publicProcedure } from "@/trpc/init";
 
-export const measurementsRouter = router({
+export const measurementsProcedures = {
   addMeasurement: publicProcedure
     .input(measurementSchema)
     .mutation(async ({ input: measurement }) => {
@@ -23,4 +23,4 @@ export const measurementsRouter = router({
     .mutation(async ({ input: id }) => {
       return await db.measurement.delete({ where: { id } });
     }),
-});
+};
