@@ -3,7 +3,7 @@ import {
   createTRPCContext,
   createTRPCOptionsProxy,
 } from "@trpc/tanstack-react-query";
-import type { AppRouter } from "./server";
+import type { AppRouter } from "./_app";
 
 export function getBaseUrl() {
   if (typeof window !== "undefined") return ""; // browser should use relative url

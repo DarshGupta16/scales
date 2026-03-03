@@ -1,7 +1,6 @@
-// no imports needed for query client
-import { dexieDb } from "../../dexieDb";
-import { useSync } from "../useSync";
-import { SyncOperation } from "../../types/syncOperations";
+import { dexieDb } from "@/dexieDb";
+import { useSync } from "@/modules/sync/useSync";
+import { SyncOperation } from "@/types/syncOperations";
 
 /**
  * Sub-hook for managing measurements for a specific dataset.
