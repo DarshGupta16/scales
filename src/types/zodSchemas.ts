@@ -53,3 +53,10 @@ export const datasetSchema = z.object({
   measurements: z.array(measurementSchema),
   slug: z.string(),
 });
+
+export const syncLogSchema = z.object({
+  id: z.string(),
+  timestamp: z.number(),
+  operation: z.string(),
+  payload: z.string(),
+});

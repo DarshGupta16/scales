@@ -79,3 +79,12 @@ model DatasetView {
 
   @@unique([datasetId, type]) // prevents duplicate view types
 }
+
+model SyncLog {
+  id        String   @id @default(cuid())
+  timestamp BigInt
+  operation String
+  payload   String
+  
+  @@index([timestamp])
+}
