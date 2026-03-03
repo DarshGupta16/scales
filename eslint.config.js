@@ -5,20 +5,20 @@ import { fixupPluginRules } from '@eslint/compat';
 
 export default tseslint.config(
   eslint.configs.recommended,
-  ...tseslint.configs.recommendedTypeChecked,
-  ...tseslint.configs.stylisticTypeChecked,
   {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      ...tseslint.configs.recommendedTypeChecked,
+      ...tseslint.configs.stylisticTypeChecked,
+    ],
+    plugins: {
+      react: fixupPluginRules(reactPlugin),
+    },
     languageOptions: {
       parserOptions: {
         project: ['./tsconfig.json'],
         tsconfigRootDir: import.meta.dirname,
       },
-    },
-  },
-  {
-    files: ['**/*.{ts,tsx}'],
-    plugins: {
-      react: fixupPluginRules(reactPlugin),
     },
     rules: {
       ...reactPlugin.configs.recommended.rules,

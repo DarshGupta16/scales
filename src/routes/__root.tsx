@@ -7,6 +7,7 @@ import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import { TRPCProvider } from "../trpc/Provider";
 import { QueryClient } from "@tanstack/react-query";
+import { SyncManager } from "@/modules/sync/useSync";
 
 import appCss from "../styles.css?url";
 
@@ -66,6 +67,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body className="bg-black text-white min-h-screen font-sans selection:bg-brand selection:text-black">
         <TRPCProvider>
+          <SyncManager />
           <main>{children}</main>
           <TanStackDevtools
             config={{

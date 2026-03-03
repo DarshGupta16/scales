@@ -8,6 +8,7 @@ import {
   Plus,
   X,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 interface ViewSwitcherProps {
   views: ViewType[];
@@ -17,7 +18,7 @@ interface ViewSwitcherProps {
   onRemoveView: (view: ViewType) => void;
 }
 
-const viewIcons: Record<ViewType, any> = {
+const viewIcons: Record<ViewType, LucideIcon> = {
   line: LineChart,
   bar: BarChart2,
   area: AreaChart,
