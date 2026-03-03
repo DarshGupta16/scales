@@ -1,40 +1,15 @@
-import { initTRPC } from "@trpc/server";
 import { z } from "zod";
-import { db } from "../db";
-import { datasetSchema, measurementSchema } from "@/types/zodSchemas";
+import { db } from "@/db";
+import { datasetSchema } from "@/types/zodSchemas";
 import { type Dataset as DatasetModelType } from "generated/prisma/client";
 import {
   type Dataset as DatasetType,
   type Measurement,
   type ViewType,
 } from "@/types/dataset";
+import { publicProcedure } from "@/trpc/init";
 
-/**
- * Initialization of tRPC backend
- * Should be done only once per backend!
- */
-const t = initTRPC.create();
-
-/**
- * Export reusable router and procedure helpers
- * that can be used throughout the router
- */
-export const router = t.router;
-export const publicProcedure = t.procedure;
-
-export const appRouter = router({
-  hello: publicProcedure
-    .input(
-      z.object({
-        name: z.string().nullish(),
-      }),
-    )
-    .query(({ input }) => {
-      return {
-        greeting: `Hello ${input.name ?? "world"}`,
-      };
-    }),
-
+export const datasetsProcedures = {
   getDatasets: publicProcedure.query(async () => {
     const prismaDatasets: DatasetModelType[] = await db.dataset.findMany();
     const returnDatasets: DatasetType[] = await Promise.all(
@@ -92,29 +67,11 @@ export const appRouter = router({
       };
     }),
 
-  upsertDataset: publicProcedure
+  createDataset: publicProcedure
     .input(datasetSchema)
     .mutation(async ({ input: dataset }) => {
-      return await db.dataset.upsert({
-        where: { slug: dataset.slug },
-        update: {
-          title: dataset.title,
-          description: dataset.description,
-          unit: dataset.unit,
-          views: {
-            deleteMany: {},
-            create: dataset.views.map((type) => ({ type })),
-          },
-          measurements: {
-            deleteMany: {},
-            create: dataset.measurements.map((m) => ({
-              id: m.id,
-              value: m.value,
-              timestamp: new Date(m.timestamp),
-            })),
-          },
-        },
-        create: {
+      return await db.dataset.create({
+        data: {
           id: dataset.id,
           slug: dataset.slug,
           title: dataset.title,
@@ -133,27 +90,4 @@ export const appRouter = router({
         },
       });
     }),
-
-  addMeasurement: publicProcedure
-    .input(measurementSchema)
-    .mutation(async ({ input: measurement }) => {
-      return await db.measurement.create({
-        data: {
-          value: measurement.value,
-          timestamp: measurement.timestamp,
-          dataset: {
-            connect: { slug: measurement.datasetSlug },
-          },
-        },
-      });
-    }),
-
-  removeMeasurement: publicProcedure
-    .input(z.string())
-    .mutation(async ({ input: id }) => {
-      return await db.measurement.delete({ where: { id } });
-    }),
-});
-
-// Export type definition of API
-export type AppRouter = typeof appRouter;
+};
