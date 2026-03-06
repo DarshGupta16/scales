@@ -4,6 +4,7 @@ import {
 } from "@/modules/datasets/hooks";
 import { useMeasurements } from "@/modules/measurements/hooks";
 import { useLogs } from "@/modules/logs/hooks";
+import { useViews } from "@/modules/views/hooks";
 
 /**
  * Universal data management hook.
@@ -34,8 +35,11 @@ export function useData(datasetId?: string) {
   const { addMeasurement, removeMeasurement, isAddPending, isRemovePending } =
     useMeasurements(datasetId ?? "");
 
+  const { updateViews } = useViews(datasetId ?? "");
+
   // Logs logic
-  const { localLogs, serverLogs, isServerLogsLoading, serverLogsError } = useLogs();
+  const { localLogs, serverLogs, isServerLogsLoading, serverLogsError } =
+    useLogs();
 
   return {
     // Collection Exports
@@ -55,6 +59,9 @@ export function useData(datasetId?: string) {
     removeMeasurement,
     isAddPending,
     isRemovePending,
+
+    // View Exports
+    updateViews,
 
     // Logs Exports
     localLogs,

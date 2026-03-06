@@ -1,6 +1,6 @@
 import { SyncOperation } from "@/types/syncOperations";
-import { db } from "@/db";
 import type { ServerReplayHandler } from "@/modules/sync/types";
+import { addMeasurementInternal, removeMeasurementInternal } from "./router";
 
 export const serverHandlers: {
   [K in
@@ -9,31 +9,16 @@ export const serverHandlers: {
     | SyncOperation.REMOVE_MEASUREMENT]: ServerReplayHandler<K>;
 } = {
   [SyncOperation.ADD_MEASUREMENT]: async (payload) => {
-    await db.measurement.upsert({
-      where: { id: payload.id },
-      update: {
-        value: payload.value,
-        timestamp: payload.timestamp,
-      },
-      create: {
-        id: payload.id,
-        value: payload.value,
-        timestamp: payload.timestamp,
-        dataset: { connect: { slug: payload.datasetSlug } },
-      },
-    });
+    await addMeasurementInternal(payload);
   },
   [SyncOperation.UPDATE_MEASUREMENT]: async (payload) => {
-    await db.measurement.update({
-      where: { id: payload.id },
-      data: {
-        value: payload.value,
-        timestamp: payload.timestamp,
-      },
-    });
+    // Shared with add logic because it's an upsert internally
+    await addMeasurementInternal({
+      ...payload,
+      datasetSlug: "", // Not needed for update due to ID-based upsert
+    } as any);
   },
   [SyncOperation.REMOVE_MEASUREMENT]: async (payload) => {
-    // Use deleteMany to avoid crashing (P2025) if the record is missing
-    await db.measurement.deleteMany({ where: { id: payload.id } });
+    await removeMeasurementInternal(payload.id);
   },
 };

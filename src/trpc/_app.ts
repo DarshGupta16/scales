@@ -5,6 +5,7 @@ import { datasetsProcedures } from "@/modules/datasets/router";
 import { measurementsProcedures } from "@/modules/measurements/router";
 import { syncProcedures } from "@/modules/sync/router";
 import { logsProcedures } from "@/modules/logs/router";
+import { viewsProcedures } from "@/modules/views/router";
 
 export const appRouter = router({
   hello: publicProcedure
@@ -23,6 +24,7 @@ export const appRouter = router({
   ...measurementsProcedures,
   ...syncProcedures,
   ...logsProcedures,
+  ...viewsProcedures,
 });
 
 export type AppRouter = typeof appRouter;

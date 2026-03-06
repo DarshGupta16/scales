@@ -10,6 +10,5 @@ export enum SyncOperation {
   REMOVE_MEASUREMENT = "REMOVE_MEASUREMENT",
 
   // View operations
-  ADD_VIEW = "ADD_VIEW",
-  REMOVE_VIEW = "REMOVE_VIEW",
+  UPDATE_VIEWS = "UPDATE_VIEWS",
 }

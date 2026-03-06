@@ -3,27 +3,16 @@ import { dexieDb } from "@/dexieDb";
 import type { ClientReplayHandler } from "@/modules/sync/types";
 
 export const clientHandlers: {
-  [K in SyncOperation.ADD_VIEW | SyncOperation.REMOVE_VIEW]: ClientReplayHandler<K>;
+  [K in SyncOperation.UPDATE_VIEWS]: ClientReplayHandler<K>;
 } = {
-  [SyncOperation.ADD_VIEW]: async (payload) => {
-    const dsVAdd = await dexieDb.datasets
-      .where("id")
-      .equals(payload.datasetId)
+  [SyncOperation.UPDATE_VIEWS]: async (payload) => {
+    const dataset = await dexieDb.datasets
+      .where("slug")
+      .equals(payload.datasetSlug)
       .first();
-    if (dsVAdd && !dsVAdd.views.includes(payload.type)) {
-      await dexieDb.datasets.update(dsVAdd.id, {
-        views: [...dsVAdd.views, payload.type],
-      });
-    }
-  },
-  [SyncOperation.REMOVE_VIEW]: async (payload) => {
-    const dsVRem = await dexieDb.datasets
-      .where("id")
-      .equals(payload.datasetId)
-      .first();
-    if (dsVRem) {
-      await dexieDb.datasets.update(dsVRem.id, {
-        views: dsVRem.views.filter((v) => v !== payload.type),
+    if (dataset) {
+      await dexieDb.datasets.update(dataset.id, {
+        views: payload.views,
       });
     }
   },

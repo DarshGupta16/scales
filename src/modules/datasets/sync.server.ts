@@ -1,6 +1,11 @@
 import { SyncOperation } from "@/types/syncOperations";
-import { db } from "@/db";
 import type { ServerReplayHandler } from "@/modules/sync/types";
+import {
+  createDatasetInternal,
+  updateDatasetInternal,
+  deleteDatasetInternal,
+} from "./router";
+import type { Dataset } from "@/types/dataset";
 
 export const serverHandlers: {
   [K in
@@ -9,36 +14,12 @@ export const serverHandlers: {
     | SyncOperation.DELETE_DATASET]: ServerReplayHandler<K>;
 } = {
   [SyncOperation.CREATE_DATASET]: async (payload) => {
-    await db.dataset.upsert({
-      where: { id: payload.id },
-      update: {
-        title: payload.title,
-        description: payload.description,
-        unit: payload.unit,
-        slug: payload.slug,
-      },
-      create: {
-        id: payload.id,
-        slug: payload.slug,
-        title: payload.title,
-        description: payload.description,
-        unit: payload.unit,
-      },
-    });
+    await createDatasetInternal(payload as Dataset);
   },
   [SyncOperation.UPDATE_DATASET]: async (payload) => {
-    await db.dataset.update({
-      where: { id: payload.id },
-      data: {
-        title: payload.title,
-        description: payload.description,
-        unit: payload.unit,
-        slug: payload.slug,
-      },
-    });
+    await updateDatasetInternal(payload.id, payload as Partial<Dataset>);
   },
   [SyncOperation.DELETE_DATASET]: async (payload) => {
-    // Use deleteMany to avoid crashing if the record was already deleted
-    await db.dataset.deleteMany({ where: { id: payload.id } });
+    await deleteDatasetInternal(payload.id);
   },
 };

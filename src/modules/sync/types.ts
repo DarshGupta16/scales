@@ -10,8 +10,7 @@ export interface SyncPayloads {
   [SyncOperation.UPDATE_MEASUREMENT]: Partial<Measurement> & { id: string };
   [SyncOperation.REMOVE_MEASUREMENT]: { id: string };
 
-  [SyncOperation.ADD_VIEW]: { id: string; datasetId: string; type: ViewType };
-  [SyncOperation.REMOVE_VIEW]: { id: string; datasetId: string; type: ViewType };
+  [SyncOperation.UPDATE_VIEWS]: { datasetSlug: string; views: ViewType[] };
 }
 
 export type ServerReplayHandler<T extends SyncOperation = SyncOperation> = (

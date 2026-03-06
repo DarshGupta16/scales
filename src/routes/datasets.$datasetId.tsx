@@ -15,10 +15,7 @@ import { AddViewModal } from "../components/dataset-detail/AddViewModal";
 
 export const Route = createFileRoute("/datasets/$datasetId")({
   component: DatasetDetail,
-  loader: async ({
-    context: { queryClient },
-    params: { datasetId },
-  }) => {
+  loader: async ({ context: { queryClient }, params: { datasetId } }) => {
     await queryClient.ensureQueryData({
       ...trpc.getDataset.queryOptions(datasetId),
       staleTime: 1000 * 60 * 5,
@@ -34,7 +31,7 @@ function DatasetDetail() {
   }, []);
 
   const { datasetId } = Route.useParams();
-  const { dataset, removeMeasurement } = useData(datasetId);
+  const { dataset, removeMeasurement, updateViews } = useData(datasetId);
 
   const [activeView, setActiveView] = useState<ViewType | null>(null);
 
@@ -70,12 +67,15 @@ function DatasetDetail() {
   const handleAddView = (view: ViewType) => {
     if (!dataset || dataset.views.includes(view)) return;
 
+    void updateViews([...dataset.views, view]);
     setActiveView(view);
     setIsAddViewOpen(false);
   };
 
   const handleRemoveView = (view: ViewType) => {
+    if (!dataset) return;
     const updatedViews = dataset.views.filter((v) => v !== view);
+    void updateViews(updatedViews);
     if (activeView === view) {
       setActiveView(updatedViews[0] ?? null);
     }
