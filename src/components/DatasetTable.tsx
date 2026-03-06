@@ -1,5 +1,6 @@
 import type { Measurement } from "../types/dataset";
 import { Trash2 } from "lucide-react";
+import { LocalTime } from "./LocalTime";
 
 interface DatasetTableProps {
   measurements: Measurement[];
@@ -49,12 +50,14 @@ export function DatasetTable({
                 className="hover:bg-white/[0.02] transition-colors group"
               >
                 <td className="px-8 py-5 whitespace-nowrap text-xs text-zinc-400 font-sans tracking-wider">
-                  {new Date(measurement.timestamp)
-                    .toLocaleString(undefined, {
+                  <LocalTime
+                    timestamp={measurement.timestamp}
+                    options={{
                       dateStyle: "medium",
                       timeStyle: "short",
-                    })
-                    .toUpperCase()}
+                    }}
+                    transform={(s) => s.toUpperCase()}
+                  />
                 </td>
                 <td className="px-8 py-5 whitespace-nowrap text-base font-bold text-white font-sans">
                   {measurement.value}{" "}

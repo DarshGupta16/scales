@@ -52,7 +52,9 @@ const CustomTooltip = ({
           </p>
           <p className="text-xl font-display font-extrabold text-brand uppercase">
             {firstPayload.value}{" "}
-            <span className="text-white/50 text-xs tracking-widest">{unit}</span>
+            <span className="text-white/50 text-xs tracking-widest">
+              {unit}
+            </span>
           </p>
         </div>
       );
@@ -236,22 +238,21 @@ export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
     return data.map((m, index) => ({
       ...m,
       tooltipId: `${m.id || index.toString()}-${m.timestamp}`,
-      displayDate: new Date(m.timestamp).toLocaleDateString(undefined, {
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
+      displayDate: isClient
+        ? new Date(m.timestamp).toLocaleDateString(undefined, {
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        : "",
     }));
-  }, [data]);
+  }, [data, isClient]);
 
   return (
     <div className="w-full h-[400px] min-w-0 bg-[#070707] rounded-3xl p-6 relative">
       {isClient && (
-        <ResponsiveContainer
-          width="100%"
-          height="100%"
-        >
+        <ResponsiveContainer width="100%" height="100%">
           <ChartRenderer
             viewType={viewType}
             chartData={chartData}

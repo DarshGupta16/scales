@@ -34,12 +34,14 @@ export function DatasetCard({ dataset }: DatasetCardProps) {
     return dataset.measurements.slice(-7).map((m, index) => ({
       ...m,
       tooltipId: `${m.id || index.toString()}-${m.timestamp}`,
-      displayDate: new Date(m.timestamp).toLocaleDateString(undefined, {
-        month: "short",
-        day: "numeric",
-      }),
+      displayDate: isClient
+        ? new Date(m.timestamp).toLocaleDateString(undefined, {
+            month: "short",
+            day: "numeric",
+          })
+        : "",
     }));
-  }, [dataset.measurements]);
+  }, [dataset.measurements, isClient]);
 
   const viewType = dataset.views[0] ?? "line";
 
