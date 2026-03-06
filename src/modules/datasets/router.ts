@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { db } from "@/db";
 import { datasetSchema } from "@/types/zodSchemas";
-import { type Dataset as DatasetModelType } from "generated/prisma/client";
+import { type Dataset as DatasetModelType, type DatasetView, type Measurement } from "generated/prisma/client";
 import { type Dataset as DatasetType, type ViewType } from "@/types/dataset";
 import { publicProcedure } from "@/trpc/init";
 
@@ -12,6 +12,39 @@ import { publicProcedure } from "@/trpc/init";
  * and mutations for creation. These procedures handle the mapping between
  * Prisma models and our application-level domain types.
  */
+
+// Shared include for Prisma queries to avoid N+1 problems
+const datasetInclude = {
+  views: {
+    orderBy: { id: "asc" } as const,
+  },
+  measurements: {
+    orderBy: { timestamp: "asc" } as const,
+  },
+};
+
+// Helper function to map a Prisma dataset with its relations to the domain DatasetType
+type PrismaDatasetWithRelations = DatasetModelType & {
+  views: DatasetView[];
+  measurements: Measurement[];
+};
+
+function mapPrismaDatasetToDomain(dataset: PrismaDatasetWithRelations): DatasetType {
+  return {
+    id: dataset.id,
+    slug: dataset.slug,
+    title: dataset.title,
+    unit: dataset.unit as DatasetType["unit"],
+    views: dataset.views.map((view) => view.type as ViewType),
+    measurements: dataset.measurements.map((measurement) => ({
+      ...measurement,
+      timestamp: new Date(measurement.timestamp).toISOString(),
+    })),
+    description: dataset.description ?? undefined,
+    createdAt: dataset.createdAt.getTime(),
+  };
+}
+
 /**
  * Internal logic for creating/upserting a dataset.
  */
@@ -72,76 +105,25 @@ export async function deleteDatasetInternal(id: string) {
 
 export const datasetsProcedures = {
   getDatasets: publicProcedure.query(async () => {
-    const prismaDatasets: DatasetModelType[] = await db.dataset.findMany({
+    const prismaDatasets = await db.dataset.findMany({
       orderBy: { createdAt: "asc" },
+      include: datasetInclude,
     });
-    const returnDatasets: DatasetType[] = await Promise.all(
-      prismaDatasets.map(async (dataset) => {
-        const views = (
-          await db.datasetView.findMany({
-            where: { datasetId: dataset.id },
-            orderBy: { id: "asc" },
-          })
-        ).map((view) => view.type as ViewType);
-
-        const measurements = (
-          await db.measurement.findMany({
-            where: { datasetId: dataset.id },
-            orderBy: { timestamp: "asc" },
-          })
-        ).map((measurement) => ({
-          ...measurement,
-          timestamp: new Date(measurement.timestamp).toISOString(),
-        }));
-
-        return {
-          id: dataset.id,
-          slug: dataset.slug,
-          title: dataset.title,
-          unit: dataset.unit as DatasetType["unit"],
-          views,
-          measurements,
-          description: dataset.description ?? undefined,
-          createdAt: dataset.createdAt.getTime(),
-        };
-      }),
-    );
-    return returnDatasets;
+    
+    return prismaDatasets.map(mapPrismaDatasetToDomain);
   }),
 
   getDataset: publicProcedure
     .input(z.string())
     .query(async ({ input: slug }) => {
-      const dataset = await db.dataset.findFirst({ where: { slug } });
+      const dataset = await db.dataset.findFirst({
+        where: { slug },
+        include: datasetInclude,
+      });
+      
       if (!dataset) return null;
 
-      const views = (
-        await db.datasetView.findMany({
-          where: { datasetId: dataset.id },
-          orderBy: { id: "asc" },
-        })
-      ).map((view) => view.type as ViewType);
-
-      const measurements = (
-        await db.measurement.findMany({
-          where: { datasetId: dataset.id },
-          orderBy: { timestamp: "asc" },
-        })
-      ).map((measurement) => ({
-        ...measurement,
-        timestamp: new Date(measurement.timestamp).toISOString(),
-      }));
-
-      return {
-        id: dataset.id,
-        slug: dataset.slug,
-        title: dataset.title,
-        unit: dataset.unit as DatasetType["unit"],
-        views,
-        measurements,
-        description: dataset.description ?? undefined,
-        createdAt: dataset.createdAt.getTime(),
-      };
+      return mapPrismaDatasetToDomain(dataset);
     }),
 
   createDataset: publicProcedure

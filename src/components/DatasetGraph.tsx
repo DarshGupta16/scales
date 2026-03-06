@@ -120,112 +120,102 @@ const ChartRenderer = ({ viewType, chartData, unit }: ChartRendererProps) => {
     margin: { top: 20, right: 20, left: 0, bottom: 0 },
   };
 
-  switch (viewType) {
-    case "line":
-      return (
-        <LineChart {...commonProps}>
-          {renderCartesianGrid()}
-          {renderXAxis(chartData)}
-          {renderYAxis()}
-          {renderTooltip(unit)}
-          <Line
-            type="monotone"
-            dataKey="value"
-            stroke="#8b5cf6"
-            strokeWidth={3}
-            dot={{ r: 4, fill: "#8b5cf6", strokeWidth: 2, stroke: "#000" }}
-            activeDot={{
-              r: 6,
-              strokeWidth: 3,
-              stroke: "#fff",
-              fill: "#8b5cf6",
-            }}
-            animationDuration={1500}
-          />
-        </LineChart>
-      );
-    case "bar":
-      return (
-        <BarChart {...commonProps}>
-          {renderCartesianGrid()}
-          {renderXAxis(chartData)}
-          {renderYAxis()}
-          {renderTooltip(unit)}
-          <Bar
-            dataKey="value"
-            fill="#8b5cf6"
-            radius={[10, 10, 0, 0]}
-            animationDuration={1500}
-          />
-        </BarChart>
-      );
-    case "area":
-      return (
-        <AreaChart {...commonProps}>
-          <defs>
-            <linearGradient id="colorMain" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.4} />
-              <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
-            </linearGradient>
-          </defs>
-          {renderCartesianGrid()}
-          {renderXAxis(chartData)}
-          {renderYAxis()}
-          {renderTooltip(unit)}
-          <Area
-            type="monotone"
-            dataKey="value"
-            stroke="#8b5cf6"
-            strokeWidth={3}
-            fillOpacity={1}
-            fill="url(#colorMain)"
-            animationDuration={1500}
-          />
-        </AreaChart>
-      );
-    case "pie":
-      return (
-        <PieChart {...commonProps}>
-          <Pie
-            data={chartData}
-            cx="50%"
-            cy="50%"
-            innerRadius={80}
-            outerRadius={120}
-            paddingAngle={8}
-            dataKey="value"
-            animationDuration={1500}
-            stroke="none"
-            cornerRadius={10}
-          >
-            {chartData.map((_, index) => (
-              <Cell
-                key={`cell-${index}`}
-                fill={COLORS[index % COLORS.length]}
-              />
-            ))}
-          </Pie>
-          {renderTooltip(unit)}
-        </PieChart>
-      );
-    case "scatter":
-      return (
-        <ScatterChart {...commonProps}>
-          {renderCartesianGrid()}
-          {renderXAxis(chartData)}
-          {renderYAxis()}
-          {renderTooltip(unit)}
-          <Scatter
-            name="Measurements"
-            data={chartData}
-            fill="#8b5cf6"
-            animationDuration={1500}
-          />
-        </ScatterChart>
-      );
-    default:
-      return null;
+  if (viewType === "pie") {
+    return (
+      <PieChart {...commonProps}>
+        <Pie
+          data={chartData}
+          cx="50%"
+          cy="50%"
+          innerRadius={80}
+          outerRadius={120}
+          paddingAngle={8}
+          dataKey="value"
+          animationDuration={1500}
+          stroke="none"
+          cornerRadius={10}
+        >
+          {chartData.map((_, index) => (
+            <Cell
+              key={`cell-${index}`}
+              fill={COLORS[index % COLORS.length]}
+            />
+          ))}
+        </Pie>
+        {renderTooltip(unit)}
+      </PieChart>
+    );
   }
+
+  const ChartWrapper = {
+    line: LineChart,
+    bar: BarChart,
+    area: AreaChart,
+    scatter: ScatterChart,
+  }[viewType];
+
+  if (!ChartWrapper) return null;
+
+  return (
+    <ChartWrapper {...commonProps}>
+      {viewType === "area" && (
+        <defs>
+          <linearGradient id="colorMain" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.4} />
+            <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+          </linearGradient>
+        </defs>
+      )}
+      {renderCartesianGrid()}
+      {renderXAxis(chartData)}
+      {renderYAxis()}
+      {renderTooltip(unit)}
+      
+      {viewType === "line" && (
+        <Line
+          type="monotone"
+          dataKey="value"
+          stroke="#8b5cf6"
+          strokeWidth={3}
+          dot={{ r: 4, fill: "#8b5cf6", strokeWidth: 2, stroke: "#000" }}
+          activeDot={{
+            r: 6,
+            strokeWidth: 3,
+            stroke: "#fff",
+            fill: "#8b5cf6",
+          }}
+          animationDuration={1500}
+        />
+      )}
+      {viewType === "bar" && (
+        <Bar
+          dataKey="value"
+          fill="#8b5cf6"
+          radius={[10, 10, 0, 0]}
+          animationDuration={1500}
+        />
+      )}
+      {viewType === "area" && (
+        <Area
+          type="monotone"
+          dataKey="value"
+          stroke="#8b5cf6"
+          strokeWidth={3}
+          fillOpacity={1}
+          fill="url(#colorMain)"
+          animationDuration={1500}
+        />
+      )}
+      {viewType === "scatter" && (
+        <Scatter
+          name="Measurements"
+          data={chartData}
+          fill="#8b5cf6"
+          animationDuration={1500}
+        />
+      )}
+    </ChartWrapper>
+  );
 };
 
 export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {

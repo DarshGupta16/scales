@@ -44,10 +44,11 @@ export const syncProcedures = {
       }
 
       // 2. Batch-save sync logs in a transaction (this is fast — just upserts)
-      await db.$transaction(async (tx) => {
-        for (const log of logs) {
-          try {
-            await tx.syncLog.upsert({
+      //    Using an array transaction is faster than an interactive transaction.
+      try {
+        await db.$transaction(
+          logs.map((log) =>
+            db.syncLog.upsert({
               where: { id: log.id },
               update: {
                 timestamp: BigInt(log.timestamp),
@@ -60,15 +61,12 @@ export const syncProcedures = {
                 operation: log.operation,
                 payload: log.payload,
               },
-            });
-          } catch (e) {
-            console.warn(
-              `Sync log ${log.id} already exists or failed to save:`,
-              e,
-            );
-          }
-        }
-      });
+            })
+          )
+        );
+      } catch (e) {
+        console.warn("Sync log batch upsert failed:", e);
+      }
 
       return { success: true };
     }),

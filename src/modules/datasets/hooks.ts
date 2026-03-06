@@ -49,18 +49,19 @@ export function useDatasetCollection() {
     await recordOperation(SyncOperation.CREATE_DATASET, newDataset);
   };
 
-  // Before the first sync completes, show server (SSR) data so the user
-  // sees the latest cloud state instantly. Once sync finishes, Dexie is
-  // the source of truth and we never fall back to server data again.
+  // Determine the active dataset collection:
+  // - Post-sync: Local Dexie DB is the primary source of truth.
+  // - Pre-sync: Server data is preferred to show initial cloud state.
   const hasSynced = lastSyncedAt !== null;
   const datasets = hasSynced
     ? (localDatasets ?? serverDatasets ?? [])
     : (serverDatasets ?? localDatasets ?? []);
 
+  const isCollectionLoading = datasetsQuery.isLoading && !localDatasets && !serverDatasets;
+
   return {
     datasets,
-    isCollectionLoading:
-      datasetsQuery.isLoading && !localDatasets && !serverDatasets,
+    isCollectionLoading,
     collectionError: datasetsQuery.error,
     createDataset,
     isUpsertPending: false, // Sync runs in background
@@ -71,9 +72,9 @@ export function useDatasetCollection() {
  * Hook for managing a single dataset's detailed data.
  *
  * Uses a tiered data resolution strategy to ensure instant loading:
- * 1. Checks for server data from its own query.
- * 2. Checks the query cache from the `getDatasets` collection query.
- * 3. Checks the local Dexie database.
+ * 1. Checks the local Dexie database (primary truth).
+ * 2. Checks the query cache from the `getDatasets` collection query (instant SSR fallback).
+ * 3. Checks the server data from its own specific query.
  *
  * @param datasetId The slug of the dataset to retrieve.
  * @returns Object containing the dataset, loading states, and any errors.
@@ -82,7 +83,6 @@ export function useDatasetDetail(datasetId: string) {
   const queryClient = useQueryClient();
 
   // Instant fallback: find the dataset in the already-cached collection query
-  // (the route loader awaits getDatasets, so this is populated on navigation)
   const cachedDatasets = queryClient.getQueryData(trpc.getDatasets.queryKey());
   const cachedDataset = (cachedDatasets as Dataset[] | undefined)?.find(
     (d) => d.slug === datasetId,
@@ -100,9 +100,13 @@ export function useDatasetDetail(datasetId: string) {
     gcTime: 1000 * 60 * 30,
   });
 
+  // Resolve the dataset in priority order: Local -> Cache -> Direct Server Query
+  const dataset = localDataset ?? cachedDataset ?? datasetQuery.data;
+  const isDetailLoading = datasetQuery.isLoading && !dataset;
+
   return {
-    dataset: localDataset ?? cachedDataset, // fallback to cache only if local isn't ready
-    isDetailLoading: datasetQuery.isLoading && !cachedDataset && !localDataset,
+    dataset,
+    isDetailLoading,
     detailError: datasetQuery.error,
   };
 }

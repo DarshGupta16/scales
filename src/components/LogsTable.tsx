@@ -15,6 +15,20 @@ interface LogsTableProps {
   isLoading?: boolean;
 }
 
+// Extracted shared tag styling logic
+function getOperationTagClass(operation: string, baseClasses: string) {
+  const isCreate = operation.includes("CREATE") || operation.includes("ADD");
+  const isDelete = operation.includes("DELETE") || operation.includes("REMOVE");
+  
+  const colorClasses = isCreate
+    ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
+    : isDelete
+      ? "bg-rose-500/10 border-rose-500/20 text-rose-500"
+      : "bg-brand/10 border-brand/20 text-brand";
+
+  return `${baseClasses} ${colorClasses}`;
+}
+
 export function LogsTable({ logs, type, isLoading }: LogsTableProps) {
   const sortedLogs = [...logs].sort((a, b) => b.timestamp - a.timestamp);
 
@@ -125,20 +139,7 @@ export function LogsTable({ logs, type, isLoading }: LogsTableProps) {
                       </div>
                     </td>
                     <td className="px-8 py-5 whitespace-nowrap">
-                      <span
-                        className={`
-                        px-3 py-1 rounded-full text-[9px] font-bold font-mono tracking-widest border
-                        ${
-                          log.operation.includes("CREATE") ||
-                          log.operation.includes("ADD")
-                            ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
-                            : log.operation.includes("DELETE") ||
-                                log.operation.includes("REMOVE")
-                              ? "bg-rose-500/10 border-rose-500/20 text-rose-500"
-                              : "bg-brand/10 border-brand/20 text-brand"
-                        }
-                      `}
-                      >
+                      <span className={getOperationTagClass(log.operation, "px-3 py-1 rounded-full text-[9px] font-bold font-mono tracking-widest border")}>
                         {log.operation}
                       </span>
                     </td>
@@ -228,20 +229,7 @@ export function LogsTable({ logs, type, isLoading }: LogsTableProps) {
                     />
                   </span>
                 </div>
-                <span
-                  className={`
-                  px-2 py-1 rounded-full text-[8px] font-bold font-mono tracking-widest border
-                  ${
-                    log.operation.includes("CREATE") ||
-                    log.operation.includes("ADD")
-                      ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
-                      : log.operation.includes("DELETE") ||
-                          log.operation.includes("REMOVE")
-                        ? "bg-rose-500/10 border-rose-500/20 text-rose-500"
-                        : "bg-brand/10 border-brand/20 text-brand"
-                  }
-                `}
-                >
+                <span className={getOperationTagClass(log.operation, "px-2 py-1 rounded-full text-[8px] font-bold font-mono tracking-widest border")}>
                   {log.operation}
                 </span>
               </div>
