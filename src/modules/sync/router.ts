@@ -24,65 +24,51 @@ export const syncProcedures = {
   pushSyncLogs: publicProcedure
     .input(z.array(syncLogSchema))
     .mutation(async ({ input: logs }) => {
-      // Timeout increased to 30s to handle large batches of sync logs
-      await db.$transaction(
-        async (tx) => {
-          for (const log of logs) {
-            const operation = log.operation as SyncOperation;
-            const handler = allServerHandlers[operation];
+      // 1. Replay operations outside the transaction — handlers use the
+      //    global `db` instance so they don't benefit from `tx` anyway,
+      //    and running them inside was causing transaction timeouts.
+      for (const log of logs) {
+        const operation = log.operation as SyncOperation;
+        const handler = allServerHandlers[operation];
 
-            if (handler) {
-              try {
-                const payload = JSON.parse(
-                  log.payload,
-                ) as SyncPayloads[SyncOperation];
-                // The handlers use the global db instance, which is generally fine
-                // for atomic operations, but to be fully transaction-safe we would
-                // need to pass the tx object down. For now, this loop is within
-                // a transaction context, but Prisma requires explicit tx passing for
-                // full atomic guarantees. As a first step, we wrap the log saving
-                // in the transaction to batch write operations.
-                await (handler as (p: typeof payload) => Promise<void>)(
-                  payload,
-                );
-              } catch (e) {
-                console.error(
-                  `Failed to replay operation ${log.operation}:`,
-                  e,
-                );
-              }
-            }
+        if (handler) {
+          try {
+            const payload = JSON.parse(
+              log.payload,
+            ) as SyncPayloads[SyncOperation];
+            await (handler as (p: typeof payload) => Promise<void>)(payload);
+          } catch (e) {
+            console.error(`Failed to replay operation ${log.operation}:`, e);
           }
+        }
+      }
 
-          // Batch insert/upsert the sync logs to prevent re-replaying in the future
-          // We do this after successful replays. If a replay fails, the log is still saved
-          // so we don't block the sync queue forever.
-          for (const log of logs) {
-            try {
-              await tx.syncLog.upsert({
-                where: { id: log.id },
-                update: {
-                  timestamp: BigInt(log.timestamp),
-                  operation: log.operation,
-                  payload: log.payload,
-                },
-                create: {
-                  id: log.id,
-                  timestamp: BigInt(log.timestamp),
-                  operation: log.operation,
-                  payload: log.payload,
-                },
-              });
-            } catch (e) {
-              console.warn(
-                `Sync log ${log.id} already exists or failed to save:`,
-                e,
-              );
-            }
+      // 2. Batch-save sync logs in a transaction (this is fast — just upserts)
+      await db.$transaction(async (tx) => {
+        for (const log of logs) {
+          try {
+            await tx.syncLog.upsert({
+              where: { id: log.id },
+              update: {
+                timestamp: BigInt(log.timestamp),
+                operation: log.operation,
+                payload: log.payload,
+              },
+              create: {
+                id: log.id,
+                timestamp: BigInt(log.timestamp),
+                operation: log.operation,
+                payload: log.payload,
+              },
+            });
+          } catch (e) {
+            console.warn(
+              `Sync log ${log.id} already exists or failed to save:`,
+              e,
+            );
           }
-        },
-        { timeout: 30000 },
-      );
+        }
+      });
 
       return { success: true };
     }),

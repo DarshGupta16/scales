@@ -35,9 +35,12 @@ function DatasetDetail() {
 
   const [activeView, setActiveView] = useState<ViewType | null>(null);
 
-  // Set initial active view once dataset is loaded
+  // Set initial active view once dataset is loaded, and reset if activeView
+  // is no longer in the views array (e.g. after deletion)
   useEffect(() => {
     if (dataset && !activeView) {
+      setActiveView(dataset.views[0] ?? "line");
+    } else if (dataset && activeView && !dataset.views.includes(activeView)) {
       setActiveView(dataset.views[0] ?? "line");
     }
   }, [dataset, activeView]);

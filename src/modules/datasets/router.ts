@@ -80,6 +80,7 @@ export const datasetsProcedures = {
         const views = (
           await db.datasetView.findMany({
             where: { datasetId: dataset.id },
+            orderBy: { id: "asc" },
           })
         ).map((view) => view.type as ViewType);
 
@@ -117,6 +118,7 @@ export const datasetsProcedures = {
       const views = (
         await db.datasetView.findMany({
           where: { datasetId: dataset.id },
+          orderBy: { id: "asc" },
         })
       ).map((view) => view.type as ViewType);
 
