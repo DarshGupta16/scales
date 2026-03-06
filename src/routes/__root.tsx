@@ -8,6 +8,7 @@ import { TanStackDevtools } from "@tanstack/react-devtools";
 import { TRPCProvider } from "../trpc/Provider";
 import { QueryClient } from "@tanstack/react-query";
 import { SyncManager } from "@/modules/sync/useSync";
+import { BottomNav } from "@/components/BottomNav";
 
 import appCss from "../styles.css?url";
 
@@ -68,7 +69,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <body className="bg-black text-white min-h-screen font-sans selection:bg-brand selection:text-black">
         <TRPCProvider>
           <SyncManager />
-          <main>{children}</main>
+          <main className="pb-24 sm:pb-0">{children}</main>
+          <BottomNav />
           <TanStackDevtools
             config={{
               position: "bottom-right",

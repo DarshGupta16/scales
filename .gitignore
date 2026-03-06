@@ -4,6 +4,7 @@ dist
 dist-ssr
 *.local
 .env
+.env.*
 .nitro
 .tanstack
 .wrangler
@@ -19,3 +20,4 @@ scales.db
 
 snapshots.txt
 CHANGES.md
+bubblewrap-app

@@ -56,28 +56,24 @@ export function DatasetGrid({ datasets }: DatasetGridProps) {
   const isEmpty = datasets.length === 0;
 
   return (
-    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative z-0">
-      <div className="flex flex-col gap-16">
+    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-16 relative z-0">
+      <div className="flex flex-col gap-10 sm:gap-16">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
           <div className="max-w-2xl">
-            <h2 className="text-4xl md:text-6xl font-display font-extrabold text-white tracking-tighter uppercase leading-none mb-6">
+            <h2 className="text-4xl sm:text-5xl md:text-6xl font-display font-extrabold text-white tracking-tighter uppercase leading-none mb-4 sm:mb-6">
               Your
               <br />
               <span className="text-brand">Collections</span>
             </h2>
-            <p className="text-sm text-zinc-500 font-sans uppercase tracking-[0.2em] border-l border-brand/50 pl-4">
+            <p className="text-[10px] sm:text-sm text-zinc-500 font-sans uppercase tracking-[0.2em] border-l border-brand/50 pl-4">
               Refined metrics. Elegant tracking.
             </p>
           </div>
         </div>
 
         <div className="relative">
-          {/* 
-            Show skeletons during SSR or before hydration completes.
-            If hydrated and not empty, show the actual cards.
-          */}
           {(!isHydrated || !isEmpty) && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
               {!isHydrated
                 ? Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={`skel-${i}`} />)
                 : datasets.map((dataset) => (

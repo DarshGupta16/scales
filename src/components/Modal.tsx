@@ -42,8 +42,8 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
             className="relative bg-[#0a0a0a] border border-white/10 shadow-2xl w-full max-w-md rounded-[2.5rem] overflow-hidden"
           >
-            <div className="px-8 py-6 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
-              <h3 className="text-xl font-display font-bold text-white uppercase tracking-tight">
+            <div className="px-6 py-4 sm:px-8 sm:py-6 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
+              <h3 className="text-lg sm:text-xl font-display font-bold text-white uppercase tracking-tight">
                 {title}
               </h3>
               <button
@@ -53,7 +53,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
                 <X className="w-5 h-5 stroke-[2.5]" />
               </button>
             </div>
-            <div className="p-10 bg-[#0a0a0a]">{children}</div>
+            <div className="p-6 sm:p-10 bg-[#0a0a0a] max-h-[80vh] overflow-y-auto">{children}</div>
           </motion.div>
         </div>
       )}

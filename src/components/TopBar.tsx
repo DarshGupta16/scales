@@ -15,9 +15,9 @@ export function TopBar({ searchQuery, setSearchQuery }: TopBarProps) {
 
   return (
     <header className="sticky top-0 z-50 bg-[#050505]/80 backdrop-blur-xl border-b border-white/5">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-brand/10 border border-brand/20 rounded-xl flex items-center justify-center overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-brand/10 border border-brand/20 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0">
             <img
               src="/icon.png"
               alt="Scales Logo"
@@ -25,10 +25,10 @@ export function TopBar({ searchQuery, setSearchQuery }: TopBarProps) {
             />
           </div>
           <div className="flex flex-col">
-            <h1 className="text-xl font-display font-bold text-white tracking-tight uppercase leading-tight">
+            <h1 className="text-lg sm:text-xl font-display font-bold text-white tracking-tight uppercase leading-tight">
               Scales
             </h1>
-            <div className="flex items-center gap-2 text-[10px] font-mono text-zinc-500 uppercase tracking-widest">
+            <div className="hidden xs:flex items-center gap-2 text-[8px] sm:text-[10px] font-mono text-zinc-500 uppercase tracking-widest">
               {hello.isLoading ? (
                 <Loader2 className="w-2 h-2 animate-spin" />
               ) : (
@@ -39,7 +39,9 @@ export function TopBar({ searchQuery, setSearchQuery }: TopBarProps) {
           </div>
         </div>
 
-        <SearchBar value={searchQuery} onChange={setSearchQuery} />
+        <div className="flex-1 max-w-md">
+          <SearchBar value={searchQuery} onChange={setSearchQuery} />
+        </div>
 
         <div className="flex items-center gap-2">
           <Link

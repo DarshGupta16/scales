@@ -250,7 +250,7 @@ export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
   }, [data, isClient]);
 
   return (
-    <div className="w-full h-[400px] min-w-0 bg-[#070707] rounded-3xl p-6 relative">
+    <div className="w-full h-[300px] sm:h-[400px] min-w-0 bg-[#070707] rounded-3xl p-2 sm:p-6 relative">
       {isClient && (
         <ResponsiveContainer width="100%" height="100%">
           <ChartRenderer
