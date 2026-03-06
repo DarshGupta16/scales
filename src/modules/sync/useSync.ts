@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { dexieDb, type SyncLogEntry } from "@/dexieDb";
 import { trpcClient } from "@/trpc/client";
 import { SyncOperation } from "@/types/syncOperations";
+import type { Dataset } from "@/types/dataset";
 import type { SyncPayloads } from "./types";
 import { createClientOnlyFn } from "@tanstack/react-start";
 
@@ -78,14 +79,31 @@ export function useSync() {
           clientOnlyLogs = localLogs.slice(commonLocalIndex + 1);
           serverOnlyLogs = serverLogs.slice(commonServerIndex + 1);
         } else {
-          // If no common log found (e.g. initial sync or gap too large), 
-          // we use the sets as they are, but filter out ones we already know about
+          // No common log found (first sync on this device, or logs were pruned).
+          // Push any local-only logs to the server first, then do a FULL server overwrite.
           clientOnlyLogs = localLogs.filter(
-            (ll) => !serverLogs.some((sl) => sl.id === ll.id)
+            (ll) => !serverLogs.some((sl) => sl.id === ll.id),
           );
-          serverOnlyLogs = serverLogs.filter(
-            (sl) => !localLogs.some((ll) => ll.id === sl.id)
-          );
+
+          // Push client-only logs before overwriting
+          if (clientOnlyLogs.length > 0) {
+            await trpcClient.pushSyncLogs.mutate(clientOnlyLogs);
+          }
+
+          // Full server snapshot overwrite: fetch all datasets and replace Dexie entirely
+          const allServerDatasets = await trpcClient.getDatasets.query();
+          await dexieDb.datasets.clear();
+          if (allServerDatasets && allServerDatasets.length > 0) {
+            await dexieDb.datasets.bulkPut(allServerDatasets as Dataset[]);
+          }
+
+          // Copy all server sync logs to local so future syncs have a common base
+          if (serverLogs.length > 0) {
+            await dexieDb.syncLogs.bulkPut(serverLogs);
+          }
+
+          setLastSyncedAt(new Date());
+          return;
         }
 
         if (clientOnlyLogs.length === 0 && serverOnlyLogs.length === 0) {
@@ -124,10 +142,13 @@ export function useSync() {
 
         // 8. Prune old logs on the server (older than 10 days)
         await trpcClient.pruneOldLogs.mutate({ thresholdDays: 10 });
-        
+
         // 9. Prune local logs to match (prevent infinite local growth)
         const localThreshold = new Date().getTime() - 10 * 24 * 60 * 60 * 1000;
-        await dexieDb.syncLogs.where("timestamp").below(localThreshold).delete();
+        await dexieDb.syncLogs
+          .where("timestamp")
+          .below(localThreshold)
+          .delete();
 
         setLastSyncedAt(new Date());
       } catch (error) {
@@ -189,8 +210,14 @@ export function SyncManager() {
     // Trigger initial sync on mount
     void sync();
 
+    // Poll every 5 seconds for cross-device changes
+    const intervalId = setInterval(() => void sync(), 5000);
+
     window.addEventListener("online", handleOnline);
-    return () => window.removeEventListener("online", handleOnline);
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener("online", handleOnline);
+    };
   }, [sync]);
 
   return null;

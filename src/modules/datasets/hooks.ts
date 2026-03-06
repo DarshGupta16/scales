@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLiveQuery } from "dexie-react-hooks";
 import { trpc } from "@/trpc/client";
@@ -18,7 +17,7 @@ import { useSync } from "@/modules/sync/useSync";
  * @returns Object containing the dataset list, loading states, and the `createDataset` mutation function.
  */
 export function useDatasetCollection() {
-  const { recordOperation } = useSync();
+  const { recordOperation, lastSyncedAt } = useSync();
 
   const localDatasets = useLiveQuery(async () => {
     const data = await dexieDb.datasets.toArray();
@@ -50,24 +49,16 @@ export function useDatasetCollection() {
     await recordOperation(SyncOperation.CREATE_DATASET, newDataset);
   };
 
-  // Sync Collection Data -> Local Dexie DB (ONLY ON INITIAL LOAD)
-  useEffect(() => {
-    const hydrateLocalDb = async () => {
-      if (serverDatasets && serverDatasets.length > 0) {
-        // Only run hydration if the local Dexie store is completely empty
-        // (to prevent overwriting fresh local offline measurements with stale server cache)
-        const count = await dexieDb.datasets.count();
-        if (count === 0) {
-          await dexieDb.datasets.bulkPut(serverDatasets as Dataset[]);
-        }
-      }
-    };
-
-    void hydrateLocalDb();
-  }, [serverDatasets]);
+  // Before the first sync completes, show server (SSR) data so the user
+  // sees the latest cloud state instantly. Once sync finishes, Dexie is
+  // the source of truth and we never fall back to server data again.
+  const hasSynced = lastSyncedAt !== null;
+  const datasets = hasSynced
+    ? (localDatasets ?? serverDatasets ?? [])
+    : (serverDatasets ?? localDatasets ?? []);
 
   return {
-    datasets: localDatasets ?? serverDatasets ?? [],
+    datasets,
     isCollectionLoading:
       datasetsQuery.isLoading && !localDatasets && !serverDatasets,
     collectionError: datasetsQuery.error,
@@ -108,8 +99,6 @@ export function useDatasetDetail(datasetId: string) {
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 30,
   });
-
-  const serverDataset = datasetQuery.data;
 
   return {
     dataset: localDataset ?? cachedDataset, // fallback to cache only if local isn't ready
