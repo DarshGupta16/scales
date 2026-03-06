@@ -18,6 +18,7 @@ export const clientHandlers: {
         ...dsAdd.measurements,
         {
           id: payload.id,
+          datasetId: dsAdd.id,
           value: payload.value,
           timestamp: payload.timestamp,
         },

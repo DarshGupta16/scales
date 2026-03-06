@@ -31,13 +31,16 @@ export function useSync() {
       setIsSyncing(true);
 
       try {
-        // 1. Fetch server logs
+        // 1. Fetch server logs (capped at 500 to prevent mega-responses)
         const serverLogsQuery = await trpcClient.getSyncLogs.query({
           after: 0,
+          limit: 500,
+          sort: "desc",
         });
-        const serverLogs = serverLogsQuery as SyncLogEntry[];
+        // Reverse to get chronological order (oldest to newest)
+        const serverLogs = (serverLogsQuery as SyncLogEntry[]).reverse();
 
-        // 2. Fetch all local logs
+        // 2. Fetch local logs (also pruned, so it stays small)
         const localLogs = await dexieDb.syncLogs.orderBy("timestamp").toArray();
 
         // 3. Early Exit / Short-circuit
@@ -75,8 +78,14 @@ export function useSync() {
           clientOnlyLogs = localLogs.slice(commonLocalIndex + 1);
           serverOnlyLogs = serverLogs.slice(commonServerIndex + 1);
         } else {
-          clientOnlyLogs = [...localLogs];
-          serverOnlyLogs = [...serverLogs];
+          // If no common log found (e.g. initial sync or gap too large), 
+          // we use the sets as they are, but filter out ones we already know about
+          clientOnlyLogs = localLogs.filter(
+            (ll) => !serverLogs.some((sl) => sl.id === ll.id)
+          );
+          serverOnlyLogs = serverLogs.filter(
+            (sl) => !localLogs.some((ll) => ll.id === sl.id)
+          );
         }
 
         if (clientOnlyLogs.length === 0 && serverOnlyLogs.length === 0) {
@@ -91,8 +100,7 @@ export function useSync() {
 
         // 7. Replay server-only logs on Dexie (Local DB)
         if (serverOnlyLogs.length > 0) {
-          // SSR-Safe Dynamic Import:registry.client imports Dexie and other client-only files.
-          // We only load this in the browser during an active sync.
+          // SSR-Safe Dynamic Import
           const { allClientHandlers } = await import("./registry.client");
 
           for (const log of serverOnlyLogs) {
@@ -114,8 +122,12 @@ export function useSync() {
           }
         }
 
-        // 8. Prune old logs on the server
+        // 8. Prune old logs on the server (older than 10 days)
         await trpcClient.pruneOldLogs.mutate({ thresholdDays: 10 });
+        
+        // 9. Prune local logs to match (prevent infinite local growth)
+        const localThreshold = new Date().getTime() - 10 * 24 * 60 * 60 * 1000;
+        await dexieDb.syncLogs.where("timestamp").below(localThreshold).delete();
 
         setLastSyncedAt(new Date());
       } catch (error) {

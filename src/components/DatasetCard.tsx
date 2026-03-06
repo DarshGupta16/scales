@@ -11,11 +11,6 @@ import {
   XAxis,
   Tooltip,
 } from "recharts";
-import type { TooltipProps } from "recharts";
-import type {
-  NameType,
-  ValueType,
-} from "recharts/types/component/DefaultTooltipContent";
 import { motion } from "framer-motion";
 import { useEffect, useState, useMemo } from "react";
 
@@ -51,7 +46,10 @@ export function DatasetCard({ dataset }: DatasetCardProps) {
   const CustomTooltip = ({
     active,
     payload,
-  }: TooltipProps<ValueType, NameType>) => {
+  }: {
+    active?: boolean;
+    payload?: any[];
+  }) => {
     if (active && payload && payload.length > 0) {
       const firstPayload = payload[0];
       if (firstPayload?.payload) {

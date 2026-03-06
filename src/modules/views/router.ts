@@ -15,44 +15,22 @@ export async function updateViewsInternal(slug: string, views: ViewType[]) {
     throw new Error(`Dataset with slug "${slug}" not found`);
   }
 
-  const previousViews = (
-    await db.datasetView.findMany({
-      where: {
-        datasetId: dataset.id,
-      },
-    })
-  ).map(({ type }) => type);
-
-  const viewsToRemove = previousViews.filter(
-    (view) => !views.includes(view as any),
-  );
-
-  for (const view of views) {
-    await db.datasetView.upsert({
-      where: {
-        datasetId_type: {
-          datasetId: dataset.id,
-          type: view as any,
-        },
-      },
-      update: {},
-      create: {
-        type: view as any,
-        datasetId: dataset.id,
-      },
+  await db.$transaction(async (tx) => {
+    // 1. Wipe existing views for this dataset
+    await tx.datasetView.deleteMany({
+      where: { datasetId: dataset.id },
     });
-  }
 
-  for (const view of viewsToRemove) {
-    await db.datasetView.delete({
-      where: {
-        datasetId_type: {
+    // 2. Insert the new set of views in bulk
+    if (views.length > 0) {
+      await tx.datasetView.createMany({
+        data: views.map((view) => ({
+          type: view,
           datasetId: dataset.id,
-          type: view as any,
-        },
-      },
-    });
-  }
+        })),
+      });
+    }
+  });
 
   return { success: true };
 }

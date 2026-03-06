@@ -18,11 +18,6 @@ import {
 } from "recharts";
 import type { ViewType, Measurement } from "../types/dataset";
 import { useMemo, useState, useEffect } from "react";
-import type { TooltipProps } from "recharts";
-import type {
-  NameType,
-  ValueType,
-} from "recharts/types/component/DefaultTooltipContent";
 
 interface DatasetGraphProps {
   data: Measurement[];
@@ -41,7 +36,11 @@ const CustomTooltip = ({
   active,
   payload,
   unit,
-}: TooltipProps<ValueType, NameType> & { unit: string }) => {
+}: {
+  active?: boolean;
+  payload?: any[];
+  unit: string;
+}) => {
   if (active && payload && payload.length > 0) {
     const firstPayload = payload[0];
     if (firstPayload?.payload) {

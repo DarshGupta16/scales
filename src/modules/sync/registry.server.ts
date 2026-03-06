@@ -5,9 +5,9 @@ import type { SyncOperation } from "@/types/syncOperations";
 import type { ServerReplayHandler } from "./types";
 
 export const allServerHandlers: Partial<
-  Record<SyncOperation, ServerReplayHandler>
+  Record<SyncOperation, ServerReplayHandler<any>>
 > = {
   ...datasetHandlers,
   ...measurementHandlers,
   ...viewHandlers,
-};
+} as Partial<Record<SyncOperation, ServerReplayHandler<any>>>;
