@@ -42,5 +42,6 @@ export interface Dataset {
   views: ViewType[]; // persisted configuration
   measurements: Measurement[];
   slug: string;
+  createdAt: number;
   isOptimistic?: boolean;
 }

@@ -52,6 +52,7 @@ export const datasetSchema = z.object({
   views: z.array(viewTypeSchema),
   measurements: z.array(measurementSchema),
   slug: z.string(),
+  createdAt: z.number(),
 });
 
 export const syncLogSchema = z.object({

@@ -40,6 +40,7 @@ export async function createDatasetInternal(dataset: DatasetType) {
           timestamp: new Date(m.timestamp),
         })),
       },
+      createdAt: new Date(dataset.createdAt),
     },
   });
 }
@@ -71,7 +72,9 @@ export async function deleteDatasetInternal(id: string) {
 
 export const datasetsProcedures = {
   getDatasets: publicProcedure.query(async () => {
-    const prismaDatasets: DatasetModelType[] = await db.dataset.findMany();
+    const prismaDatasets: DatasetModelType[] = await db.dataset.findMany({
+      orderBy: { createdAt: "asc" },
+    });
     const returnDatasets: DatasetType[] = await Promise.all(
       prismaDatasets.map(async (dataset) => {
         const views = (
@@ -98,6 +101,7 @@ export const datasetsProcedures = {
           views,
           measurements,
           description: dataset.description ?? undefined,
+          createdAt: dataset.createdAt.getTime(),
         };
       }),
     );
@@ -134,6 +138,7 @@ export const datasetsProcedures = {
         views,
         measurements,
         description: dataset.description ?? undefined,
+        createdAt: dataset.createdAt.getTime(),
       };
     }),
 

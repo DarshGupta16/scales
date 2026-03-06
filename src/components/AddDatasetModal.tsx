@@ -35,6 +35,7 @@ export function AddDatasetModal({
       unit,
       views: ["line"],
       measurements: [],
+      createdAt: Date.now(),
     };
 
     void createDataset(newDataset);
