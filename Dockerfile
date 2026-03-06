@@ -1,54 +1,51 @@
-# Use the official Bun image
-# see all versions at https://hub.docker.com/r/oven/bun/tags
-FROM oven/bun:1 as base
+# ── Stage 1: Install all deps + build ──
+FROM oven/bun:1-alpine AS builder
 WORKDIR /app
 
-# Install dependencies into temp directory
-# This will cache them and speed up future builds
-FROM base AS install
-RUN mkdir -p /temp/dev
-COPY package.json bun.lock /temp/dev/
-RUN cd /temp/dev && bun install --frozen-lockfile
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
 
-# Install with --production (exclude devDependencies)
-RUN mkdir -p /temp/prod
-COPY package.json bun.lock /temp/prod/
-RUN cd /temp/prod && bun install --frozen-lockfile --production
-
-# Build the app
-FROM base AS builder
-COPY --from=install /temp/dev/node_modules node_modules
 COPY . .
-
-# Set environment variables for build time
-ENV NODE_ENV=production
 
 # Generate Prisma Client
 RUN bunx prisma generate
 
-# Build the TanStack Start App and Service Worker
+# Build TanStack Start app + Service Worker
+ENV NODE_ENV=production
 RUN bun run build
 
-# Final runner stage
-FROM base AS runner
+# ── Stage 2: Production runner (minimal) ──
+FROM oven/bun:1-alpine AS runner
 WORKDIR /app
 
-# Copy the built application and production dependencies
+# Copy only the files needed at runtime
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/generated ./generated
 COPY --from=builder /app/package.json ./package.json
-
-# Copy prisma schema for runtime schema pushing and configuration
+COPY --from=builder /app/bun.lock ./bun.lock
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 
-# Copy the entrypoint script
-COPY scripts/entrypoint.sh ./scripts/entrypoint.sh
-RUN chmod +x ./scripts/entrypoint.sh
+# Copy the custom production server
+COPY --from=builder /app/server.ts ./server.ts
 
-# Expose port 3000
+# Install only production dependencies directly in the runner
+RUN bun install --frozen-lockfile --production
+
+# Strip unnecessary bloat from node_modules
+RUN find node_modules \( \
+      -name "*.md" -o -name "*.map" -o -name "LICENSE*" \
+      -o -name "CHANGELOG*" -o -name "*.txt" -o -name "Makefile" \
+    \) -type f -delete 2>/dev/null; \
+    find node_modules -type d \( \
+      -name "test" -o -name "tests" -o -name "__tests__" \
+      -o -name "docs" -o -name "example" -o -name "examples" \
+    \) -exec rm -rf {} + 2>/dev/null; \
+    true
+
+# Runtime configuration
 EXPOSE 3000
 ENV PORT=3000
 ENV NODE_ENV=production
 
-# The entrypoint script will handle running Prisma push and starting the server
-CMD ["./scripts/entrypoint.sh"]
+CMD ["sh", "-c", "mkdir -p /app/data && echo 'Pushing database schema...' && bunx prisma db push --accept-data-loss && echo 'Starting server...' && exec bun run server.ts"]

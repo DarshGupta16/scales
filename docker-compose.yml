@@ -8,8 +8,10 @@ services:
     volumes:
       - ./data:/app/data
     environment:
-      # Use an absolute URL for your homelab deployment
-      - WEBSITE_URL=http://localhost:3000
       # Path to the SQLite database on the volume mount
       - DATABASE_URL=file:/app/data/scales.db
       - NODE_ENV=production
+      # NOTE: Do NOT set WEBSITE_URL here. The server uses PORT (3000)
+      # internally for SSR requests. If you place this behind a reverse
+      # proxy with a real domain, WEBSITE_URL is only needed if you
+      # explicitly reference it elsewhere (e.g. meta tags, emails).

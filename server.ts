@@ -1,0 +1,53 @@
+/**
+ * Custom Bun production server for TanStack Start.
+ *
+ * The built server.js only handles SSR and API routes — it does NOT serve
+ * static files.  This wrapper intercepts requests and checks if the requested
+ * path exists in `dist/client` first.  If it does, it serves the file directly.
+ * Otherwise it delegates to the TanStack Start handler.
+ */
+
+import { join } from "node:path";
+import { statSync } from "node:fs";
+
+// Import the TanStack Start server handler
+import app from "./dist/server/server.js";
+
+const CLIENT_DIR = join(import.meta.dirname, "dist", "client");
+const PORT = Number(process.env.PORT) || 3000;
+
+/**
+ * Try to resolve a static file from dist/client.
+ * Returns the Bun File object if found, null otherwise.
+ */
+function resolveStaticFile(pathname: string): string | null {
+  // Prevent path traversal
+  const safePath = join(CLIENT_DIR, pathname);
+  if (!safePath.startsWith(CLIENT_DIR)) return null;
+
+  try {
+    const stat = statSync(safePath);
+    if (stat.isFile()) return safePath;
+  } catch {
+    // File not found, that's fine
+  }
+  return null;
+}
+
+const server = Bun.serve({
+  port: PORT,
+  async fetch(request) {
+    const url = new URL(request.url);
+
+    // Try to serve static file from dist/client
+    const staticPath = resolveStaticFile(url.pathname);
+    if (staticPath) {
+      return new Response(Bun.file(staticPath));
+    }
+
+    // Delegate to TanStack Start SSR handler
+    return app.fetch(request);
+  },
+});
+
+console.log(`Started server: http://localhost:${server.port}`);
