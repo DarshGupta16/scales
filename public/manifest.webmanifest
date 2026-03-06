@@ -4,6 +4,7 @@
   "description": "Track and visualize your metrics over time",
   "theme_color": "#050505",
   "background_color": "#050505",
+  "start_url": "/",
   "display": "standalone",
   "icons": [
     {
@@ -35,7 +36,8 @@
     {
       "src": "/launchericon-512x512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
