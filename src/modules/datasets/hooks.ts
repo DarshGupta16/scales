@@ -50,12 +50,20 @@ export function useDatasetCollection() {
     await recordOperation(SyncOperation.CREATE_DATASET, newDataset);
   };
 
-  // Sync Collection Data -> Local Dexie DB
+  // Sync Collection Data -> Local Dexie DB (ONLY ON INITIAL LOAD)
   useEffect(() => {
-    if (serverDatasets && serverDatasets.length > 0) {
-      // Hydrate all server datasets into Dexie
-      void dexieDb.datasets.bulkPut(serverDatasets as Dataset[]);
-    }
+    const hydrateLocalDb = async () => {
+      if (serverDatasets && serverDatasets.length > 0) {
+        // Only run hydration if the local Dexie store is completely empty
+        // (to prevent overwriting fresh local offline measurements with stale server cache)
+        const count = await dexieDb.datasets.count();
+        if (count === 0) {
+          await dexieDb.datasets.bulkPut(serverDatasets as Dataset[]);
+        }
+      }
+    };
+
+    void hydrateLocalDb();
   }, [serverDatasets]);
 
   return {
@@ -102,15 +110,6 @@ export function useDatasetDetail(datasetId: string) {
   });
 
   const serverDataset = datasetQuery.data;
-
-  // Sync Detail Data -> Local Dexie DB
-  useEffect(() => {
-    if (serverDataset) {
-      // Cast to Dataset to satisfy Dexie's InsertType, which might be picky about
-      // optional fields or extra server-side fields (like createdAt).
-      void dexieDb.datasets.put(serverDataset as Dataset);
-    }
-  }, [serverDataset]);
 
   return {
     dataset: localDataset ?? cachedDataset, // fallback to cache only if local isn't ready
