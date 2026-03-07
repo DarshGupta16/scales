@@ -14,7 +14,7 @@ export const serverHandlers: {
     | SyncOperation.DELETE_DATASET]: ServerReplayHandler<K>;
 } = {
   [SyncOperation.CREATE_DATASET]: async (payload) => {
-    await createDatasetInternal(payload as Dataset);
+    await createDatasetInternal(payload);
   },
   [SyncOperation.UPDATE_DATASET]: async (payload) => {
     await updateDatasetInternal(payload.id, payload as Partial<Dataset>);

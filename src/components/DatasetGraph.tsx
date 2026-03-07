@@ -32,19 +32,24 @@ interface ChartData extends Measurement {
 
 const COLORS = ["#8b5cf6", "#a78bfa", "#c4b5fd", "#ddd6fe", "#ede9fe"];
 
+interface TooltipPayload {
+  payload: ChartData;
+  value: number | string;
+}
+
 const CustomTooltip = ({
   active,
   payload,
   unit,
 }: {
   active?: boolean;
-  payload?: any[];
+  payload?: TooltipPayload[];
   unit: string;
 }) => {
   if (active && payload && payload.length > 0) {
     const firstPayload = payload[0];
     if (firstPayload?.payload) {
-      const data = firstPayload.payload as ChartData;
+      const data = firstPayload.payload;
       return (
         <div className="bg-zinc-900/90 backdrop-blur-md p-4 border border-white/10 rounded-2xl shadow-2xl">
           <p className="text-[10px] font-bold text-zinc-500 mb-2 uppercase tracking-[0.2em]">

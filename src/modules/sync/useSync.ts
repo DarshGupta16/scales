@@ -126,7 +126,7 @@ export function useSync() {
               const payload = JSON.parse(
                 log.payload,
               ) as SyncPayloads[SyncOperation];
-              const handler = allClientHandlers[log.operation as SyncOperation];
+              const handler = allClientHandlers[log.operation];
               if (handler) {
                 await handler(payload);
               }

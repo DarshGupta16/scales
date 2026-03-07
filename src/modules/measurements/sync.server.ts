@@ -16,7 +16,7 @@ export const serverHandlers: {
     await addMeasurementInternal({
       ...payload,
       datasetSlug: "", // Not needed for update due to ID-based upsert
-    } as any);
+    });
   },
   [SyncOperation.REMOVE_MEASUREMENT]: async (payload) => {
     await removeMeasurementInternal(payload.id);

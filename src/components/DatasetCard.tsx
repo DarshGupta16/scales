@@ -23,6 +23,11 @@ interface PreviewData extends Measurement {
   displayDate: string;
 }
 
+interface TooltipPayload {
+  payload: PreviewData;
+  value: number | string;
+}
+
 export function DatasetCard({ dataset }: DatasetCardProps) {
   const [isClient, setIsClient] = useState(false);
   useEffect(() => {
@@ -50,12 +55,12 @@ export function DatasetCard({ dataset }: DatasetCardProps) {
     payload,
   }: {
     active?: boolean;
-    payload?: any[];
+    payload?: TooltipPayload[];
   }) => {
     if (active && payload && payload.length > 0) {
       const firstPayload = payload[0];
       if (firstPayload?.payload) {
-        const data = firstPayload.payload as PreviewData;
+        const data = firstPayload.payload;
         return (
           <div className="bg-zinc-900 border border-white/20 p-2 rounded-lg shadow-xl pointer-events-none">
             <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider leading-none mb-1">
