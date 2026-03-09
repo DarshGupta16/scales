@@ -7,7 +7,7 @@ import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import { TRPCProvider } from "../trpc/Provider";
 import { QueryClient } from "@tanstack/react-query";
-import { SyncManager } from "@/modules/sync/useSync";
+import { SyncManager } from "@/hooks/useSync";
 import { BottomNav } from "@/components/BottomNav";
 
 import appCss from "../styles.css?url";

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Modal } from "./Modal";
 import { UnitSelector } from "./UnitSelector";
 import type { Dataset, Unit } from "../types/dataset";
-import { useData } from "../hooks/useData";
+import { useDatasetCollection } from "@/hooks/useDatasets";
 
 interface AddDatasetModalProps {
   isOpen: boolean;
@@ -15,7 +15,7 @@ export function AddDatasetModal({
   onClose,
   onDatasetCreated,
 }: AddDatasetModalProps) {
-  const { createDataset } = useData();
+  const { createDataset } = useDatasetCollection();
 
   // Form State
   const [title, setTitle] = useState("");

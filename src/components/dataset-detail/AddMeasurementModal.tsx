@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Modal } from "../Modal";
-import { useData } from "@/hooks/useData";
+import { useMeasurements } from "@/hooks/useMeasurements";
 
 interface AddMeasurementModalProps {
   isOpen: boolean;
@@ -15,7 +15,7 @@ export function AddMeasurementModal({
   unit,
   datasetSlug,
 }: AddMeasurementModalProps) {
-  const { addMeasurement } = useData(datasetSlug);
+  const { addMeasurement } = useMeasurements(datasetSlug);
   const [value, setValue] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
