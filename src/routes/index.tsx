@@ -5,7 +5,7 @@ import { DatasetGrid } from "../components/DatasetGrid";
 import { AddDatasetFAB } from "../components/AddDatasetFAB";
 import { AddDatasetModal } from "../components/AddDatasetModal";
 import type { Dataset } from "../types/dataset";
-import { useData } from "../hooks/useData";
+import { useDatasetCollection } from "@/hooks/useDatasets";
 import { trpc } from "../trpc/client";
 
 export const Route = createFileRoute("/")({
@@ -25,7 +25,7 @@ function Index() {
   const router = useRouter();
 
   // Background sync and local fallback are handled inside the central hook.
-  const { datasets: activeDatasets } = useData();
+  const { datasets: activeDatasets } = useDatasetCollection();
 
   // Preload routes using whatever data is currently available.
   useEffect(() => {

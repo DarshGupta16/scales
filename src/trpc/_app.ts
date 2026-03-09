@@ -1,11 +1,11 @@
 import { z } from "zod";
 import { router, publicProcedure } from "./init";
 
-import { datasetsProcedures } from "@/modules/datasets/router";
-import { measurementsProcedures } from "@/modules/measurements/router";
-import { syncProcedures } from "@/modules/sync/router";
-import { logsProcedures } from "@/modules/logs/router";
-import { viewsProcedures } from "@/modules/views/router";
+import { datasetsProcedures } from "@/trpc/routers/datasets";
+import { measurementsProcedures } from "@/trpc/routers/measurements";
+import { syncProcedures } from "@/trpc/routers/sync";
+import { logsProcedures } from "@/trpc/routers/logs";
+import { viewsProcedures } from "@/trpc/routers/views";
 
 export const appRouter = router({
   hello: publicProcedure

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { useData } from "../hooks/useData";
+import { useLogs } from "@/hooks/useLogs";
 import { LogsHeader } from "../components/LogsHeader";
 import { LogsTable } from "../components/LogsTable";
 import { Database, Server } from "lucide-react";
@@ -12,7 +12,7 @@ export const Route = createFileRoute("/logs")({
 function LogsPage() {
   const [activeTab, setActiveTab] = useState<"local" | "server">("local");
 
-  const { localLogs, serverLogs, isServerLogsLoading } = useData();
+  const { localLogs, serverLogs, isServerLogsLoading } = useLogs();
 
   return (
     <div className="min-h-screen bg-[#050505] pb-32 selection:bg-brand selection:text-white relative">
@@ -60,10 +60,11 @@ function LogsPage() {
                 <span>Server Sequence</span>
               </button>
             </div>
-            
+
             <div className="hidden sm:flex items-center gap-4">
               <span className="text-[10px] font-bold font-mono text-zinc-500 uppercase tracking-[0.3em] px-4 py-2 bg-white/5 rounded-full border border-white/5">
-                Total Sequence: {activeTab === "local" ? localLogs.length : serverLogs.length}
+                Total Sequence:{" "}
+                {activeTab === "local" ? localLogs.length : serverLogs.length}
               </span>
             </div>
           </div>
@@ -72,9 +73,9 @@ function LogsPage() {
           <div className="relative group">
             {/* Aesthetic Glow */}
             <div className="absolute -inset-1 bg-gradient-to-r from-brand/20 to-transparent rounded-[2.1rem] blur-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-            
-            <LogsTable 
-              logs={activeTab === "local" ? localLogs : serverLogs} 
+
+            <LogsTable
+              logs={activeTab === "local" ? localLogs : serverLogs}
               type={activeTab}
               isLoading={activeTab === "server" && isServerLogsLoading}
             />
