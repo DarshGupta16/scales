@@ -1,12 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useMemo } from "react";
-import { mockDatasets } from "../data/mockDatasets";
+import { useState, useMemo, use } from "react";
 import { DatasetDetailHeader } from "../components/layout/DatasetDetailHeader";
 import { AddMeasurementModal } from "../components/datasets/AddMeasurementModal";
 import { GraphSection } from "../components/datasets/GraphSection";
 import { TableSection } from "../components/datasets/TableSection";
 import { DatasetDetailNotFound } from "../components/datasets/DatasetDetailNotFound";
 import type { Dataset, Measurement } from "../types/dataset";
+import { useDatasetStore } from "@/store";
+import { db } from "@/dexieDb";
 
 export const Route = createFileRoute("/datasets/$datasetId")({
   component: DatasetDetail,
@@ -15,31 +16,34 @@ export const Route = createFileRoute("/datasets/$datasetId")({
 function DatasetDetail() {
   const { datasetId } = Route.useParams();
 
-  // In a real app, this would be managed by TanStack Query
-  const [allDatasets, setAllDatasets] = useState(mockDatasets);
+  const datasetStore = useDatasetStore();
+  const { datasets } = useDatasetStore();
 
   const dataset = useMemo(() => {
-    return allDatasets.find((d) => d.id === datasetId);
-  }, [allDatasets, datasetId]);
+    return datasets.find((d) => d.id === datasetId);
+  }, [datasets, datasetId]);
 
   // Modals state
   const [isAddMeasurementOpen, setIsAddMeasurementOpen] = useState(false);
 
   if (!dataset) {
+    use(
+      (async () => {
+        datasetStore.setDatasets(await db.datasets.toArray());
+      })(),
+    );
     return <DatasetDetailNotFound />;
   }
 
-  const handleUpdateDataset = (updatedDataset: Dataset) => {
-    setAllDatasets((prev) =>
-      prev.map((d) => (d.id === datasetId ? updatedDataset : d)),
-    );
-  };
+  const handleUpdateDataset = (updatedDataset: Dataset) => {};
 
   const handleAddMeasurement = (newMeasurement: Measurement) => {
-    handleUpdateDataset({
+    const updatedDataset = {
       ...dataset,
       measurements: [...dataset.measurements, newMeasurement],
-    });
+    };
+    db.datasets.upsert(datasetId, updatedDataset);
+    datasetStore.updateDataset(updatedDataset);
     setIsAddMeasurementOpen(false);
   };
 
