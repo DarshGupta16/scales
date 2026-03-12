@@ -16,7 +16,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import type { ViewType, Measurement } from "../types/dataset";
+import type { ViewType, Measurement } from "../../types/dataset";
 import { useMemo } from "react";
 
 interface DatasetGraphProps {

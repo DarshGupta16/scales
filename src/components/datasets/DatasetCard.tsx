@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import type { Dataset } from "../types/dataset";
+import type { Dataset } from "../../types/dataset";
 import {
   LineChart,
   Line,

@@ -1,4 +1,4 @@
-import type { ViewType } from "../types/dataset";
+import type { ViewType } from "../../types/dataset";
 import { LineChart, BarChart2, AreaChart, PieChart, ScatterChart, Plus, X } from "lucide-react";
 
 interface ViewSwitcherProps {

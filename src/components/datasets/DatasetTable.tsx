@@ -1,4 +1,4 @@
-import type { Measurement } from "../types/dataset";
+import type { Measurement } from "../../types/dataset";
 import { Trash2 } from "lucide-react";
 
 interface DatasetTableProps {

@@ -1,4 +1,4 @@
-import type { Unit } from "../types/dataset";
+import type { Unit } from "../../types/dataset";
 import { useState, useMemo } from "react";
 import { Check, ChevronsUpDown, Search } from "lucide-react";
 
