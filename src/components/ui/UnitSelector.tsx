@@ -8,14 +8,31 @@ interface UnitSelectorProps {
 }
 
 const ALL_UNITS: Unit[] = [
-  "seconds", "minutes", "hours", "days", "weeks", "months", "years",
-  "meters", "kilometers", "miles",
-  "grams", "kilograms", "pounds",
-  "celsius", "fahrenheit",
+  "seconds",
+  "minutes",
+  "hours",
+  "days",
+  "weeks",
+  "months",
+  "years",
+  "meters",
+  "kilometers",
+  "miles",
+  "grams",
+  "kilograms",
+  "pounds",
+  "celsius",
+  "fahrenheit",
   "percentage",
-  "bytes", "kilobytes", "megabytes", "gigabytes", "terabytes",
-  "dollars", "euros", "rupees",
-  "count"
+  "bytes",
+  "kilobytes",
+  "megabytes",
+  "gigabytes",
+  "terabytes",
+  "dollars",
+  "euros",
+  "rupees",
+  "count",
 ];
 
 export function UnitSelector({ value, onChange }: UnitSelectorProps) {
@@ -23,7 +40,9 @@ export function UnitSelector({ value, onChange }: UnitSelectorProps) {
   const [search, setSearch] = useState("");
 
   const filteredUnits = useMemo(() => {
-    return ALL_UNITS.filter(u => u.toLowerCase().includes(search.toLowerCase()));
+    return ALL_UNITS.filter((u) =>
+      u.toLowerCase().includes(search.toLowerCase()),
+    );
   }, [search]);
 
   return (
@@ -33,15 +52,17 @@ export function UnitSelector({ value, onChange }: UnitSelectorProps) {
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center justify-between px-4 py-3 bg-zinc-900/50 border border-white/10 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all text-left rounded-xl"
       >
-        <span className="text-white uppercase tracking-widest font-bold text-[10px]">{value}</span>
+        <span className="text-white uppercase tracking-widest font-bold text-[10px]">
+          {value}
+        </span>
         <ChevronsUpDown className="w-4 h-4 text-brand" />
       </button>
 
       {isOpen && (
         <>
-          <div 
-            className="fixed inset-0 z-[60]" 
-            onClick={() => setIsOpen(false)} 
+          <div
+            className="fixed inset-0 z-[60]"
+            onClick={() => setIsOpen(false)}
           />
           <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-900 border border-white/10 shadow-2xl z-[70] overflow-hidden rounded-2xl animate-in fade-in slide-in-from-top-2 duration-200">
             <div className="p-3 border-b border-white/5 bg-white/[0.02] flex items-center gap-2">
@@ -67,9 +88,10 @@ export function UnitSelector({ value, onChange }: UnitSelectorProps) {
                   }}
                   className={`
                     w-full flex items-center justify-between px-4 py-3 text-[10px] transition-all uppercase tracking-widest font-bold rounded-xl
-                    ${value === unit 
-                      ? "bg-brand text-white shadow-lg shadow-brand/20" 
-                      : "text-zinc-500 hover:bg-white/5 hover:text-white"
+                    ${
+                      value === unit
+                        ? "bg-brand text-white shadow-lg shadow-brand/20"
+                        : "text-zinc-500 hover:bg-white/5 hover:text-white"
                     }
                   `}
                 >

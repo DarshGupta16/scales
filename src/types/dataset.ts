@@ -27,17 +27,21 @@ export type Unit =
 
 export type ViewType = "line" | "bar" | "area" | "pie" | "scatter";
 
-export type Measurement = {
+export interface Measurement {
   id: string;
+  datasetId: string;
   timestamp: string; // ISO string
   value: number;
-};
+}
 
-export type Dataset = {
+export interface Dataset {
   id: string; // used as slug in URL
   title: string;
   description?: string;
   unit: Unit;
   views: ViewType[]; // persisted configuration
   measurements: Measurement[];
-};
+  slug: string;
+  createdAt: number;
+  isOptimistic?: boolean;
+}
