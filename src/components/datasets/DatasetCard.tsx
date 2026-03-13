@@ -179,8 +179,8 @@ export function DatasetCard({ dataset }: DatasetCardProps) {
           </ResponsiveContainer>
         </div>
 
-        <p className="text-xs font-sans text-zinc-500 line-clamp-2 leading-relaxed uppercase tracking-wider">
-          {dataset.description ?? "Refined tracking parameters."}
+        <p className="text-xs font-sans text-zinc-500 line-clamp-2 leading-relaxed uppercase tracking-wider min-h-[2.5rem]">
+          {dataset.description || "Refined tracking parameters."}
         </p>
       </Link>
     </motion.div>
