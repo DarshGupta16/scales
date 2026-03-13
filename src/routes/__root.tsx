@@ -1,6 +1,8 @@
 import { HeadContent, Outlet, Scripts, createRootRoute } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
+import { useState, useEffect } from 'react'
+import { LoadingScreen } from '../components/LoadingScreen'
 
 import appCss from '../styles.css?url'
 
@@ -39,7 +41,28 @@ export const Route = createRootRoute({
     ],
   }),
   shellComponent: RootDocument,
+  component: RootComponent,
 })
+
+function RootComponent() {
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    // Artificial delay to ensure hydration and rendering can happen
+    // behind the scenes before we reveal the UI on first load.
+    const timer = setTimeout(() => setIsLoading(false), 275)
+    return () => clearTimeout(timer)
+  }, [])
+
+  return (
+    <>
+      <LoadingScreen isVisible={isLoading} />
+      <div style={{ visibility: isLoading ? 'hidden' : 'visible' }}>
+        <Outlet />
+      </div>
+    </>
+  )
+}
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
