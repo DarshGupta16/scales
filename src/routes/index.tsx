@@ -28,11 +28,13 @@ function Index() {
 
   // Core data filtering logic remains in the orchestrator
   const filteredDatasets = useMemo(() => {
-    return datasets?.filter(
-      (dataset) =>
-        dataset.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        dataset.unit.toLowerCase().includes(searchQuery.toLowerCase()),
-    );
+    return (datasets || [])
+      .filter(
+        (dataset) =>
+          dataset.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          dataset.unit.toLowerCase().includes(searchQuery.toLowerCase()),
+      )
+      .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
   }, [datasets, searchQuery]);
 
   const handleAddDataset = (newDataset: Dataset) => {
@@ -44,7 +46,7 @@ function Index() {
     <div className="min-h-screen pb-24 bg-[#050505] relative selection:bg-brand selection:text-white">
       {/* Subtle Grain Overlay */}
       <div
-        className="fixed inset-0 pointer-events-none opacity-[0.03] z-[100]"
+        className="fixed inset-0 pointer-events-none opacity-[0.03] z-100"
         style={{
           backgroundImage:
             'url("https://grainy-gradients.vercel.app/noise.svg")',
