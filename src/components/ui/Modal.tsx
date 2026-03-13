@@ -27,7 +27,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -40,9 +40,9 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="relative bg-[#0a0a0a] border border-white/10 shadow-2xl w-full max-w-md rounded-[2.5rem] overflow-hidden"
+            className="relative bg-[#0a0a0a] border border-white/10 shadow-2xl w-full max-w-md rounded-[2.5rem]"
           >
-            <div className="px-8 py-6 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
+            <div className="px-8 py-6 border-b border-white/5 flex items-center justify-between bg-white/2 rounded-t-[2.5rem]">
               <h3 className="text-xl font-display font-bold text-white uppercase tracking-tight">{title}</h3>
               <button
                 onClick={onClose}
@@ -51,7 +51,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
                 <X className="w-5 h-5 stroke-[2.5]" />
               </button>
             </div>
-            <div className="p-10 bg-[#0a0a0a]">{children}</div>
+            <div className="p-10 rounded-b-[2.5rem]">{children}</div>
           </motion.div>
         </div>
       )}

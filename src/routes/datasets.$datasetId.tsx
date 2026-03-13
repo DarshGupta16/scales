@@ -2,12 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo, use } from "react";
 import { DatasetDetailHeader } from "../components/layout/DatasetDetailHeader";
 import { AddMeasurementModal } from "../components/datasets/AddMeasurementModal";
+import { DatasetSettingsModal } from "../components/datasets/DatasetSettingsModal";
 import { GraphSection } from "../components/datasets/GraphSection";
 import { TableSection } from "../components/datasets/TableSection";
 import { DatasetDetailNotFound } from "../components/datasets/DatasetDetailNotFound";
 import type { Dataset, Measurement } from "../types/dataset";
 import { useDatasetStore } from "@/store";
 import { db } from "@/dexieDb";
+import { useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/datasets/$datasetId")({
   component: DatasetDetail,
@@ -25,6 +27,8 @@ function DatasetDetail() {
 
   // Modals state
   const [isAddMeasurementOpen, setIsAddMeasurementOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const navigate = useNavigate();
 
   if (!dataset) {
     use(
@@ -35,14 +39,23 @@ function DatasetDetail() {
     return <DatasetDetailNotFound />;
   }
 
-  const handleUpdateDataset = (updatedDataset: Dataset) => {};
+  const handleUpdateDataset = (updatedDataset: Dataset) => {
+    db.datasets.put(updatedDataset);
+    datasetStore.updateDataset(updatedDataset);
+  };
+
+  const handleDeleteDataset = (id: string) => {
+    db.datasets.delete(id);
+    datasetStore.removeDataset(id);
+    navigate({ to: "/" });
+  };
 
   const handleAddMeasurement = (newMeasurement: Measurement) => {
     const updatedDataset = {
       ...dataset,
       measurements: [...dataset.measurements, newMeasurement],
     };
-    db.datasets.upsert(datasetId, updatedDataset);
+    db.datasets.put(updatedDataset);
     datasetStore.updateDataset(updatedDataset);
     setIsAddMeasurementOpen(false);
   };
@@ -62,6 +75,7 @@ function DatasetDetail() {
         title={dataset.title}
         unit={dataset.unit}
         onAddMeasurement={() => setIsAddMeasurementOpen(true)}
+        onOpenSettings={() => setIsSettingsOpen(true)}
       />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative z-0">
@@ -83,6 +97,14 @@ function DatasetDetail() {
         onClose={() => setIsAddMeasurementOpen(false)}
         onAdd={handleAddMeasurement}
         unit={dataset.unit}
+      />
+
+      <DatasetSettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        dataset={dataset}
+        onUpdate={handleUpdateDataset}
+        onDelete={handleDeleteDataset}
       />
     </div>
   );

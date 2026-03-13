@@ -61,10 +61,10 @@ export function UnitSelector({ value, onChange }: UnitSelectorProps) {
       {isOpen && (
         <>
           <div
-            className="fixed inset-0 z-[60]"
+            className="fixed inset-0 z-40"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-900 border border-white/10 shadow-2xl z-[70] overflow-hidden rounded-2xl animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-900 border border-white/10 shadow-2xl z-50 overflow-hidden rounded-2xl animate-in fade-in slide-in-from-top-2 duration-200">
             <div className="p-3 border-b border-white/5 bg-white/[0.02] flex items-center gap-2">
               <Search className="w-4 h-4 text-zinc-500" />
               <input
