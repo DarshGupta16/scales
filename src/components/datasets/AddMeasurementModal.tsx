@@ -15,26 +15,31 @@ export function AddMeasurementModal({
   onAdd,
   unit,
 }: AddMeasurementModalProps) {
+  const getLocalDatetimeLocal = () => {
+    const now = new Date();
+    const offset = now.getTimezoneOffset(); // in minutes
+    const local = new Date(now.getTime() - offset * 60000);
+    return local.toISOString().slice(0, 16);
+  };
+
   const [value, setValue] = useState("");
-  const [timestamp, setTimestamp] = useState(
-    new Date().toISOString().slice(0, 16),
-  );
+  const [timestamp, setTimestamp] = useState(getLocalDatetimeLocal());
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!value || isNaN(Number(value))) return;
 
-    const newMeasurement: Measurement = {
+    const newMeasurement = {
       id: Math.random().toString(36).substring(7),
-      timestamp: new Date(timestamp).toISOString(),
+      timestamp: new Date(timestamp).getTime(),
       value: Number(value),
-    };
+    } as Measurement;
 
     onAdd(newMeasurement);
 
     // Reset and close
     setValue("");
-    setTimestamp(new Date().toISOString().slice(0, 16));
+    setTimestamp(getLocalDatetimeLocal());
     onClose();
   };
 

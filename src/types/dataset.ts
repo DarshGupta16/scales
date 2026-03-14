@@ -30,7 +30,7 @@ export type ViewType = "line" | "bar" | "area" | "pie" | "scatter";
 export interface Measurement {
   id: string;
   datasetId: string;
-  timestamp: string; // ISO string
+  timestamp: number;
   value: number;
 }
 
