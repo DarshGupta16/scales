@@ -1,4 +1,6 @@
 import { Link } from "@tanstack/react-router";
+import { MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import type { Dataset, Measurement } from "../../types/dataset";
 import {
   LineChart,
@@ -11,11 +13,12 @@ import {
   XAxis,
   Tooltip,
 } from "recharts";
-import { motion } from "framer-motion";
 import { useEffect, useState, useMemo } from "react";
 
 interface DatasetCardProps {
   dataset: Dataset;
+  onEdit?: (dataset: Dataset) => void;
+  onDelete?: (dataset: Dataset) => void;
 }
 
 interface PreviewData extends Measurement {
@@ -28,11 +31,27 @@ interface TooltipPayload {
   value: number | string;
 }
 
-export function DatasetCard({ dataset }: DatasetCardProps) {
+export function DatasetCard({ dataset, onEdit, onDelete }: DatasetCardProps) {
   const [isClient, setIsClient] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useMemo(() => ({ current: null as HTMLDivElement | null }), []);
+
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  useEffect(() => {
+    if (!isMenuOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isMenuOpen]);
 
   // Use the last 7 measurements for the preview chart, sorted chronologically
   const previewData = useMemo<PreviewData[]>(() => {
@@ -166,9 +185,58 @@ export function DatasetCard({ dataset }: DatasetCardProps) {
               {dataset.unit}
             </p>
           </div>
+
+          <div className="relative" ref={(el) => { menuRef.current = el; }}>
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsMenuOpen(!isMenuOpen);
+              }}
+              className="p-2 text-zinc-500 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+            >
+              <MoreVertical className="w-5 h-5" />
+            </button>
+
+            <AnimatePresence>
+              {isMenuOpen && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                  className="absolute right-0 mt-2 w-48 bg-zinc-900 border border-white/10 rounded-xl shadow-2xl z-20 overflow-hidden"
+                >
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onEdit?.(dataset);
+                        setIsMenuOpen(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-zinc-400 hover:text-white hover:bg-white/5 transition-all uppercase tracking-widest"
+                    >
+                      <Pencil className="w-4 h-4" />
+                      Edit
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onDelete?.(dataset);
+                        setIsMenuOpen(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-red-500/70 hover:text-red-500 hover:bg-red-500/5 transition-all uppercase tracking-widest border-t border-white/5"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Delete
+                    </button>
+                  </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
-        <div className="h-28 w-full mb-6 bg-white/[0.02] border border-white/5 rounded-2xl p-2 min-h-0 relative overflow-hidden group-hover:border-brand/20 transition-colors">
+        <div className="h-28 w-full mb-6 bg-white/2 border border-white/5 rounded-2xl p-2 min-h-0 relative overflow-hidden group-hover:border-brand/20 transition-colors">
           <ResponsiveContainer
             width="100%"
             height="100%"
@@ -179,7 +247,7 @@ export function DatasetCard({ dataset }: DatasetCardProps) {
           </ResponsiveContainer>
         </div>
 
-        <p className="text-xs font-sans text-zinc-500 line-clamp-2 leading-relaxed uppercase tracking-wider min-h-[2.5rem]">
+        <p className="text-xs font-sans text-zinc-500 line-clamp-2 leading-relaxed uppercase tracking-wider min-h-10">
           {dataset.description || "Refined tracking parameters."}
         </p>
       </Link>

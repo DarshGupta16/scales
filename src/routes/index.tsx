@@ -4,6 +4,7 @@ import { TopBar } from "../components/layout/TopBar";
 import { DatasetGrid } from "../components/datasets/DatasetGrid";
 import { AddDatasetFAB } from "../components/layout/AddDatasetFAB";
 import { AddDatasetModal } from "../components/datasets/AddDatasetModal";
+import { DatasetSettingsModal } from "../components/datasets/DatasetSettingsModal";
 import type { Dataset } from "../types/dataset";
 import { db } from "@/dexieDb";
 import { useDatasetStore } from "@/store";
@@ -17,6 +18,8 @@ function Index() {
   const { datasets } = datasetStore;
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingDataset, setEditingDataset] = useState<Dataset | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const getDatasets = async () => {
@@ -42,6 +45,20 @@ function Index() {
     db.datasets.put(newDataset);
   };
 
+  const handleUpdateDataset = (updatedDataset: Dataset) => {
+    db.datasets.put(updatedDataset);
+    datasetStore.updateDataset(updatedDataset);
+    setEditingDataset(null);
+    setIsDeleting(false);
+  };
+
+  const handleDeleteDataset = (id: string) => {
+    db.datasets.delete(id);
+    datasetStore.removeDataset(id);
+    setEditingDataset(null);
+    setIsDeleting(false);
+  };
+
   return (
     <div className="min-h-screen pb-24 bg-[#050505] relative selection:bg-brand selection:text-white">
       {/* Subtle Grain Overlay */}
@@ -55,7 +72,17 @@ function Index() {
 
       <TopBar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
 
-      <DatasetGrid datasets={filteredDatasets as Dataset[]} />
+      <DatasetGrid 
+        datasets={filteredDatasets as Dataset[]} 
+        onEdit={(dataset) => {
+          setEditingDataset(dataset);
+          setIsDeleting(false);
+        }}
+        onDelete={(dataset) => {
+          setEditingDataset(dataset);
+          setIsDeleting(true);
+        }}
+      />
 
       <AddDatasetFAB onClick={() => setIsAddModalOpen(true)} />
 
@@ -64,6 +91,20 @@ function Index() {
         onClose={() => setIsAddModalOpen(false)}
         onAdd={handleAddDataset}
       />
+
+      {editingDataset && (
+        <DatasetSettingsModal
+          isOpen={!!editingDataset}
+          onClose={() => {
+            setEditingDataset(null);
+            setIsDeleting(false);
+          }}
+          dataset={editingDataset}
+          onUpdate={handleUpdateDataset}
+          onDelete={handleDeleteDataset}
+          showDeleteDirectly={isDeleting}
+        />
+      )}
     </div>
   );
 }

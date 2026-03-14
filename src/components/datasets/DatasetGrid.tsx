@@ -5,9 +5,11 @@ import type { Dataset } from "../../types/dataset";
 
 interface DatasetGridProps {
   datasets: Dataset[];
+  onEdit?: (dataset: Dataset) => void;
+  onDelete?: (dataset: Dataset) => void;
 }
 
-export function DatasetGrid({ datasets }: DatasetGridProps) {
+export function DatasetGrid({ datasets, onEdit, onDelete }: DatasetGridProps) {
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative z-0">
       <div className="flex flex-col gap-16">
@@ -37,7 +39,11 @@ export function DatasetGrid({ datasets }: DatasetGridProps) {
                     exit={{ opacity: 0, scale: 0.9 }}
                     transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
                   >
-                    <DatasetCard dataset={dataset} />
+                    <DatasetCard 
+                      dataset={dataset} 
+                      onEdit={onEdit}
+                      onDelete={onDelete}
+                    />
                   </motion.div>
                 ))}
               </AnimatePresence>

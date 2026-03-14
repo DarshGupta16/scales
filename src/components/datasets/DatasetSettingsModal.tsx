@@ -11,6 +11,7 @@ interface DatasetSettingsModalProps {
   dataset: Dataset;
   onUpdate: (updatedDataset: Dataset) => void;
   onDelete: (id: string) => void;
+  showDeleteDirectly?: boolean;
 }
 
 export function DatasetSettingsModal({
@@ -19,6 +20,7 @@ export function DatasetSettingsModal({
   dataset,
   onUpdate,
   onDelete,
+  showDeleteDirectly = false,
 }: DatasetSettingsModalProps) {
   const [title, setTitle] = useState(dataset.title);
   const [description, setDescription] = useState(dataset.description);
@@ -31,8 +33,11 @@ export function DatasetSettingsModal({
       setTitle(dataset.title);
       setDescription(dataset.description);
       setUnit(dataset.unit);
+      if (showDeleteDirectly) {
+        setIsConfirmDeleteOpen(true);
+      }
     }
-  }, [isOpen, dataset]);
+  }, [isOpen, dataset, showDeleteDirectly]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +57,20 @@ export function DatasetSettingsModal({
     setIsConfirmDeleteOpen(false);
     onClose();
   };
+
+  if (showDeleteDirectly) {
+    return (
+      <ConfirmDialog
+        isOpen={isOpen}
+        onClose={onClose}
+        onConfirm={handleDelete}
+        title="Destroy Collection"
+        message={`Are you absolutely certain you wish to destroy "${dataset.title}"? This operation is irreversible and all recorded metrics will be purged from the archive.`}
+        confirmText="Destroy Permanently"
+        type="danger"
+      />
+    );
+  }
 
   return (
     <>
