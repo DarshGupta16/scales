@@ -18,6 +18,7 @@ import {
 } from "recharts";
 import type { ViewType, Measurement } from "../../types/dataset";
 import { useMemo, useState, useEffect } from "react";
+import { formatDate } from "../../utils/format";
 
 interface DatasetGraphProps {
   data: Measurement[];
@@ -69,7 +70,7 @@ const CustomTooltip = ({
 };
 
 // Reusable Chart Elements
-const renderXAxis = (chartData: ChartData[]) => (
+const CommonXAxis = ({ chartData }: { chartData: ChartData[] }) => (
   <XAxis
     dataKey="tooltipId"
     tickFormatter={(_, index) => chartData[index]?.displayDate ?? ""}
@@ -84,7 +85,7 @@ const renderXAxis = (chartData: ChartData[]) => (
   />
 );
 
-const renderYAxis = () => (
+const CommonYAxis = () => (
   <YAxis
     stroke="rgba(255,255,255,0.1)"
     tick={{
@@ -97,7 +98,7 @@ const renderYAxis = () => (
   />
 );
 
-const renderCartesianGrid = () => (
+const CommonGrid = () => (
   <CartesianGrid
     strokeDasharray="5 5"
     vertical={false}
@@ -105,123 +106,107 @@ const renderCartesianGrid = () => (
   />
 );
 
-const renderTooltip = (unit: string) => (
+const CommonTooltip = ({ unit }: { unit: string }) => (
   <Tooltip
     content={<CustomTooltip unit={unit} />}
     cursor={{ stroke: "rgba(139, 92, 246, 0.2)", strokeWidth: 2 }}
   />
 );
 
-interface ChartRendererProps {
-  viewType: ViewType;
-  chartData: ChartData[];
-  unit: string;
-}
-
 // Modular Chart Renderers
-const ChartRenderer = ({ viewType, chartData, unit }: ChartRendererProps) => {
-  const commonProps = {
-    data: chartData,
-    margin: { top: 20, right: 20, left: 0, bottom: 0 },
-  };
+const LineRenderer = ({ chartData, unit }: { chartData: ChartData[], unit: string }) => (
+  <LineChart data={chartData} margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
+    <CommonGrid />
+    <CommonXAxis chartData={chartData} />
+    <CommonYAxis />
+    <CommonTooltip unit={unit} />
+    <Line
+      type="monotone"
+      dataKey="value"
+      stroke="#8b5cf6"
+      strokeWidth={3}
+      dot={{ r: 4, fill: "#8b5cf6", strokeWidth: 2, stroke: "#000" }}
+      activeDot={{ r: 6, strokeWidth: 3, stroke: "#fff", fill: "#8b5cf6" }}
+      animationDuration={1500}
+    />
+  </LineChart>
+);
 
-  if (viewType === "pie") {
-    return (
-      <PieChart {...commonProps}>
-        <Pie
-          data={chartData}
-          cx="50%"
-          cy="50%"
-          innerRadius={80}
-          outerRadius={120}
-          paddingAngle={8}
-          dataKey="value"
-          animationDuration={1500}
-          stroke="none"
-          cornerRadius={10}
-        >
-          {chartData.map((_, index) => (
-            <Cell
-              key={`cell-${index}`}
-              fill={COLORS[index % COLORS.length]}
-            />
-          ))}
-        </Pie>
-        {renderTooltip(unit)}
-      </PieChart>
-    );
-  }
+const BarRenderer = ({ chartData, unit }: { chartData: ChartData[], unit: string }) => (
+  <BarChart data={chartData} margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
+    <CommonGrid />
+    <CommonXAxis chartData={chartData} />
+    <CommonYAxis />
+    <CommonTooltip unit={unit} />
+    <Bar
+      dataKey="value"
+      fill="#8b5cf6"
+      radius={[10, 10, 0, 0]}
+      animationDuration={1500}
+    />
+  </BarChart>
+);
 
-  const ChartWrapper = {
-    line: LineChart,
-    bar: BarChart,
-    area: AreaChart,
-    scatter: ScatterChart,
-  }[viewType];
+const AreaRenderer = ({ chartData, unit }: { chartData: ChartData[], unit: string }) => (
+  <AreaChart data={chartData} margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
+    <defs>
+      <linearGradient id="colorMain" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.4} />
+        <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+      </linearGradient>
+    </defs>
+    <CommonGrid />
+    <CommonXAxis chartData={chartData} />
+    <CommonYAxis />
+    <CommonTooltip unit={unit} />
+    <Area
+      type="monotone"
+      dataKey="value"
+      stroke="#8b5cf6"
+      strokeWidth={3}
+      fillOpacity={1}
+      fill="url(#colorMain)"
+      animationDuration={1500}
+    />
+  </AreaChart>
+);
 
-  if (!ChartWrapper) return null;
+const PieRenderer = ({ chartData, unit }: { chartData: ChartData[], unit: string }) => (
+  <PieChart>
+    <Pie
+      data={chartData}
+      cx="50%"
+      cy="50%"
+      innerRadius={80}
+      outerRadius={120}
+      paddingAngle={8}
+      dataKey="value"
+      animationDuration={1500}
+      stroke="none"
+      cornerRadius={10}
+    >
+      {chartData.map((_, index) => (
+        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+      ))}
+    </Pie>
+    <CommonTooltip unit={unit} />
+  </PieChart>
+);
 
-  return (
-    <ChartWrapper {...commonProps}>
-      {viewType === "area" && (
-        <defs>
-          <linearGradient id="colorMain" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.4} />
-            <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
-          </linearGradient>
-        </defs>
-      )}
-      {renderCartesianGrid()}
-      {renderXAxis(chartData)}
-      {renderYAxis()}
-      {renderTooltip(unit)}
-      
-      {viewType === "line" && (
-        <Line
-          type="monotone"
-          dataKey="value"
-          stroke="#8b5cf6"
-          strokeWidth={3}
-          dot={{ r: 4, fill: "#8b5cf6", strokeWidth: 2, stroke: "#000" }}
-          activeDot={{
-            r: 6,
-            strokeWidth: 3,
-            stroke: "#fff",
-            fill: "#8b5cf6",
-          }}
-          animationDuration={1500}
-        />
-      )}
-      {viewType === "bar" && (
-        <Bar
-          dataKey="value"
-          fill="#8b5cf6"
-          radius={[10, 10, 0, 0]}
-          animationDuration={1500}
-        />
-      )}
-      {viewType === "area" && (
-        <Area
-          type="monotone"
-          dataKey="value"
-          stroke="#8b5cf6"
-          strokeWidth={3}
-          fillOpacity={1}
-          fill="url(#colorMain)"
-          animationDuration={1500}
-        />
-      )}
-      {viewType === "scatter" && (
-        <Scatter
-          name="Measurements"
-          data={chartData}
-          fill="#8b5cf6"
-          animationDuration={1500}
-        />
-      )}
-    </ChartWrapper>
-  );
-};
+const ScatterRenderer = ({ chartData, unit }: { chartData: ChartData[], unit: string }) => (
+  <ScatterChart margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
+    <CommonGrid />
+    <CommonXAxis chartData={chartData} />
+    <CommonYAxis />
+    <CommonTooltip unit={unit} />
+    <Scatter
+      name="Measurements"
+      data={chartData}
+      fill="#8b5cf6"
+      animationDuration={1500}
+    />
+  </ScatterChart>
+);
 
 export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
   const [isClient, setIsClient] = useState(false);
@@ -233,28 +218,28 @@ export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
     return data.map((m, index) => ({
       ...m,
       tooltipId: `${m.id || index.toString()}-${m.timestamp}`,
-      displayDate: isClient
-        ? new Date(m.timestamp).toLocaleDateString(undefined, {
-            month: "short",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          })
-        : "",
+      displayDate: isClient ? formatDate(m.timestamp, "full") : "",
     }));
   }, [data, isClient]);
 
+  const renderContent = () => {
+    if (!isClient) return null;
+    
+    switch (viewType) {
+      case "line": return <LineRenderer chartData={chartData} unit={unit} />;
+      case "bar": return <BarRenderer chartData={chartData} unit={unit} />;
+      case "area": return <AreaRenderer chartData={chartData} unit={unit} />;
+      case "pie": return <PieRenderer chartData={chartData} unit={unit} />;
+      case "scatter": return <ScatterRenderer chartData={chartData} unit={unit} />;
+      default: return null;
+    }
+  };
+
   return (
     <div className="w-full h-[300px] sm:h-[400px] min-w-0 bg-[#070707] rounded-3xl p-2 sm:p-6 relative">
-      {isClient && (
-        <ResponsiveContainer width="100%" height="100%">
-          <ChartRenderer
-            viewType={viewType}
-            chartData={chartData}
-            unit={unit}
-          />
-        </ResponsiveContainer>
-      )}
+      <ResponsiveContainer width="100%" height="100%">
+        {renderContent()}
+      </ResponsiveContainer>
     </div>
   );
 }

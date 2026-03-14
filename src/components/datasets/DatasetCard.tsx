@@ -13,7 +13,8 @@ import {
   XAxis,
   Tooltip,
 } from "recharts";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
+import { formatDate } from "../../utils/format";
 
 interface DatasetCardProps {
   dataset: Dataset;
@@ -26,15 +27,92 @@ interface PreviewData extends Measurement {
   displayDate: string;
 }
 
-interface TooltipPayload {
-  payload: PreviewData;
-  value: number | string;
-}
+const CustomTooltip = ({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: any[];
+}) => {
+  if (active && payload && payload.length > 0) {
+    const data = payload[0].payload as PreviewData;
+    return (
+      <div className="bg-zinc-900 border border-white/20 p-2 rounded-lg shadow-xl pointer-events-none">
+        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider leading-none mb-1">
+          {data.displayDate}
+        </p>
+        <p className="text-sm font-display font-black text-brand leading-none">
+          {payload[0].value}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
+const PreviewChart = ({ dataset, data }: { dataset: Dataset; data: PreviewData[] }) => {
+  const viewType = dataset.views[0] ?? "line";
+  const commonAxis = <XAxis dataKey="tooltipId" hide />;
+  const tooltip = (
+    <Tooltip
+      content={<CustomTooltip />}
+      cursor={{ stroke: "rgba(139, 92, 246, 0.2)", strokeWidth: 2 }}
+      isAnimationActive={false}
+    />
+  );
+
+  switch (viewType) {
+    case "area":
+      return (
+        <AreaChart data={data}>
+          <defs>
+            <linearGradient id={`grad-${dataset.id}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
+              <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          {commonAxis}
+          {tooltip}
+          <Area
+            type="monotone"
+            dataKey="value"
+            stroke="#8b5cf6"
+            fill={`url(#grad-${dataset.id})`}
+            strokeWidth={2}
+            isAnimationActive={false}
+          />
+        </AreaChart>
+      );
+    case "bar":
+      return (
+        <BarChart data={data}>
+          {commonAxis}
+          {tooltip}
+          <Bar dataKey="value" fill="#8b5cf6" radius={[4, 4, 0, 0]} isAnimationActive={false} />
+        </BarChart>
+      );
+    default:
+      return (
+        <LineChart data={data}>
+          {commonAxis}
+          {tooltip}
+          <Line
+            type="monotone"
+            dataKey="value"
+            stroke="#8b5cf6"
+            strokeWidth={2.5}
+            dot={false}
+            isAnimationActive={false}
+          />
+        </LineChart>
+      );
+  }
+};
 
 export function DatasetCard({ dataset, onEdit, onDelete }: DatasetCardProps) {
   const [isClient, setIsClient] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const menuRef = useMemo(() => ({ current: null as HTMLDivElement | null }), []);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsClient(true);
@@ -42,129 +120,22 @@ export function DatasetCard({ dataset, onEdit, onDelete }: DatasetCardProps) {
 
   useEffect(() => {
     if (!isMenuOpen) return;
-
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setIsMenuOpen(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isMenuOpen]);
 
-  // Use the last 7 measurements for the preview chart, sorted chronologically
   const previewData = useMemo<PreviewData[]>(() => {
     return dataset.measurements.slice(-7).map((m, index) => ({
       ...m,
-      tooltipId: `${m.id || index.toString()}-${m.timestamp}`,
-      displayDate: isClient
-        ? new Date(m.timestamp).toLocaleDateString(undefined, {
-            month: "short",
-            day: "numeric",
-          })
-        : "",
+      tooltipId: `${m.id || index}-${m.timestamp}`,
+      displayDate: isClient ? formatDate(m.timestamp, "short") : "",
     }));
   }, [dataset.measurements, isClient]);
-
-  const viewType = dataset.views[0] ?? "line";
-
-  const CustomTooltip = ({
-    active,
-    payload,
-  }: {
-    active?: boolean;
-    payload?: TooltipPayload[];
-  }) => {
-    if (active && payload && payload.length > 0) {
-      const firstPayload = payload[0];
-      if (firstPayload?.payload) {
-        const data = firstPayload.payload;
-        return (
-          <div className="bg-zinc-900 border border-white/20 p-2 rounded-lg shadow-xl pointer-events-none">
-            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider leading-none mb-1">
-              {data.displayDate}
-            </p>
-            <p className="text-sm font-display font-black text-brand leading-none">
-              {firstPayload.value}
-            </p>
-          </div>
-        );
-      }
-    }
-    return null;
-  };
-
-  const renderPreviewChart = () => {
-    if (!isClient) return null;
-
-    const commonAxis = <XAxis dataKey="tooltipId" hide />;
-    const tooltip = (
-      <Tooltip
-        content={<CustomTooltip />}
-        cursor={{ stroke: "rgba(139, 92, 246, 0.2)", strokeWidth: 2 }}
-        isAnimationActive={false}
-      />
-    );
-
-    switch (viewType) {
-      case "area":
-        return (
-          <AreaChart data={previewData}>
-            <defs>
-              <linearGradient
-                id={`gradient-${dataset.id}`}
-                x1="0"
-                y1="0"
-                x2="0"
-                y2="1"
-              >
-                <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            {commonAxis}
-            {tooltip}
-            <Area
-              type="monotone"
-              dataKey="value"
-              stroke="#8b5cf6"
-              fill={`url(#gradient-${dataset.id})`}
-              strokeWidth={2}
-              isAnimationActive={false}
-            />
-          </AreaChart>
-        );
-      case "bar":
-        return (
-          <BarChart data={previewData}>
-            {commonAxis}
-            {tooltip}
-            <Bar
-              dataKey="value"
-              fill="#8b5cf6"
-              radius={[4, 4, 0, 0]}
-              isAnimationActive={false}
-            />
-          </BarChart>
-        );
-      default:
-        return (
-          <LineChart data={previewData}>
-            {commonAxis}
-            {tooltip}
-            <Line
-              type="monotone"
-              dataKey="value"
-              stroke="#8b5cf6"
-              strokeWidth={2.5}
-              dot={false}
-              isAnimationActive={false}
-            />
-          </LineChart>
-        );
-    }
-  };
 
   return (
     <motion.div
@@ -186,7 +157,7 @@ export function DatasetCard({ dataset, onEdit, onDelete }: DatasetCardProps) {
             </p>
           </div>
 
-          <div className="relative" ref={(el) => { menuRef.current = el; }}>
+          <div className="relative" ref={menuRef}>
             <button
               onClick={(e) => {
                 e.preventDefault();
@@ -206,44 +177,39 @@ export function DatasetCard({ dataset, onEdit, onDelete }: DatasetCardProps) {
                   exit={{ opacity: 0, scale: 0.95, y: -10 }}
                   className="absolute right-0 mt-2 w-48 bg-zinc-900 border border-white/10 rounded-xl shadow-2xl z-20 overflow-hidden"
                 >
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        onEdit?.(dataset);
-                        setIsMenuOpen(false);
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-zinc-400 hover:text-white hover:bg-white/5 transition-all uppercase tracking-widest"
-                    >
-                      <Pencil className="w-4 h-4" />
-                      Edit
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        onDelete?.(dataset);
-                        setIsMenuOpen(false);
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-red-500/70 hover:text-red-500 hover:bg-red-500/5 transition-all uppercase tracking-widest border-t border-white/5"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      Delete
-                    </button>
-                  </motion.div>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onEdit?.(dataset);
+                      setIsMenuOpen(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-zinc-400 hover:text-white hover:bg-white/5 transition-all uppercase tracking-widest"
+                  >
+                    <Pencil className="w-4 h-4" />
+                    Edit
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onDelete?.(dataset);
+                      setIsMenuOpen(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-red-500/70 hover:text-red-500 hover:bg-red-500/5 transition-all uppercase tracking-widest border-t border-white/5"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete
+                  </button>
+                </motion.div>
               )}
             </AnimatePresence>
           </div>
         </div>
 
         <div className="h-28 w-full mb-6 bg-white/2 border border-white/5 rounded-2xl p-2 min-h-0 relative overflow-hidden group-hover:border-brand/20 transition-colors">
-          <ResponsiveContainer
-            width="100%"
-            height="100%"
-            minWidth={0}
-            minHeight={0}
-          >
-            {renderPreviewChart()}
+          <ResponsiveContainer width="100%" height="100%">
+            {isClient ? <PreviewChart dataset={dataset} data={previewData} /> : <div />}
           </ResponsiveContainer>
         </div>
 

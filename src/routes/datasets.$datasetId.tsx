@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useMemo, use } from "react";
+import { useState, useMemo } from "react";
 import { DatasetDetailHeader } from "../components/layout/DatasetDetailHeader";
 import { AddMeasurementModal } from "../components/datasets/AddMeasurementModal";
 import { DatasetSettingsModal } from "../components/datasets/DatasetSettingsModal";
@@ -8,7 +8,6 @@ import { TableSection } from "../components/datasets/TableSection";
 import { DatasetDetailNotFound } from "../components/datasets/DatasetDetailNotFound";
 import type { Dataset, Measurement } from "../types/dataset";
 import { useDatasetStore } from "@/store";
-import { db } from "@/dexieDb";
 import { useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/datasets/$datasetId")({
@@ -17,9 +16,7 @@ export const Route = createFileRoute("/datasets/$datasetId")({
 
 function DatasetDetail() {
   const { datasetId } = Route.useParams();
-
-  const datasetStore = useDatasetStore();
-  const { datasets } = useDatasetStore();
+  const { datasets, updateDataset, removeDataset } = useDatasetStore();
 
   const dataset = useMemo(() => {
     return datasets.find((d) => d.id === datasetId);
@@ -31,22 +28,15 @@ function DatasetDetail() {
   const navigate = useNavigate();
 
   if (!dataset) {
-    use(
-      (async () => {
-        datasetStore.setDatasets(await db.datasets.toArray());
-      })(),
-    );
     return <DatasetDetailNotFound />;
   }
 
   const handleUpdateDataset = (updatedDataset: Dataset) => {
-    db.datasets.put(updatedDataset);
-    datasetStore.updateDataset(updatedDataset);
+    updateDataset(updatedDataset);
   };
 
   const handleDeleteDataset = (id: string) => {
-    db.datasets.delete(id);
-    datasetStore.removeDataset(id);
+    removeDataset(id);
     navigate({ to: "/" });
   };
 
@@ -55,8 +45,7 @@ function DatasetDetail() {
       ...dataset,
       measurements: [...dataset.measurements, newMeasurement],
     };
-    db.datasets.put(updatedDataset);
-    datasetStore.updateDataset(updatedDataset);
+    updateDataset(updatedDataset);
     setIsAddMeasurementOpen(false);
   };
 

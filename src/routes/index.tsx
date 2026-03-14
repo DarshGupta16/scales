@@ -6,7 +6,6 @@ import { AddDatasetFAB } from "../components/layout/AddDatasetFAB";
 import { AddDatasetModal } from "../components/datasets/AddDatasetModal";
 import { DatasetSettingsModal } from "../components/datasets/DatasetSettingsModal";
 import type { Dataset } from "../types/dataset";
-import { db } from "@/dexieDb";
 import { useDatasetStore } from "@/store";
 
 export const Route = createFileRoute("/")({
@@ -14,22 +13,19 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const datasetStore = useDatasetStore();
-  const { datasets } = datasetStore;
+  const { 
+    datasets, 
+    addDataset, 
+    updateDataset, 
+    removeDataset 
+  } = useDatasetStore();
+
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingDataset, setEditingDataset] = useState<Dataset | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  useEffect(() => {
-    const getDatasets = async () => {
-      datasetStore.setDatasets((await db.datasets.toArray()) as Dataset[]);
-    };
-
-    getDatasets();
-  }, []);
-
-  // Core data filtering logic remains in the orchestrator
+  // Core data filtering logic
   const filteredDatasets = useMemo(() => {
     return (datasets || [])
       .filter(
@@ -41,20 +37,18 @@ function Index() {
   }, [datasets, searchQuery]);
 
   const handleAddDataset = (newDataset: Dataset) => {
-    datasetStore.addDataset(newDataset);
-    db.datasets.put(newDataset);
+    addDataset(newDataset);
+    setIsAddModalOpen(false);
   };
 
   const handleUpdateDataset = (updatedDataset: Dataset) => {
-    db.datasets.put(updatedDataset);
-    datasetStore.updateDataset(updatedDataset);
+    updateDataset(updatedDataset);
     setEditingDataset(null);
     setIsDeleting(false);
   };
 
   const handleDeleteDataset = (id: string) => {
-    db.datasets.delete(id);
-    datasetStore.removeDataset(id);
+    removeDataset(id);
     setEditingDataset(null);
     setIsDeleting(false);
   };

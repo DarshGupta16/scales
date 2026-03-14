@@ -3,6 +3,7 @@ import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import { useState, useEffect } from 'react'
 import { LoadingScreen } from '../components/LoadingScreen'
+import { useDatasetStore } from '../store'
 
 import appCss from '../styles.css?url'
 
@@ -46,13 +47,17 @@ export const Route = createRootRoute({
 
 function RootComponent() {
   const [isLoading, setIsLoading] = useState(true)
+  const hydrate = useDatasetStore((state) => state.hydrate)
 
   useEffect(() => {
+    // Start hydrating data from Dexie immediately on mount
+    hydrate()
+
     // Artificial delay to ensure hydration and rendering can happen
     // behind the scenes before we reveal the UI on first load.
     const timer = setTimeout(() => setIsLoading(false), 275)
     return () => clearTimeout(timer)
-  }, [])
+  }, [hydrate])
 
   return (
     <>
