@@ -1,49 +1,24 @@
 import type { Unit } from "../../types/dataset";
 import { useState, useMemo } from "react";
 import { Check, ChevronsUpDown, Search } from "lucide-react";
+import { useDatasetStore } from "@/store";
 
 interface UnitSelectorProps {
-  value: Unit;
-  onChange: (value: Unit) => void;
+  value: Unit | null;
+  onChange: (unit: Unit) => void;
 }
 
-const ALL_UNITS: Unit[] = [
-  "seconds",
-  "minutes",
-  "hours",
-  "days",
-  "weeks",
-  "months",
-  "years",
-  "meters",
-  "kilometers",
-  "miles",
-  "grams",
-  "kilograms",
-  "pounds",
-  "celsius",
-  "fahrenheit",
-  "percentage",
-  "bytes",
-  "kilobytes",
-  "megabytes",
-  "gigabytes",
-  "terabytes",
-  "dollars",
-  "euros",
-  "rupees",
-  "count",
-];
-
 export function UnitSelector({ value, onChange }: UnitSelectorProps) {
+  const { units } = useDatasetStore();
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
 
   const filteredUnits = useMemo(() => {
-    return ALL_UNITS.filter((u) =>
-      u.toLowerCase().includes(search.toLowerCase()),
+    return units.filter((u) =>
+      u.name.toLowerCase().includes(search.toLowerCase()) ||
+      u.symbol.toLowerCase().includes(search.toLowerCase())
     );
-  }, [search]);
+  }, [units, search]);
 
   return (
     <div className="relative">
@@ -53,7 +28,7 @@ export function UnitSelector({ value, onChange }: UnitSelectorProps) {
         className="w-full flex items-center justify-between px-4 py-3 bg-zinc-900/50 border border-white/10 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all text-left rounded-xl"
       >
         <span className="text-white uppercase tracking-widest font-bold text-[10px]">
-          {value}
+          {value ? `${value.name} (${value.symbol})` : "Select Unit..."}
         </span>
         <ChevronsUpDown className="w-4 h-4 text-brand" />
       </button>
@@ -79,7 +54,7 @@ export function UnitSelector({ value, onChange }: UnitSelectorProps) {
             <div className="max-h-60 overflow-y-auto p-2 bg-zinc-900">
               {filteredUnits.map((unit) => (
                 <button
-                  key={unit}
+                  key={unit.id}
                   type="button"
                   onClick={() => {
                     onChange(unit);
@@ -89,14 +64,17 @@ export function UnitSelector({ value, onChange }: UnitSelectorProps) {
                   className={`
                     w-full flex items-center justify-between px-4 py-3 text-[10px] transition-all uppercase tracking-widest font-bold rounded-xl
                     ${
-                      value === unit
+                      value?.id === unit.id
                         ? "bg-brand text-white shadow-lg shadow-brand/20"
                         : "text-zinc-500 hover:bg-white/5 hover:text-white"
                     }
                   `}
                 >
-                  <span>{unit}</span>
-                  {value === unit && <Check className="w-4 h-4" />}
+                  <div className="flex items-center gap-2">
+                    <span className="text-brand opacity-50">{unit.symbol}</span>
+                    <span>{unit.name}</span>
+                  </div>
+                  {value?.id === unit.id && <Check className="w-4 h-4" />}
                 </button>
               ))}
               {filteredUnits.length === 0 && (

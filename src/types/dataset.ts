@@ -1,31 +1,30 @@
-export type Unit =
-  | "seconds"
-  | "minutes"
-  | "hours"
-  | "days"
-  | "weeks"
-  | "months"
-  | "years"
-  | "meters"
-  | "kilometers"
-  | "miles"
-  | "grams"
-  | "kilograms"
-  | "pounds"
-  | "celsius"
-  | "fahrenheit"
-  | "percentage"
-  | "bytes"
-  | "kilobytes"
-  | "megabytes"
-  | "gigabytes"
-  | "terabytes"
-  | "dollars"
-  | "euros"
-  | "rupees"
-  | "count";
+// Database/PocketBase Types (Normalized)
+export interface UnitRecord {
+  id: string;
+  name: string;
+  symbol: string;
+}
+
+export interface MeasurementRecord {
+  id: string;
+  datasetId: string;
+  timestamp: number;
+  value: number;
+}
+
+export interface DatasetRecord {
+  id: string;
+  title: string;
+  description?: string;
+  unitId: string;
+  views: ViewType[];
+  createdAt: number;
+}
 
 export type ViewType = "line" | "bar" | "area" | "pie" | "scatter";
+
+// UI Representation Types (Nested/Denormalized)
+export type Unit = UnitRecord;
 
 export interface Measurement {
   id: string;
@@ -34,11 +33,11 @@ export interface Measurement {
 }
 
 export interface Dataset {
-  id: string; // used as slug in URL
+  id: string;
   title: string;
   description?: string;
   unit: Unit;
-  views: ViewType[]; // persisted configuration
+  views: ViewType[];
   measurements: Measurement[];
   createdAt: number;
 }

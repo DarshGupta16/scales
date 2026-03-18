@@ -1,5 +1,5 @@
 import { Dexie, type EntityTable } from "dexie";
-import type { Dataset } from "./types/dataset";
+import type { DatasetRecord, UnitRecord, MeasurementRecord } from "./types/dataset";
 
 const isBrowser = typeof window !== "undefined";
 
@@ -10,15 +10,19 @@ const isBrowser = typeof window !== "undefined";
 export const db = (
   isBrowser ? new Dexie("ScalesDatabase") : ({} as unknown)
 ) as Dexie & {
-  datasets: EntityTable<Dataset, "id">;
+  datasets: EntityTable<DatasetRecord, "id">;
+  units: EntityTable<UnitRecord, "id">;
+  measurements: EntityTable<MeasurementRecord, "id">;
 };
 
 if (isBrowser) {
   // Schema declaration:
-  // Only indexing fields that might be used for searching/filtering.
-  db.version(1).stores({
-    datasets: "id, title, description, unit, views, slug, measurements",
+  // Version bumped to reflect normalized structure.
+  db.version(2).stores({
+    datasets: "id, title, unitId, createdAt",
+    units: "id, name, symbol",
+    measurements: "id, datasetId, timestamp, value",
   });
 }
 
-export type { Dataset };
+export type { DatasetRecord, UnitRecord, MeasurementRecord };

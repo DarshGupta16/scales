@@ -16,7 +16,11 @@ export const Route = createFileRoute("/datasets/$datasetId")({
 
 function DatasetDetail() {
   const { datasetId } = Route.useParams();
-  const { datasets, updateDataset, removeDataset } = useDatasetStore();
+  const { 
+    datasets, 
+    updateDataset, 
+    removeDataset
+  } = useDatasetStore();
 
   const dataset = useMemo(() => {
     return datasets.find((d) => d.id === datasetId);
@@ -41,9 +45,9 @@ function DatasetDetail() {
   };
 
   const handleAddMeasurement = (newMeasurement: Measurement) => {
-    const updatedDataset = {
+    const updatedDataset: Dataset = {
       ...dataset,
-      measurements: [...dataset.measurements, newMeasurement],
+      measurements: [...dataset.measurements, newMeasurement]
     };
     updateDataset(updatedDataset);
     setIsAddMeasurementOpen(false);
@@ -62,7 +66,7 @@ function DatasetDetail() {
 
       <DatasetDetailHeader
         title={dataset.title}
-        unit={dataset.unit}
+        unit={dataset.unit.symbol || dataset.unit.name}
         onAddMeasurement={() => setIsAddMeasurementOpen(true)}
         onOpenSettings={() => setIsSettingsOpen(true)}
       />
@@ -85,7 +89,7 @@ function DatasetDetail() {
         isOpen={isAddMeasurementOpen}
         onClose={() => setIsAddMeasurementOpen(false)}
         onAdd={handleAddMeasurement}
-        unit={dataset.unit}
+        unit={dataset.unit.symbol || dataset.unit.name}
       />
 
       <DatasetSettingsModal

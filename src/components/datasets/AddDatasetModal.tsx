@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Modal } from "../ui/Modal";
 import { UnitSelector } from "../ui/UnitSelector";
 import type { Dataset, Unit } from "../../types/dataset";
+import { useDatasetStore } from "@/store";
 
 interface AddDatasetModalProps {
   isOpen: boolean;
@@ -14,22 +15,26 @@ export function AddDatasetModal({
   onClose,
   onAdd,
 }: AddDatasetModalProps) {
+  const { units } = useDatasetStore();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [unit, setUnit] = useState<Unit>("count");
+  const [unit, setUnit] = useState<Unit | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title) return;
+
+    const selectedUnit = unit || units[0];
+    if (!selectedUnit) return;
 
     const newId = title.toLowerCase().replace(/\s+/g, "-");
     const newDataset: Dataset = {
       id: `${newId}-${Math.random().toString(36).substring(7)}`,
       title,
       description,
-      unit,
-      views: ["line"],
+      unit: selectedUnit,
       measurements: [],
+      views: ["line"],
       createdAt: new Date().getTime(),
     };
 
@@ -38,7 +43,7 @@ export function AddDatasetModal({
     // Reset form
     setTitle("");
     setDescription("");
-    setUnit("count");
+    setUnit(null);
     onClose();
   };
 
@@ -77,7 +82,7 @@ export function AddDatasetModal({
           <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] ml-1">
             Unit
           </label>
-          <UnitSelector value={unit} onChange={setUnit} />
+          <UnitSelector value={unit || units[0] || null} onChange={setUnit} />
         </div>
 
         <button type="submit" className="mt-4 brutal-btn-brand py-4 w-full">

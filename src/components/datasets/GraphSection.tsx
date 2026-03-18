@@ -64,9 +64,9 @@ export function GraphSection({ dataset, onUpdateDataset }: GraphSectionProps) {
         <div className="flex-1 min-h-0 bg-black/40 rounded-3xl overflow-hidden border border-white/5">
           {activeView ? (
             <DatasetGraph
-              data={dataset.measurements}
+              data={dataset.measurements || []}
               viewType={activeView}
-              unit={dataset.unit}
+              unit={dataset.unit.symbol || dataset.unit.name}
             />
           ) : (
             <div className="h-full flex flex-col items-center justify-center text-zinc-700 font-sans uppercase tracking-[0.3em] font-bold text-xs">

@@ -130,7 +130,7 @@ export function DatasetCard({ dataset, onEdit, onDelete }: DatasetCardProps) {
   }, [isMenuOpen]);
 
   const previewData = useMemo<PreviewData[]>(() => {
-    return dataset.measurements.slice(-7).map((m, index) => ({
+    return (dataset.measurements || []).slice(-7).map((m, index) => ({
       ...m,
       tooltipId: `${m.id || index}-${m.timestamp}`,
       displayDate: isClient ? formatDate(m.timestamp, "short") : "",
@@ -153,7 +153,7 @@ export function DatasetCard({ dataset, onEdit, onDelete }: DatasetCardProps) {
               {dataset.title}
             </h3>
             <p className="text-[10px] font-sans font-bold text-zinc-500 uppercase tracking-[0.2em] mt-2">
-              {dataset.unit}
+              {dataset.unit.symbol || dataset.unit.name}
             </p>
           </div>
 

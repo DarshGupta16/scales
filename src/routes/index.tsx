@@ -25,13 +25,14 @@ function Index() {
   const [editingDataset, setEditingDataset] = useState<Dataset | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Core data filtering logic
+  // Core data filtering logic - datasets are already hydrated by the store
   const filteredDatasets = useMemo(() => {
     return (datasets || [])
       .filter(
-        (dataset) =>
-          dataset.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          dataset.unit.toLowerCase().includes(searchQuery.toLowerCase()),
+        (d) =>
+          d.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          d.unit.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          d.unit.symbol.toLowerCase().includes(searchQuery.toLowerCase()),
       )
       .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
   }, [datasets, searchQuery]);
