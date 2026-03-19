@@ -19,6 +19,7 @@ const config = defineConfig({
       globDirectory: "dist/client",
       injectionPoint: "self.__SW_MANIFEST",
       rollupFormat: "iife",
+      disable: true,
     }),
   ],
 })

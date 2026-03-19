@@ -15,13 +15,21 @@ export const Route = createRootRoute({
       },
       {
         name: 'viewport',
-        content: 'width=device-width, initial-scale=1',
+        content: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0',
+      },
+      {
+        name: 'theme-color',
+        content: '#050505',
       },
       {
         title: 'SCALES | BRUTAL METRICS',
       },
     ],
     links: [
+      {
+        rel: 'manifest',
+        href: '/manifest.webmanifest',
+      },
       {
         rel: 'stylesheet',
         href: appCss,
@@ -91,6 +99,17 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           ]}
         />
         <Scripts />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+                if ('serviceWorker' in navigator && window.location.hostname !== 'localhost') {
+                  window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                  })
+                }
+              `,
+          }}
+        />
       </body>
     </html>
   )

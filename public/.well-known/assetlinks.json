@@ -1,0 +1,10 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "org.duckdns.spacexdragon7_scales_app.twa",
+      "sha256_cert_fingerprints": ["F8:87:99:56:57:12:26:21:4F:6E:A6:30:78:47:64:8E:BF:74:12:A1:E8:F3:15:AC:13:55:50:CF:3F:A1:C4:C1"]
+    }
+  }
+]

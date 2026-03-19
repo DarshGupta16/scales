@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "bun --bun vite dev --port 3000",
-    "build": "bun --bun vite build",
+    "build": "bun --bun vite build && bun run scripts/build-sw.ts && bun run scripts/inject-manifest.ts",
     "preview": "bun --bun vite preview",
     "test": "vitest run"
   },
@@ -27,12 +27,12 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "recharts": "^3.7.0",
-    "serwist": "^9.5.7",
+    "serwist": "9.5.6",
     "tailwindcss": "^4.1.18",
     "zustand": "^5.0.11"
   },
   "devDependencies": {
-    "@serwist/vite": "^9.5.7",
+    "@serwist/vite": "9.5.6",
     "@tanstack/devtools-vite": "^0.3.11",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/react": "^16.2.0",
