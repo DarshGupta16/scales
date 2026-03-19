@@ -1,7 +1,4 @@
-import { 
-  type Dataset, 
-  type Unit, 
-} from "../types/dataset";
+import { type Dataset, type Unit } from "../types/dataset";
 
 export interface DatasetState {
   datasets: Dataset[];
@@ -13,7 +10,7 @@ export interface DatasetState {
 
   // Actions
   hydrate: () => Promise<void>;
-  
+
   // Dataset Actions
   addDataset: (dataset: Dataset) => Promise<void>;
   updateDataset: (dataset: Dataset) => Promise<void>;
