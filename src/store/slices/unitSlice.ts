@@ -69,16 +69,18 @@ export const createUnitSlice: StateCreator<
       // 3. POCKETBASE: Remote Persistence
       try {
         await pb.collection("units").create(unit);
-      } catch (pbErr) {
-        // Record offline operation
-        await db.offline_ops.add({
-          collection: "units",
-          action: "create",
-          recordId: unit.id,
-          data: unit,
-          timestamp: Date.now(),
-        });
-        console.warn("Offline: Recorded unit creation in op logs.");
+      } catch (pbErr: any) {
+        if (pbErr.status === 0) {
+          // Record offline operation
+          await db.offline_ops.add({
+            collection: "units",
+            action: "create",
+            recordId: unit.id,
+            data: unit,
+            timestamp: Date.now(),
+          });
+          console.warn("Offline: Recorded unit creation in op logs.");
+        }
       }
     } catch (err) {
       set({ units: previousUnits });
@@ -106,16 +108,18 @@ export const createUnitSlice: StateCreator<
       // 3. POCKETBASE: Remote Persistence
       try {
         await pb.collection("units").update(unit.id, unit);
-      } catch (pbErr) {
-        // Record offline operation
-        await db.offline_ops.add({
-          collection: "units",
-          action: "update",
-          recordId: unit.id,
-          data: unit,
-          timestamp: Date.now(),
-        });
-        console.warn("Offline: Recorded unit update in op logs.");
+      } catch (pbErr: any) {
+        if (pbErr.status === 0) {
+          // Record offline operation
+          await db.offline_ops.add({
+            collection: "units",
+            action: "update",
+            recordId: unit.id,
+            data: unit,
+            timestamp: Date.now(),
+          });
+          console.warn("Offline: Recorded unit update in op logs.");
+        }
       }
     } catch (err) {
       set({ units: previousUnits, datasets: previousDatasets });
@@ -139,16 +143,18 @@ export const createUnitSlice: StateCreator<
       // 3. POCKETBASE: Remote Persistence
       try {
         await pb.collection("units").delete(id);
-      } catch (pbErr) {
-        // Record offline operation
-        await db.offline_ops.add({
-          collection: "units",
-          action: "delete",
-          recordId: id,
-          data: null,
-          timestamp: Date.now(),
-        });
-        console.warn("Offline: Recorded unit deletion in op logs.");
+      } catch (pbErr: any) {
+        if (pbErr.status === 0) {
+          // Record offline operation
+          await db.offline_ops.add({
+            collection: "units",
+            action: "delete",
+            recordId: id,
+            data: null,
+            timestamp: Date.now(),
+          });
+          console.warn("Offline: Recorded unit deletion in op logs.");
+        }
       }
     } catch (err) {
       set({ units: previousUnits });

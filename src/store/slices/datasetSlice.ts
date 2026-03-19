@@ -72,16 +72,18 @@ export const createDatasetSlice: StateCreator<
             timestamp: m.timestamp,
           });
         }
-      } catch (pbErr) {
-        // Record offline operation if it's a network error
-        await db.offline_ops.add({
-          collection: "datasets",
-          action: "create",
-          recordId: datasetRecord.id,
-          data: { datasetRecord, measurementRecords },
-          timestamp: Date.now(),
-        });
-        console.warn("Offline: Recorded dataset creation in op logs.");
+      } catch (pbErr: any) {
+        if (pbErr.status === 0) {
+          // Record offline operation if it's a network error
+          await db.offline_ops.add({
+            collection: "datasets",
+            action: "create",
+            recordId: datasetRecord.id,
+            data: { datasetRecord, measurementRecords },
+            timestamp: Date.now(),
+          });
+          console.warn("Offline: Recorded dataset creation in op logs.");
+        }
       }
     } catch (err) {
       set({ datasets: previousDatasets });
@@ -174,16 +176,18 @@ export const createDatasetSlice: StateCreator<
             });
           }
         }
-      } catch (pbErr) {
-        // Record offline operation
-        await db.offline_ops.add({
-          collection: "datasets",
-          action: "update",
-          recordId: updatedDataset.id,
-          data: { datasetRecord, measurementRecords },
-          timestamp: Date.now(),
-        });
-        console.warn("Offline: Recorded dataset update in op logs.");
+      } catch (pbErr: any) {
+        if (pbErr.status === 0) {
+          // Record offline operation
+          await db.offline_ops.add({
+            collection: "datasets",
+            action: "update",
+            recordId: updatedDataset.id,
+            data: { datasetRecord, measurementRecords },
+            timestamp: Date.now(),
+          });
+          console.warn("Offline: Recorded dataset update in op logs.");
+        }
       }
     } catch (err) {
       set({ datasets: previousDatasets });
@@ -210,16 +214,18 @@ export const createDatasetSlice: StateCreator<
       // 3. POCKETBASE: Remote Persistence
       try {
         await pb.collection("datasets").delete(id);
-      } catch (pbErr) {
-        // Record offline operation
-        await db.offline_ops.add({
-          collection: "datasets",
-          action: "delete",
-          recordId: id,
-          data: null,
-          timestamp: Date.now(),
-        });
-        console.warn("Offline: Recorded dataset deletion in op logs.");
+      } catch (pbErr: any) {
+        if (pbErr.status === 0) {
+          // Record offline operation
+          await db.offline_ops.add({
+            collection: "datasets",
+            action: "delete",
+            recordId: id,
+            data: null,
+            timestamp: Date.now(),
+          });
+          console.warn("Offline: Recorded dataset deletion in op logs.");
+        }
       }
     } catch (err) {
       set({ datasets: previousDatasets });
