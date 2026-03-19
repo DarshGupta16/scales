@@ -56,14 +56,20 @@ export const createDatasetSlice: StateCreator<
       // 3. POCKETBASE: Remote Persistence
       try {
         await pb.collection("datasets").create({
-          ...datasetRecord,
+          id: datasetRecord.id,
+          title: datasetRecord.title,
+          description: datasetRecord.description,
           unit_id: datasetRecord.unitId,
+          views: datasetRecord.views,
+          created: new Date(datasetRecord.createdAt).toISOString(),
         });
 
         for (const m of measurementRecords) {
           await pb.collection("measurements").create({
-            ...m,
+            id: m.id,
             dataset_id: m.datasetId,
+            value: m.value,
+            timestamp: m.timestamp,
           });
         }
       } catch (pbErr) {
@@ -134,8 +140,10 @@ export const createDatasetSlice: StateCreator<
       // 3. POCKETBASE: Remote Persistence
       try {
         await pb.collection("datasets").update(updatedDataset.id, {
-          ...datasetRecord,
+          title: datasetRecord.title,
+          description: datasetRecord.description,
           unit_id: datasetRecord.unitId,
+          views: datasetRecord.views,
         });
 
         const pbExisting = await pb
@@ -152,9 +160,18 @@ export const createDatasetSlice: StateCreator<
         }
         for (const up of pbToUpdate) {
           try {
-            await pb.collection("measurements").update(up.id, { ...up, dataset_id: up.datasetId });
+            await pb.collection("measurements").update(up.id, {
+              value: up.value,
+              timestamp: up.timestamp,
+              dataset_id: up.datasetId,
+            });
           } catch {
-            await pb.collection("measurements").create({ ...up, dataset_id: up.datasetId });
+            await pb.collection("measurements").create({
+              id: up.id,
+              value: up.value,
+              timestamp: up.timestamp,
+              dataset_id: up.datasetId,
+            });
           }
         }
       } catch (pbErr) {

@@ -128,13 +128,19 @@ export const useDatasetStore = create<DatasetState>((set, get, ...args) => ({
           if (op.collection === "datasets") {
             const { datasetRecord, measurementRecords } = op.data;
             await collection.create({
-              ...datasetRecord,
+              id: datasetRecord.id,
+              title: datasetRecord.title,
+              description: datasetRecord.description,
               unit_id: datasetRecord.unitId,
+              views: datasetRecord.views,
+              created: new Date(datasetRecord.createdAt).toISOString(),
             });
             for (const m of measurementRecords) {
               await pb.collection("measurements").create({
-                ...m,
+                id: m.id,
                 dataset_id: m.datasetId,
+                value: m.value,
+                timestamp: m.timestamp,
               });
             }
           } else {
@@ -144,8 +150,10 @@ export const useDatasetStore = create<DatasetState>((set, get, ...args) => ({
           if (op.collection === "datasets") {
             const { datasetRecord } = op.data;
             await collection.update(op.recordId, {
-              ...datasetRecord,
+              title: datasetRecord.title,
+              description: datasetRecord.description,
               unit_id: datasetRecord.unitId,
+              views: datasetRecord.views,
             });
 
             // For simplicity, we'll assume measurements are handled by the rewrite sync after this

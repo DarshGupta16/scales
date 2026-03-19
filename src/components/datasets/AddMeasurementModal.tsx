@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Modal } from "../ui/Modal";
 import type { Measurement } from "../../types/dataset";
+import { generatePbId } from "../../utils/id";
 
 interface AddMeasurementModalProps {
   isOpen: boolean;
@@ -30,7 +31,7 @@ export function AddMeasurementModal({
     if (!value || isNaN(Number(value))) return;
 
     const newMeasurement = {
-      id: Math.random().toString(36).substring(7),
+      id: generatePbId(),
       timestamp: new Date(timestamp).getTime(),
       value: Number(value),
     } as Measurement;

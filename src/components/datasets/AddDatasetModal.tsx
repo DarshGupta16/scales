@@ -3,6 +3,7 @@ import { Modal } from "../ui/Modal";
 import { UnitSelector } from "../ui/UnitSelector";
 import type { Dataset, Unit } from "../../types/dataset";
 import { useDatasetStore } from "@/store";
+import { generatePbId } from "../../utils/id";
 
 interface AddDatasetModalProps {
   isOpen: boolean;
@@ -27,9 +28,8 @@ export function AddDatasetModal({
     const selectedUnit = unit || units[0];
     if (!selectedUnit) return;
 
-    const newId = title.toLowerCase().replace(/\s+/g, "-");
     const newDataset: Dataset = {
-      id: `${newId}-${Math.random().toString(36).substring(7)}`,
+      id: generatePbId(),
       title,
       description,
       unit: selectedUnit,
