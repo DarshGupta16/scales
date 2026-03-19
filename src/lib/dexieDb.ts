@@ -1,7 +1,16 @@
 import { Dexie, type EntityTable } from "dexie";
-import type { DatasetRecord, UnitRecord, MeasurementRecord } from "./types/dataset";
+import type { DatasetRecord, UnitRecord, MeasurementRecord } from "../types/dataset";
 
 const isBrowser = typeof window !== "undefined";
+
+export interface OfflineOp {
+  id?: number;
+  collection: "datasets" | "measurements" | "units";
+  action: "create" | "update" | "delete";
+  recordId: string;
+  data: any;
+  timestamp: number;
+}
 
 /**
  * Scales Database - Dexie implementation for local-first persistence.
@@ -13,15 +22,17 @@ export const db = (
   datasets: EntityTable<DatasetRecord, "id">;
   units: EntityTable<UnitRecord, "id">;
   measurements: EntityTable<MeasurementRecord, "id">;
+  offline_ops: EntityTable<OfflineOp, "id">;
 };
 
 if (isBrowser) {
   // Schema declaration:
-  // Version bumped to reflect normalized structure.
-  db.version(2).stores({
+  // Version bumped to reflect normalized structure and offline ops.
+  db.version(3).stores({
     datasets: "id, title, unitId, createdAt",
     units: "id, name, symbol",
     measurements: "id, datasetId, timestamp, value",
+    offline_ops: "++id, collection, action, recordId, timestamp",
   });
 }
 

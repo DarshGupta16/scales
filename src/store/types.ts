@@ -10,6 +10,7 @@ export interface DatasetState {
 
   // Actions
   hydrate: () => Promise<void>;
+  sync: () => Promise<void>;
 
   // Dataset Actions
   addDataset: (dataset: Dataset) => Promise<void>;

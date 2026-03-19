@@ -20,7 +20,19 @@ export const createUnitSlice: StateCreator<
       await db.units.put(unit);
 
       // 3. POCKETBASE: Remote Persistence
-      await pb.collection("units").create(unit);
+      try {
+        await pb.collection("units").create(unit);
+      } catch (pbErr) {
+        // Record offline operation
+        await db.offline_ops.add({
+          collection: "units",
+          action: "create",
+          recordId: unit.id,
+          data: unit,
+          timestamp: Date.now(),
+        });
+        console.warn("Offline: Recorded unit creation in op logs.");
+      }
     } catch (err) {
       set({ units: previousUnits });
       set({ error: (err as Error).message });
@@ -45,7 +57,19 @@ export const createUnitSlice: StateCreator<
       await db.units.put(unit);
 
       // 3. POCKETBASE: Remote Persistence
-      await pb.collection("units").update(unit.id, unit);
+      try {
+        await pb.collection("units").update(unit.id, unit);
+      } catch (pbErr) {
+        // Record offline operation
+        await db.offline_ops.add({
+          collection: "units",
+          action: "update",
+          recordId: unit.id,
+          data: unit,
+          timestamp: Date.now(),
+        });
+        console.warn("Offline: Recorded unit update in op logs.");
+      }
     } catch (err) {
       set({ units: previousUnits, datasets: previousDatasets });
       set({ error: (err as Error).message });
@@ -63,10 +87,22 @@ export const createUnitSlice: StateCreator<
 
     try {
       // 2. DEXIE: Local Persistence
-      await db.units.delete(id);
+      await db.units.delete(id as any);
 
       // 3. POCKETBASE: Remote Persistence
-      await pb.collection("units").delete(id);
+      try {
+        await pb.collection("units").delete(id);
+      } catch (pbErr) {
+        // Record offline operation
+        await db.offline_ops.add({
+          collection: "units",
+          action: "delete",
+          recordId: id,
+          data: null,
+          timestamp: Date.now(),
+        });
+        console.warn("Offline: Recorded unit deletion in op logs.");
+      }
     } catch (err) {
       set({ units: previousUnits });
       set({ error: (err as Error).message });

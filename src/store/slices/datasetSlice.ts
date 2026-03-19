@@ -54,18 +54,28 @@ export const createDatasetSlice: StateCreator<
       }
 
       // 3. POCKETBASE: Remote Persistence
-      // Note: We use the client-side ID. PocketBase supports custom IDs (max 15 chars).
-      await pb.collection("datasets").create({
-        ...datasetRecord,
-        unit_id: datasetRecord.unitId, // PocketBase usually uses underscores
-      });
-
-      // Batch create measurements if any
-      for (const m of measurementRecords) {
-        await pb.collection("measurements").create({
-          ...m,
-          dataset_id: m.datasetId,
+      try {
+        await pb.collection("datasets").create({
+          ...datasetRecord,
+          unit_id: datasetRecord.unitId,
         });
+
+        for (const m of measurementRecords) {
+          await pb.collection("measurements").create({
+            ...m,
+            dataset_id: m.datasetId,
+          });
+        }
+      } catch (pbErr) {
+        // Record offline operation if it's a network error
+        await db.offline_ops.add({
+          collection: "datasets",
+          action: "create",
+          recordId: datasetRecord.id,
+          data: { datasetRecord, measurementRecords },
+          timestamp: Date.now(),
+        });
+        console.warn("Offline: Recorded dataset creation in op logs.");
       }
     } catch (err) {
       set({ datasets: previousDatasets });
@@ -122,32 +132,41 @@ export const createDatasetSlice: StateCreator<
       });
 
       // 3. POCKETBASE: Remote Persistence
-      await pb.collection("datasets").update(updatedDataset.id, {
-        ...datasetRecord,
-        unit_id: datasetRecord.unitId,
-      });
+      try {
+        await pb.collection("datasets").update(updatedDataset.id, {
+          ...datasetRecord,
+          unit_id: datasetRecord.unitId,
+        });
 
-      // PocketBase Measurement Sync (Simple version: Delete all and re-add or diff)
-      // For simplicity in this local-first flow, we'll follow the Dexie logic
-      const pbExisting = await pb
-        .collection("measurements")
-        .getFullList({ filter: `dataset_id="${updatedDataset.id}"` });
-      
-      const pbToUpdate = measurementRecords;
-      const pbToDelete = pbExisting.filter(
-        (ex) => !pbToUpdate.some((up) => up.id === ex.id)
-      );
+        const pbExisting = await pb
+          .collection("measurements")
+          .getFullList({ filter: `dataset_id="${updatedDataset.id}"` });
+        
+        const pbToUpdate = measurementRecords;
+        const pbToDelete = pbExisting.filter(
+          (ex) => !pbToUpdate.some((up) => up.id === ex.id)
+        );
 
-      for (const del of pbToDelete) {
-        await pb.collection("measurements").delete(del.id);
-      }
-      for (const up of pbToUpdate) {
-        // PocketBase update/create (upsert)
-        try {
-          await pb.collection("measurements").update(up.id, { ...up, dataset_id: up.datasetId });
-        } catch {
-          await pb.collection("measurements").create({ ...up, dataset_id: up.datasetId });
+        for (const del of pbToDelete) {
+          await pb.collection("measurements").delete(del.id);
         }
+        for (const up of pbToUpdate) {
+          try {
+            await pb.collection("measurements").update(up.id, { ...up, dataset_id: up.datasetId });
+          } catch {
+            await pb.collection("measurements").create({ ...up, dataset_id: up.datasetId });
+          }
+        }
+      } catch (pbErr) {
+        // Record offline operation
+        await db.offline_ops.add({
+          collection: "datasets",
+          action: "update",
+          recordId: updatedDataset.id,
+          data: { datasetRecord, measurementRecords },
+          timestamp: Date.now(),
+        });
+        console.warn("Offline: Recorded dataset update in op logs.");
       }
     } catch (err) {
       set({ datasets: previousDatasets });
@@ -167,14 +186,24 @@ export const createDatasetSlice: StateCreator<
     try {
       // 2. DEXIE: Local Persistence
       await Promise.all([
-        db.datasets.delete(id),
+        db.datasets.delete(id as any),
         db.measurements.where("datasetId").equals(id).delete(),
       ]);
 
       // 3. POCKETBASE: Remote Persistence
-      await pb.collection("datasets").delete(id);
-      // Measurements are usually deleted via cascade in PB, 
-      // but we could manually delete them if needed.
+      try {
+        await pb.collection("datasets").delete(id);
+      } catch (pbErr) {
+        // Record offline operation
+        await db.offline_ops.add({
+          collection: "datasets",
+          action: "delete",
+          recordId: id,
+          data: null,
+          timestamp: Date.now(),
+        });
+        console.warn("Offline: Recorded dataset deletion in op logs.");
+      }
     } catch (err) {
       set({ datasets: previousDatasets });
       set({ error: (err as Error).message });
