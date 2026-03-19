@@ -13,5 +13,5 @@ __unconfig*
 todos.json
 
 # PocketBase
-pocketbase
+pocketbase-server
 pb_data/

@@ -1,6 +1,7 @@
 import { type StateCreator } from "zustand";
 import { type DatasetState } from "../types";
 import { db } from "../../lib/dexieDb";
+import { pb } from "../../lib/pocketbase";
 
 export const createUnitSlice: StateCreator<
   DatasetState,
@@ -9,29 +10,29 @@ export const createUnitSlice: StateCreator<
   Pick<DatasetState, "addUnit" | "updateUnit" | "removeUnit">
 > = (set, get) => ({
   addUnit: async (unit) => {
-    // Save previous state for potential rollback
     const previousUnits = get().units;
 
-    // OPTIMISTIC UPDATE: Update UI instantly
+    // 1. ZUSTAND: Optimistic Update
     set((state) => ({ units: [...state.units, unit] }));
 
     try {
-      // BACKGROUND PERSISTENCE: Let Dexie catch up
+      // 2. DEXIE: Local Persistence
       await db.units.put(unit);
+
+      // 3. POCKETBASE: Remote Persistence
+      await pb.collection("units").create(unit);
     } catch (err) {
-      // ROLLBACK: Revert to previous state if persistence fails
       set({ units: previousUnits });
       set({ error: (err as Error).message });
-      console.error("Failed to persist unit:", err);
+      console.error("Failed to persist unit (PB/Dexie):", err);
     }
   },
 
   updateUnit: async (unit) => {
-    // Save previous state for potential rollback
     const previousUnits = get().units;
     const previousDatasets = get().datasets;
 
-    // OPTIMISTIC UPDATE: Update UI instantly
+    // 1. ZUSTAND: Optimistic Update
     set((state) => ({
       units: state.units.map((u) => (u.id === unit.id ? unit : u)),
       datasets: state.datasets.map((d) =>
@@ -40,33 +41,36 @@ export const createUnitSlice: StateCreator<
     }));
 
     try {
-      // BACKGROUND PERSISTENCE: Let Dexie catch up
+      // 2. DEXIE: Local Persistence
       await db.units.put(unit);
+
+      // 3. POCKETBASE: Remote Persistence
+      await pb.collection("units").update(unit.id, unit);
     } catch (err) {
-      // ROLLBACK: Revert to previous state if persistence fails
       set({ units: previousUnits, datasets: previousDatasets });
       set({ error: (err as Error).message });
-      console.error("Failed to update unit:", err);
+      console.error("Failed to update unit (PB/Dexie):", err);
     }
   },
 
   removeUnit: async (id) => {
-    // Save previous state for potential rollback
     const previousUnits = get().units;
 
-    // OPTIMISTIC UPDATE: Update UI instantly
+    // 1. ZUSTAND: Optimistic Update
     set((state) => ({
       units: state.units.filter((u) => u.id !== id),
     }));
 
     try {
-      // BACKGROUND PERSISTENCE: Let Dexie catch up
+      // 2. DEXIE: Local Persistence
       await db.units.delete(id);
+
+      // 3. POCKETBASE: Remote Persistence
+      await pb.collection("units").delete(id);
     } catch (err) {
-      // ROLLBACK: Revert to previous state if persistence fails
       set({ units: previousUnits });
       set({ error: (err as Error).message });
-      console.error("Failed to remove unit:", err);
+      console.error("Failed to remove unit (PB/Dexie):", err);
     }
   },
 });

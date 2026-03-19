@@ -1,6 +1,7 @@
 import { type StateCreator } from "zustand";
 import { type DatasetState } from "../types";
 import { db } from "../../lib/dexieDb";
+import { pb } from "../../lib/pocketbase";
 import {
   type DatasetRecord,
   type MeasurementRecord,
@@ -24,10 +25,9 @@ export const createDatasetSlice: StateCreator<
   >
 > = (set, get) => ({
   addDataset: async (dataset) => {
-    // Save previous state for potential rollback
     const previousDatasets = get().datasets;
 
-    // OPTIMISTIC UPDATE: Update UI instantly
+    // 1. ZUSTAND: Optimistic Update
     set((state) => ({ datasets: [dataset, ...state.datasets] }));
 
     try {
@@ -47,24 +47,37 @@ export const createDatasetSlice: StateCreator<
         }),
       );
 
-      // BACKGROUND PERSISTENCE: Let Dexie catch up
+      // 2. DEXIE: Local Persistence
       await db.datasets.put(datasetRecord);
       if (measurementRecords.length > 0) {
         await db.measurements.bulkPut(measurementRecords);
       }
+
+      // 3. POCKETBASE: Remote Persistence
+      // Note: We use the client-side ID. PocketBase supports custom IDs (max 15 chars).
+      await pb.collection("datasets").create({
+        ...datasetRecord,
+        unit_id: datasetRecord.unitId, // PocketBase usually uses underscores
+      });
+
+      // Batch create measurements if any
+      for (const m of measurementRecords) {
+        await pb.collection("measurements").create({
+          ...m,
+          dataset_id: m.datasetId,
+        });
+      }
     } catch (err) {
-      // ROLLBACK: Revert to previous state if persistence fails
       set({ datasets: previousDatasets });
       set({ error: (err as Error).message });
-      console.error("Failed to persist dataset:", err);
+      console.error("Failed to persist dataset (PB/Dexie):", err);
     }
   },
 
   updateDataset: async (updatedDataset) => {
-    // Save previous state for potential rollback
     const previousDatasets = get().datasets;
 
-    // OPTIMISTIC UPDATE: Update UI instantly
+    // 1. ZUSTAND: Optimistic Update
     set((state) => ({
       datasets: state.datasets.map((d) =>
         d.id === updatedDataset.id ? updatedDataset : d,
@@ -87,7 +100,7 @@ export const createDatasetSlice: StateCreator<
           datasetId: updatedDataset.id,
         }));
 
-      // BACKGROUND PERSISTENCE: Let Dexie catch up
+      // 2. DEXIE: Local Persistence
       await db.transaction("rw", db.datasets, db.measurements, async () => {
         await db.datasets.put(datasetRecord);
 
@@ -107,34 +120,65 @@ export const createDatasetSlice: StateCreator<
           await db.measurements.bulkPut(measurementRecords);
         }
       });
+
+      // 3. POCKETBASE: Remote Persistence
+      await pb.collection("datasets").update(updatedDataset.id, {
+        ...datasetRecord,
+        unit_id: datasetRecord.unitId,
+      });
+
+      // PocketBase Measurement Sync (Simple version: Delete all and re-add or diff)
+      // For simplicity in this local-first flow, we'll follow the Dexie logic
+      const pbExisting = await pb
+        .collection("measurements")
+        .getFullList({ filter: `dataset_id="${updatedDataset.id}"` });
+      
+      const pbToUpdate = measurementRecords;
+      const pbToDelete = pbExisting.filter(
+        (ex) => !pbToUpdate.some((up) => up.id === ex.id)
+      );
+
+      for (const del of pbToDelete) {
+        await pb.collection("measurements").delete(del.id);
+      }
+      for (const up of pbToUpdate) {
+        // PocketBase update/create (upsert)
+        try {
+          await pb.collection("measurements").update(up.id, { ...up, dataset_id: up.datasetId });
+        } catch {
+          await pb.collection("measurements").create({ ...up, dataset_id: up.datasetId });
+        }
+      }
     } catch (err) {
-      // ROLLBACK: Revert to previous state if persistence fails
       set({ datasets: previousDatasets });
       set({ error: (err as Error).message });
-      console.error("Failed to update dataset:", err);
+      console.error("Failed to update dataset (PB/Dexie):", err);
     }
   },
 
   removeDataset: async (id) => {
-    // Save previous state for potential rollback
     const previousDatasets = get().datasets;
 
-    // OPTIMISTIC UPDATE: Update UI instantly
+    // 1. ZUSTAND: Optimistic Update
     set((state) => ({
       datasets: state.datasets.filter((d) => d.id !== id),
     }));
 
     try {
-      // BACKGROUND PERSISTENCE: Let Dexie catch up
+      // 2. DEXIE: Local Persistence
       await Promise.all([
         db.datasets.delete(id),
         db.measurements.where("datasetId").equals(id).delete(),
       ]);
+
+      // 3. POCKETBASE: Remote Persistence
+      await pb.collection("datasets").delete(id);
+      // Measurements are usually deleted via cascade in PB, 
+      // but we could manually delete them if needed.
     } catch (err) {
-      // ROLLBACK: Revert to previous state if persistence fails
       set({ datasets: previousDatasets });
       set({ error: (err as Error).message });
-      console.error("Failed to remove dataset:", err);
+      console.error("Failed to remove dataset (PB/Dexie):", err);
     }
   },
 
