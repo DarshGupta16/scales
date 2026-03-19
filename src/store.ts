@@ -52,6 +52,11 @@ export const useDatasetStore = create<DatasetState>((set, get, ...args) => ({
           isLoading: false,
         });
 
+        // Populate default units if collection is empty
+        if (unitRecords.length === 0) {
+          await get().populateDefaultUnits();
+        }
+
         if (!syncedPocketbase) {
           try {
             // Trigger sync first before fetching fresh data
@@ -64,14 +69,16 @@ export const useDatasetStore = create<DatasetState>((set, get, ...args) => ({
               pb.collection("units").getFullList(),
             ]);
 
-            const datasetRecords: DatasetRecord[] = pbDatasets.map((d: any) => ({
-              id: d.id,
-              title: d.title,
-              description: d.description,
-              unitId: d.unit_id,
-              views: d.views,
-              createdAt: d.createdAt,
-            }));
+            const datasetRecords: DatasetRecord[] = pbDatasets.map(
+              (d: any) => ({
+                id: d.id,
+                title: d.title,
+                description: d.description,
+                unitId: d.unit_id,
+                views: d.views,
+                createdAt: d.createdAt,
+              }),
+            );
 
             const measurementRecords: MeasurementRecord[] = pbMeasurements.map(
               (m: any) => ({

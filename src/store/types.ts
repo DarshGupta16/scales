@@ -22,6 +22,7 @@ export interface DatasetState {
   addUnit: (unit: Unit) => Promise<void>;
   updateUnit: (unit: Unit) => Promise<void>;
   removeUnit: (id: string) => Promise<void>;
+  populateDefaultUnits: () => Promise<void>;
 
   setLoading: (isLoading: boolean) => void;
   setError: (error: string | null) => void;
