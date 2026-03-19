@@ -1,6 +1,6 @@
 import { type StateCreator } from "zustand";
 import { type DatasetState } from "../types";
-import { db } from "../../dexieDb";
+import { db } from "../../lib/dexieDb";
 
 export const createUnitSlice: StateCreator<
   DatasetState,

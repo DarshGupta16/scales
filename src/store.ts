@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { db } from "./dexieDb";
+import { db } from "./lib/dexieDb";
 import { type DatasetState } from "./store/types";
 import { buildDatasets } from "./store/helpers";
 import { createDatasetSlice } from "./store/slices/datasetSlice";
