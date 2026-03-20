@@ -5,11 +5,14 @@ import { buildDatasets } from "./store/helpers";
 import { createDatasetSlice } from "./store/slices/datasetSlice";
 import { createUnitSlice } from "./store/slices/unitSlice";
 import { pb } from "./lib/pocketbase";
+import { setupSubscriptions } from "./utils/subscriptions";
 import type {
   DatasetRecord,
   MeasurementRecord,
   UnitRecord,
 } from "./types/dataset";
+
+let subscriptionsSetup = false;
 
 export const useDatasetStore = create<DatasetState>((set, get, ...args) => ({
   datasets: [],
@@ -22,6 +25,12 @@ export const useDatasetStore = create<DatasetState>((set, get, ...args) => ({
   hydrate: async () => {
     if (get().isHydrated) return;
     set({ isLoading: true });
+
+    // Set up real-time subscriptions if not already done
+    if (!subscriptionsSetup) {
+      setupSubscriptions();
+      subscriptionsSetup = true;
+    }
 
     // Listen for back-online events to trigger sync
     if (typeof window !== "undefined") {
@@ -76,7 +85,8 @@ export const useDatasetStore = create<DatasetState>((set, get, ...args) => ({
                 description: d.description,
                 unitId: d.unit_id,
                 views: d.views,
-                createdAt: d.createdAt,
+                created: new Date(d.created).getTime(),
+                updated: new Date(d.updated).getTime(),
               }),
             );
 
@@ -86,6 +96,8 @@ export const useDatasetStore = create<DatasetState>((set, get, ...args) => ({
                 datasetId: m.dataset_id,
                 timestamp: m.timestamp,
                 value: m.value,
+                created: new Date(m.created).getTime(),
+                updated: new Date(m.updated).getTime(),
               }),
             );
 
@@ -93,6 +105,8 @@ export const useDatasetStore = create<DatasetState>((set, get, ...args) => ({
               id: u.id,
               name: u.name,
               symbol: u.symbol,
+              created: new Date(u.created).getTime(),
+              updated: new Date(u.updated).getTime(),
             }));
 
             await db.datasets.bulkPut(datasetRecords);
@@ -133,7 +147,7 @@ export const useDatasetStore = create<DatasetState>((set, get, ...args) => ({
               description: datasetRecord.description,
               unit_id: datasetRecord.unitId,
               views: datasetRecord.views,
-              created: new Date(datasetRecord.createdAt).toISOString(),
+              created: new Date(datasetRecord.created).toISOString(),
             });
             for (const m of measurementRecords) {
               await pb.collection("measurements").create({

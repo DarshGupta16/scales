@@ -2,7 +2,8 @@ import {
   type Dataset, 
   type DatasetRecord,
   type UnitRecord,
-  type MeasurementRecord
+  type MeasurementRecord,
+  type Measurement
 } from "../types/dataset";
 
 export const buildDatasets = (
@@ -15,17 +16,27 @@ export const buildDatasets = (
       id: "unknown",
       name: "Unknown",
       symbol: "?",
+      created: Date.now(),
+      updated: Date.now()
     };
-    const measurements = measurementRecords
+    
+    const measurements: Measurement[] = measurementRecords
       .filter((m) => m.datasetId === d.id)
-      .map(({ id, timestamp, value }) => ({ id, timestamp, value }));
+      .map((m) => ({ 
+        id: m.id, 
+        timestamp: m.timestamp, 
+        value: m.value,
+        created: m.created,
+        updated: m.updated
+      }));
       
     return {
       id: d.id,
       title: d.title,
       description: d.description,
       views: d.views,
-      createdAt: d.createdAt,
+      created: d.created,
+      updated: d.updated,
       unit,
       measurements,
     };

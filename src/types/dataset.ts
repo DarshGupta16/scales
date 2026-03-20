@@ -3,6 +3,8 @@ export interface UnitRecord {
   id: string;
   name: string;
   symbol: string;
+  created: number;
+  updated: number;
 }
 
 export interface MeasurementRecord {
@@ -10,6 +12,8 @@ export interface MeasurementRecord {
   datasetId: string;
   timestamp: number;
   value: number;
+  created: number;
+  updated: number;
 }
 
 export interface DatasetRecord {
@@ -18,7 +22,8 @@ export interface DatasetRecord {
   description?: string;
   unitId: string;
   views: ViewType[];
-  createdAt: number;
+  created: number;
+  updated: number;
 }
 
 export type ViewType = "line" | "bar" | "area" | "pie" | "scatter";
@@ -30,6 +35,8 @@ export interface Measurement {
   id: string;
   timestamp: number;
   value: number;
+  created: number;
+  updated: number;
 }
 
 export interface Dataset {
@@ -39,5 +46,6 @@ export interface Dataset {
   unit: Unit;
   views: ViewType[];
   measurements: Measurement[];
-  createdAt: number;
+  created: number;
+  updated: number;
 }

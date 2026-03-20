@@ -14,12 +14,12 @@ export const createUnitSlice: StateCreator<
 > = (set, get) => ({
   populateDefaultUnits: async () => {
     const defaultUnits = [
-      { id: "unit000000000kg", name: "Kilogram", symbol: "kg" },
-      { id: "unit0000000000m", name: "Meter", symbol: "m" },
-      { id: "unit0000000000s", name: "Second", symbol: "s" },
-      { id: "unit0000000000l", name: "Liter", symbol: "l" },
-      { id: "unit00000000pct", name: "Percentage", symbol: "%" },
-      { id: "unit0000000kcal", name: "Calories", symbol: "kcal" },
+      { id: "unit000000000kg", name: "Kilogram", symbol: "kg", created: Date.now(), updated: Date.now() },
+      { id: "unit0000000000m", name: "Meter", symbol: "m", created: Date.now(), updated: Date.now() },
+      { id: "unit0000000000s", name: "Second", symbol: "s", created: Date.now(), updated: Date.now() },
+      { id: "unit0000000000l", name: "Liter", symbol: "l", created: Date.now(), updated: Date.now() },
+      { id: "unit00000000pct", name: "Percentage", symbol: "%", created: Date.now(), updated: Date.now() },
+      { id: "unit0000000kcal", name: "Calories", symbol: "kcal", created: Date.now(), updated: Date.now() },
     ];
 
     // 1. ZUSTAND
@@ -58,17 +58,18 @@ export const createUnitSlice: StateCreator<
 
   addUnit: async (unit) => {
     const previousUnits = get().units;
+    const unitWithTime = { ...unit, created: Date.now(), updated: Date.now() };
 
     // 1. ZUSTAND: Optimistic Update
-    set((state) => ({ units: [...state.units, unit] }));
+    set((state) => ({ units: [...state.units, unitWithTime] }));
 
     try {
       // 2. DEXIE: Local Persistence
-      await db.units.put(unit);
+      await db.units.put(unitWithTime);
 
       // 3. POCKETBASE: Remote Persistence
       try {
-        await pb.collection("units").create(unit);
+        await pb.collection("units").create(unitWithTime);
       } catch (pbErr: any) {
         if (pbErr.status === 0) {
           // Record offline operation
@@ -92,22 +93,23 @@ export const createUnitSlice: StateCreator<
   updateUnit: async (unit) => {
     const previousUnits = get().units;
     const previousDatasets = get().datasets;
+    const unitWithTime = { ...unit, updated: Date.now() } as any;
 
     // 1. ZUSTAND: Optimistic Update
     set((state) => ({
-      units: state.units.map((u) => (u.id === unit.id ? unit : u)),
+      units: state.units.map((u) => (u.id === unit.id ? unitWithTime : u)),
       datasets: state.datasets.map((d) =>
-        d.unit.id === unit.id ? { ...d, unit } : d,
+        d.unit.id === unit.id ? { ...d, unit: unitWithTime } : d,
       ),
     }));
 
     try {
       // 2. DEXIE: Local Persistence
-      await db.units.put(unit);
+      await db.units.put(unitWithTime);
 
       // 3. POCKETBASE: Remote Persistence
       try {
-        await pb.collection("units").update(unit.id, unit);
+        await pb.collection("units").update(unit.id, unitWithTime);
       } catch (pbErr: any) {
         if (pbErr.status === 0) {
           // Record offline operation

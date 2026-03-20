@@ -37,13 +37,16 @@ export const createDatasetSlice: StateCreator<
         description: dataset.description,
         unitId: dataset.unit.id,
         views: dataset.views,
-        createdAt: dataset.createdAt,
+        created: dataset.created,
+        updated: Date.now(),
       };
 
       const measurementRecords: MeasurementRecord[] = dataset.measurements.map(
         (m) => ({
           ...m,
           datasetId: dataset.id,
+          created: m.timestamp,
+          updated: Date.now(),
         }),
       );
 
@@ -61,7 +64,7 @@ export const createDatasetSlice: StateCreator<
           description: datasetRecord.description,
           unit_id: datasetRecord.unitId,
           views: datasetRecord.views,
-          created: new Date(datasetRecord.createdAt).toISOString(),
+          created: new Date(datasetRecord.created).toISOString(),
         });
 
         for (const m of measurementRecords) {
@@ -109,13 +112,16 @@ export const createDatasetSlice: StateCreator<
         description: updatedDataset.description,
         unitId: updatedDataset.unit.id,
         views: updatedDataset.views,
-        createdAt: updatedDataset.createdAt,
+        created: updatedDataset.created,
+        updated: Date.now(),
       };
 
       const measurementRecords: MeasurementRecord[] =
         updatedDataset.measurements.map((m) => ({
           ...m,
           datasetId: updatedDataset.id,
+          created: (m as any).created || m.timestamp,
+          updated: Date.now(),
         }));
 
       // 2. DEXIE: Local Persistence

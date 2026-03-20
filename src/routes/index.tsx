@@ -34,7 +34,7 @@ function Index() {
           d.unit.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           d.unit.symbol.toLowerCase().includes(searchQuery.toLowerCase()),
       )
-      .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+      .sort((a, b) => (a.created || 0) - (b.created || 0));
   }, [datasets, searchQuery]);
 
   const handleAddDataset = (newDataset: Dataset) => {

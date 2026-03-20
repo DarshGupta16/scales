@@ -28,8 +28,8 @@ export const db = (
 if (isBrowser) {
   // Schema declaration:
   // Version bumped to reflect normalized structure and offline ops.
-  db.version(3).stores({
-    datasets: "id, title, unitId, createdAt",
+  db.version(4).stores({
+    datasets: "id, title, unitId, created",
     units: "id, name, symbol",
     measurements: "id, datasetId, timestamp, value",
     offline_ops: "++id, collection, action, recordId, timestamp",
