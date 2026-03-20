@@ -1,6 +1,7 @@
 import { type Dataset, type Unit } from "../types/dataset";
+import { type SyncSlice } from "./slices/syncSlice";
 
-export interface DatasetState {
+export interface DatasetState extends SyncSlice {
   datasets: Dataset[];
   units: Unit[];
   selectedDatasetId: string | null;
@@ -10,7 +11,7 @@ export interface DatasetState {
 
   // Actions
   hydrate: () => Promise<void>;
-  sync: () => Promise<void>;
+  // sync: () => Promise<void>; // Removed in favor of SyncSlice actions
 
   // Dataset Actions
   addDataset: (dataset: Dataset) => Promise<void>;

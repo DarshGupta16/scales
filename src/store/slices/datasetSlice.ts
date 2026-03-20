@@ -73,6 +73,7 @@ export const createDatasetSlice: StateCreator<
             dataset_id: m.datasetId,
             value: m.value,
             timestamp: m.timestamp,
+            created: new Date(m.created).toISOString(),
           });
         }
       } catch (pbErr: any) {
@@ -179,6 +180,7 @@ export const createDatasetSlice: StateCreator<
               value: up.value,
               timestamp: up.timestamp,
               dataset_id: up.datasetId,
+              created: new Date(up.created).toISOString(),
             });
           }
         }
