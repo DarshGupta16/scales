@@ -42,13 +42,25 @@ const server = Bun.serve({
   async fetch(request: Request) {
     const url = new URL(request.url);
 
-    // Try to serve static file from dist/client
+    // 1. Proxy PocketBase API and Dashboard requests
+    // This allows the app to work on a single port (3000)
+    if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/_/")) {
+      const pbUrl = new URL(url.pathname + url.search, "http://127.0.0.1:8090");
+      return fetch(pbUrl, {
+        method: request.method,
+        headers: request.headers,
+        body: request.body,
+        redirect: "manual",
+      });
+    }
+
+    // 2. Try to serve static file from dist/client
     const staticPath = resolveStaticFile(url.pathname);
     if (staticPath) {
       return new Response(Bun.file(staticPath));
     }
 
-    // Delegate to TanStack Start SSR handler
+    // 3. Delegate to TanStack Start SSR handler
     return (app as { fetch: (req: Request) => Promise<Response> }).fetch(request);
   },
 });

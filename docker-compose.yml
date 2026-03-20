@@ -1,0 +1,15 @@
+services:
+  scales:
+    image: spacexdragon7/scales:latest
+    container_name: scales
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+      # PocketBase is proxied through port 3000, but mapping 8090 directly
+      # allows you to access the Admin UI at http://<ip>:8090/_/ if needed.
+      - "8090:8090"
+    volumes:
+      - ./pb_data:/app/pb_data
+    # Optional: Set environment variables if needed
+    # environment:
+    #   - VITE_POCKETBASE_URL=https://scales.duckdns.org

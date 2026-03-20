@@ -9,8 +9,10 @@ FROM oven/bun:1 AS build
 WORKDIR /app
 COPY . .
 COPY --from=deps /app/node_modules ./node_modules
-# Inject PocketBase internal URL so it resolves correctly in the container
-ENV VITE_POCKETBASE_URL=http://localhost:8090
+# Allow VITE_POCKETBASE_URL to be set at build time, otherwise leave empty
+# so that the runtime dynamic logic can take over.
+ARG VITE_POCKETBASE_URL
+ENV VITE_POCKETBASE_URL=$VITE_POCKETBASE_URL
 RUN bun run build
 
 # Stage 3: Production environment
@@ -33,6 +35,9 @@ COPY --from=build /app/node_modules ./node_modules
 # Copy PocketBase binary and migrations
 COPY pocketbase-server ./
 COPY pb_migrations ./pb_migrations
+
+# Create a volume for PocketBase data persistence
+VOLUME /app/pb_data
 
 # Expose ports for both the Bun frontend and PocketBase backend
 EXPOSE 3000
