@@ -12,10 +12,7 @@ export function DatasetDetailNotFound() {
         <p className="text-zinc-500 font-sans uppercase tracking-[0.2em] mb-10 border-l-2 border-red-500/50 pl-6 text-left text-xs">
           The requested entity has been purged or never existed.
         </p>
-        <Link
-          to="/"
-          className="inline-block brutal-btn-brand w-full text-center"
-        >
+        <Link to="/" className="inline-block brutal-btn-brand w-full text-center">
           Return Home
         </Link>
       </div>

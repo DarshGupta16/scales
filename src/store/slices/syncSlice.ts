@@ -1,25 +1,16 @@
-import { type StateCreator } from "zustand";
-import { type DatasetState } from "../types";
+import type { StateCreator } from "zustand";
 import { db } from "../../lib/dexieDb";
 import { pb } from "../../lib/pocketbase";
+import type { DatasetRecord, MeasurementRecord, UnitRecord } from "../../types/dataset";
 import { buildDatasets } from "../helpers";
-import {
-  type DatasetRecord,
-  type MeasurementRecord,
-  type UnitRecord,
-} from "../../types/dataset";
+import type { DatasetState } from "../types";
 
 export interface SyncSlice {
   localToPbSync: () => Promise<void>;
   pbToLocalSync: () => Promise<void>;
 }
 
-export const createSyncSlice: StateCreator<
-  DatasetState,
-  [],
-  [],
-  SyncSlice
-> = (set, get) => ({
+export const createSyncSlice: StateCreator<DatasetState, [], [], SyncSlice> = (set, _get) => ({
   localToPbSync: async () => {
     const ops = await db.offline_ops.orderBy("timestamp").toArray();
     if (ops.length === 0) return;
@@ -121,11 +112,11 @@ export const createSyncSlice: StateCreator<
 
       // 3. Update ZUSTAND Store FIRST
       const datasets = buildDatasets(datasetRecords, unitRecords, measurementRecords);
-      set({ 
-        datasets, 
+      set({
+        datasets,
         units: unitRecords,
         isLoading: false,
-        isHydrated: true 
+        isHydrated: true,
       });
 
       // 4. Background: Sync DEXIE (The Diffing/Pruning Approach)
@@ -133,31 +124,33 @@ export const createSyncSlice: StateCreator<
         // DATASETS: Put fresh, delete orphans
         await db.datasets.bulkPut(datasetRecords);
         const localDatasetIds = await db.datasets.toCollection().primaryKeys();
-        const pbDatasetIds = datasetRecords.map(d => d.id);
-        const datasetOrphans = localDatasetIds.filter(id => !pbDatasetIds.includes(id as string));
+        const pbDatasetIds = datasetRecords.map((d) => d.id);
+        const datasetOrphans = localDatasetIds.filter((id) => !pbDatasetIds.includes(id as string));
         if (datasetOrphans.length > 0) await db.datasets.bulkDelete(datasetOrphans as string[]);
 
         // UNITS: Put fresh, delete orphans
         await db.units.bulkPut(unitRecords);
         const localUnitIds = await db.units.toCollection().primaryKeys();
-        const pbUnitIds = unitRecords.map(u => u.id);
-        const unitOrphans = localUnitIds.filter(id => !pbUnitIds.includes(id as string));
+        const pbUnitIds = unitRecords.map((u) => u.id);
+        const unitOrphans = localUnitIds.filter((id) => !pbUnitIds.includes(id as string));
         if (unitOrphans.length > 0) await db.units.bulkDelete(unitOrphans as string[]);
 
         // MEASUREMENTS: Put fresh, delete orphans
         await db.measurements.bulkPut(measurementRecords);
         const localMeasurementIds = await db.measurements.toCollection().primaryKeys();
-        const pbMeasurementIds = measurementRecords.map(m => m.id);
-        const measurementOrphans = localMeasurementIds.filter(id => !pbMeasurementIds.includes(id as string));
-        if (measurementOrphans.length > 0) await db.measurements.bulkDelete(measurementOrphans as string[]);
+        const pbMeasurementIds = measurementRecords.map((m) => m.id);
+        const measurementOrphans = localMeasurementIds.filter(
+          (id) => !pbMeasurementIds.includes(id as string),
+        );
+        if (measurementOrphans.length > 0)
+          await db.measurements.bulkDelete(measurementOrphans as string[]);
       };
 
       // Execute pruning without blocking UI
-      syncDexie().catch(err => console.error("Dexie background sync failed:", err));
-
+      syncDexie().catch((err) => console.error("Dexie background sync failed:", err));
     } catch (err) {
       console.error("Pocketbase fetch failed:", err);
       set({ error: (err as Error).message, isLoading: false });
     }
-  }
+  },
 });

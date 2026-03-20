@@ -1,5 +1,5 @@
 import { Dexie, type EntityTable } from "dexie";
-import type { DatasetRecord, UnitRecord, MeasurementRecord } from "../types/dataset";
+import type { DatasetRecord, MeasurementRecord, UnitRecord } from "../types/dataset";
 
 const isBrowser = typeof window !== "undefined";
 
@@ -16,9 +16,7 @@ export interface OfflineOp {
  * Scales Database - Dexie implementation for local-first persistence.
  * Instantiated with SSR-safety to support the TanStack Start environment.
  */
-export const db = (
-  isBrowser ? new Dexie("ScalesDatabase") : ({} as unknown)
-) as Dexie & {
+export const db = (isBrowser ? new Dexie("ScalesDatabase") : ({} as unknown)) as Dexie & {
   datasets: EntityTable<DatasetRecord, "id">;
   units: EntityTable<UnitRecord, "id">;
   measurements: EntityTable<MeasurementRecord, "id">;
@@ -36,4 +34,4 @@ if (isBrowser) {
   });
 }
 
-export type { DatasetRecord, UnitRecord, MeasurementRecord };
+export type { DatasetRecord, MeasurementRecord, UnitRecord };

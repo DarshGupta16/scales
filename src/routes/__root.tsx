@@ -1,80 +1,80 @@
-import { HeadContent, Outlet, Scripts, createRootRoute } from '@tanstack/react-router'
-import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
-import { TanStackDevtools } from '@tanstack/react-devtools'
-import { useState, useEffect } from 'react'
-import { LoadingScreen } from '../components/LoadingScreen'
-import { useDatasetStore } from '../store'
+import { TanStackDevtools } from "@tanstack/react-devtools";
+import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
+import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
+import { useEffect, useState } from "react";
+import { LoadingScreen } from "../components/LoadingScreen";
+import { useDatasetStore } from "../store";
 
-import appCss from '../styles.css?url'
+import appCss from "../styles.css?url";
 
 export const Route = createRootRoute({
   head: () => ({
     meta: [
       {
-        charSet: 'utf-8',
+        charSet: "utf-8",
       },
       {
-        name: 'viewport',
-        content: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0',
+        name: "viewport",
+        content: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0",
       },
       {
-        name: 'theme-color',
-        content: '#050505',
+        name: "theme-color",
+        content: "#050505",
       },
       {
-        title: 'SCALES | BRUTAL METRICS',
+        title: "SCALES | BRUTAL METRICS",
       },
     ],
     links: [
       {
-        rel: 'manifest',
-        href: '/manifest.webmanifest',
+        rel: "manifest",
+        href: "/manifest.webmanifest",
       },
       {
-        rel: 'stylesheet',
+        rel: "stylesheet",
         href: appCss,
       },
       {
-        rel: 'preconnect',
-        href: 'https://fonts.googleapis.com',
+        rel: "preconnect",
+        href: "https://fonts.googleapis.com",
       },
       {
-        rel: 'preconnect',
-        href: 'https://fonts.gstatic.com',
-        crossOrigin: 'anonymous',
+        rel: "preconnect",
+        href: "https://fonts.gstatic.com",
+        crossOrigin: "anonymous",
       },
       {
-        rel: 'stylesheet',
-        href: 'https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Syne:wght@400..800&display=swap',
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Syne:wght@400..800&display=swap",
       },
     ],
   }),
   shellComponent: RootDocument,
   component: RootComponent,
-})
+});
 
 function RootComponent() {
-  const [isLoading, setIsLoading] = useState(true)
-  const hydrate = useDatasetStore((state) => state.hydrate)
+  const [isLoading, setIsLoading] = useState(true);
+  const hydrate = useDatasetStore((state) => state.hydrate);
 
   useEffect(() => {
     // Start hydrating data from Dexie immediately on mount
-    hydrate()
+    hydrate();
 
     // Artificial delay to ensure hydration and rendering can happen
     // behind the scenes before we reveal the UI on first load.
-    const timer = setTimeout(() => setIsLoading(false), 275)
-    return () => clearTimeout(timer)
-  }, [hydrate])
+    const timer = setTimeout(() => setIsLoading(false), 275);
+    return () => clearTimeout(timer);
+  }, [hydrate]);
 
   return (
     <>
       <LoadingScreen isVisible={isLoading} />
-      <div style={{ visibility: isLoading ? 'hidden' : 'visible' }}>
+      <div style={{ visibility: isLoading ? "hidden" : "visible" }}>
         <Outlet />
       </div>
     </>
-  )
+  );
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
@@ -84,16 +84,14 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body className="bg-black text-white min-h-screen font-sans selection:bg-brand selection:text-black">
-        <main>
-          {children}
-        </main>
+        <main>{children}</main>
         <TanStackDevtools
           config={{
-            position: 'bottom-right',
+            position: "bottom-right",
           }}
           plugins={[
             {
-              name: 'Tanstack Router',
+              name: "Tanstack Router",
               render: <TanStackRouterDevtoolsPanel />,
             },
           ]}
@@ -112,5 +110,5 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         />
       </body>
     </html>
-  )
+  );
 }

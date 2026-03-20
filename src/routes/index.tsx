@@ -1,24 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useMemo } from "react";
-import { TopBar } from "../components/layout/TopBar";
-import { DatasetGrid } from "../components/datasets/DatasetGrid";
-import { AddDatasetFAB } from "../components/layout/AddDatasetFAB";
-import { AddDatasetModal } from "../components/datasets/AddDatasetModal";
-import { DatasetSettingsModal } from "../components/datasets/DatasetSettingsModal";
-import type { Dataset } from "../types/dataset";
+import { useMemo, useState } from "react";
 import { useDatasetStore } from "@/store";
+import { AddDatasetModal } from "../components/datasets/AddDatasetModal";
+import { DatasetGrid } from "../components/datasets/DatasetGrid";
+import { DatasetSettingsModal } from "../components/datasets/DatasetSettingsModal";
+import { AddDatasetFAB } from "../components/layout/AddDatasetFAB";
+import { TopBar } from "../components/layout/TopBar";
+import type { Dataset } from "../types/dataset";
 
 export const Route = createFileRoute("/")({
   component: Index,
 });
 
 function Index() {
-  const { 
-    datasets, 
-    addDataset, 
-    updateDataset, 
-    removeDataset 
-  } = useDatasetStore();
+  const { datasets, addDataset, updateDataset, removeDataset } = useDatasetStore();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -60,15 +55,14 @@ function Index() {
       <div
         className="fixed inset-0 pointer-events-none opacity-[0.03] z-100"
         style={{
-          backgroundImage:
-            'url("https://grainy-gradients.vercel.app/noise.svg")',
+          backgroundImage: 'url("https://grainy-gradients.vercel.app/noise.svg")',
         }}
       ></div>
 
       <TopBar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
 
-      <DatasetGrid 
-        datasets={filteredDatasets as Dataset[]} 
+      <DatasetGrid
+        datasets={filteredDatasets as Dataset[]}
         onEdit={(dataset) => {
           setEditingDataset(dataset);
           setIsDeleting(false);

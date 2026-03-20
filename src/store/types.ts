@@ -1,5 +1,5 @@
-import { type Dataset, type Unit } from "../types/dataset";
-import { type SyncSlice } from "./slices/syncSlice";
+import type { Dataset, Unit } from "../types/dataset";
+import type { SyncSlice } from "./slices/syncSlice";
 
 export interface DatasetState extends SyncSlice {
   datasets: Dataset[];

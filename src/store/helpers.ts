@@ -1,15 +1,15 @@
-import { 
-  type Dataset, 
-  type DatasetRecord,
-  type UnitRecord,
-  type MeasurementRecord,
-  type Measurement
+import type {
+  Dataset,
+  DatasetRecord,
+  Measurement,
+  MeasurementRecord,
+  UnitRecord,
 } from "../types/dataset";
 
 export const buildDatasets = (
   datasetRecords: DatasetRecord[],
   unitRecords: UnitRecord[],
-  measurementRecords: MeasurementRecord[]
+  measurementRecords: MeasurementRecord[],
 ): Dataset[] => {
   return datasetRecords.map((d) => {
     const unit = unitRecords.find((u) => u.id === d.unitId) || {
@@ -17,19 +17,19 @@ export const buildDatasets = (
       name: "Unknown",
       symbol: "?",
       created: Date.now(),
-      updated: Date.now()
+      updated: Date.now(),
     };
-    
+
     const measurements: Measurement[] = measurementRecords
       .filter((m) => m.datasetId === d.id)
-      .map((m) => ({ 
-        id: m.id, 
-        timestamp: m.timestamp, 
+      .map((m) => ({
+        id: m.id,
+        timestamp: m.timestamp,
         value: m.value,
         created: m.created,
-        updated: m.updated
+        updated: m.updated,
       }));
-      
+
     return {
       id: d.id,
       title: d.title,

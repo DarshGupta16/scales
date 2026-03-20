@@ -1,5 +1,5 @@
+import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { useEffect } from "react";
 
 interface ModalProps {
@@ -43,7 +43,9 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
             className="relative bg-[#0a0a0a] border border-white/10 shadow-2xl w-full max-w-md rounded-[2.5rem]"
           >
             <div className="px-8 py-6 border-b border-white/5 flex items-center justify-between bg-white/2 rounded-t-[2.5rem]">
-              <h3 className="text-xl font-display font-bold text-white uppercase tracking-tight">{title}</h3>
+              <h3 className="text-xl font-display font-bold text-white uppercase tracking-tight">
+                {title}
+              </h3>
               <button
                 onClick={onClose}
                 className="p-2 text-zinc-500 hover:text-white hover:bg-white/10 transition-all rounded-full"

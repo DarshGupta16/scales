@@ -1,10 +1,10 @@
 import { create } from "zustand";
 import { db } from "./lib/dexieDb";
-import { type DatasetState } from "./store/types";
 import { buildDatasets } from "./store/helpers";
 import { createDatasetSlice } from "./store/slices/datasetSlice";
-import { createUnitSlice } from "./store/slices/unitSlice";
 import { createSyncSlice } from "./store/slices/syncSlice";
+import { createUnitSlice } from "./store/slices/unitSlice";
+import type { DatasetState } from "./store/types";
 import { setupSubscriptions } from "./utils/subscriptions";
 
 let subscriptionsSetup = false;
@@ -37,18 +37,13 @@ export const useDatasetStore = create<DatasetState>((set, get, ...args) => ({
 
     try {
       // 3. Load initial state from DEXIE (Fast local-first start)
-      const [datasetRecords, unitRecords, measurementRecords] =
-        await Promise.all([
-          db.datasets.toArray(),
-          db.units.toArray(),
-          db.measurements.toArray(),
-        ]);
+      const [datasetRecords, unitRecords, measurementRecords] = await Promise.all([
+        db.datasets.toArray(),
+        db.units.toArray(),
+        db.measurements.toArray(),
+      ]);
 
-      const datasets = buildDatasets(
-        datasetRecords,
-        unitRecords,
-        measurementRecords,
-      );
+      const datasets = buildDatasets(datasetRecords, unitRecords, measurementRecords);
 
       set({
         datasets,
@@ -64,7 +59,7 @@ export const useDatasetStore = create<DatasetState>((set, get, ...args) => ({
       // 5. Perform Full Sync (Two-way)
       await get().localToPbSync();
       await get().pbToLocalSync();
-      
+
       set({ isLoading: false });
     } catch (err) {
       set({

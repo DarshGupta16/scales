@@ -1,14 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState, useMemo } from "react";
-import { DatasetDetailHeader } from "../components/layout/DatasetDetailHeader";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
+import { useDatasetStore } from "@/store";
 import { AddMeasurementModal } from "../components/datasets/AddMeasurementModal";
+import { DatasetDetailNotFound } from "../components/datasets/DatasetDetailNotFound";
 import { DatasetSettingsModal } from "../components/datasets/DatasetSettingsModal";
 import { GraphSection } from "../components/datasets/GraphSection";
 import { TableSection } from "../components/datasets/TableSection";
-import { DatasetDetailNotFound } from "../components/datasets/DatasetDetailNotFound";
+import { DatasetDetailHeader } from "../components/layout/DatasetDetailHeader";
 import type { Dataset, Measurement } from "../types/dataset";
-import { useDatasetStore } from "@/store";
-import { useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/datasets/$datasetId")({
   component: DatasetDetail,
@@ -16,11 +15,7 @@ export const Route = createFileRoute("/datasets/$datasetId")({
 
 function DatasetDetail() {
   const { datasetId } = Route.useParams();
-  const { 
-    datasets, 
-    updateDataset, 
-    removeDataset
-  } = useDatasetStore();
+  const { datasets, updateDataset, removeDataset } = useDatasetStore();
 
   const dataset = useMemo(() => {
     return datasets.find((d) => d.id === datasetId);
@@ -47,7 +42,7 @@ function DatasetDetail() {
   const handleAddMeasurement = (newMeasurement: Measurement) => {
     const updatedDataset: Dataset = {
       ...dataset,
-      measurements: [...dataset.measurements, newMeasurement]
+      measurements: [...dataset.measurements, newMeasurement],
     };
     updateDataset(updatedDataset);
     setIsAddMeasurementOpen(false);
@@ -59,8 +54,7 @@ function DatasetDetail() {
       <div
         className="fixed inset-0 pointer-events-none opacity-[0.03] z-100"
         style={{
-          backgroundImage:
-            'url("https://grainy-gradients.vercel.app/noise.svg")',
+          backgroundImage: 'url("https://grainy-gradients.vercel.app/noise.svg")',
         }}
       ></div>
 
@@ -73,15 +67,9 @@ function DatasetDetail() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative z-0">
         <div className="grid grid-cols-1 gap-20">
-          <GraphSection
-            dataset={dataset}
-            onUpdateDataset={handleUpdateDataset}
-          />
+          <GraphSection dataset={dataset} onUpdateDataset={handleUpdateDataset} />
 
-          <TableSection
-            dataset={dataset}
-            onUpdateDataset={handleUpdateDataset}
-          />
+          <TableSection dataset={dataset} onUpdateDataset={handleUpdateDataset} />
         </div>
       </main>
 

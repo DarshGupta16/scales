@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import type { Dataset, Unit } from "../../types/dataset";
+import { ConfirmDialog } from "../ui/ConfirmDialog";
 import { Modal } from "../ui/Modal";
 import { UnitSelector } from "../ui/UnitSelector";
-import { ConfirmDialog } from "../ui/ConfirmDialog";
-import { Trash2 } from "lucide-react";
-import type { Dataset, Unit } from "../../types/dataset";
 
 interface DatasetSettingsModalProps {
   isOpen: boolean;

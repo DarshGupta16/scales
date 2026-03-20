@@ -1,6 +1,6 @@
 import { Plus } from "lucide-react";
-import { Modal } from "../ui/Modal";
 import type { ViewType } from "../../types/dataset";
+import { Modal } from "../ui/Modal";
 
 interface InitializeModuleModalProps {
   isOpen: boolean;
@@ -15,13 +15,7 @@ export function InitializeModuleModal({
   onAddView,
   existingViews,
 }: InitializeModuleModalProps) {
-  const availableViewTypes: ViewType[] = [
-    "line",
-    "bar",
-    "area",
-    "pie",
-    "scatter",
-  ];
+  const availableViewTypes: ViewType[] = ["line", "bar", "area", "pie", "scatter"];
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Initialize Module">

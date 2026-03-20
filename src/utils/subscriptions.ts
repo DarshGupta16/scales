@@ -1,11 +1,7 @@
-import { pb } from "../lib/pocketbase";
 import { db } from "../lib/dexieDb";
+import { pb } from "../lib/pocketbase";
 import { useDatasetStore } from "../store";
-import {
-  type DatasetRecord,
-  type MeasurementRecord,
-  type UnitRecord,
-} from "../types/dataset";
+import type { DatasetRecord, MeasurementRecord, UnitRecord } from "../types/dataset";
 
 export const setupSubscriptions = () => {
   // 1. DATASETS SUBSCRIPTION
@@ -34,12 +30,12 @@ export const setupSubscriptions = () => {
           const localUpdated = (existing as any).updated || 0;
           if (updated <= localUpdated) {
             // Even if timestamps match, double check if data is actually different
-            const isDifferent = 
+            const isDifferent =
               existing.title !== datasetRecord.title ||
               existing.description !== datasetRecord.description ||
               existing.unit.id !== datasetRecord.unitId ||
               JSON.stringify(existing.views) !== JSON.stringify(datasetRecord.views);
-            
+
             if (!isDifferent) return state; // SKIP
           }
 
@@ -56,7 +52,7 @@ export const setupSubscriptions = () => {
                     created: datasetRecord.created,
                     updated: datasetRecord.updated,
                   }
-                : d
+                : d,
             ),
           };
         } else {
@@ -115,25 +111,27 @@ export const setupSubscriptions = () => {
         const newDatasets = state.datasets.map((dataset) => {
           if (dataset.id === measurementRecord.datasetId) {
             const existing = dataset.measurements.find((m) => m.id === record.id);
-            
+
             if (existing) {
               const localUpdated = (existing as any).updated || 0;
               if (updated <= localUpdated) {
-                const isDifferent = existing.value !== measurementRecord.value || existing.timestamp !== measurementRecord.timestamp;
+                const isDifferent =
+                  existing.value !== measurementRecord.value ||
+                  existing.timestamp !== measurementRecord.timestamp;
                 if (!isDifferent) return dataset;
               }
-              
+
               changed = true;
               return {
                 ...dataset,
                 measurements: dataset.measurements.map((m) =>
-                  m.id === record.id ? { ...m, ...measurementRecord } : m
+                  m.id === record.id ? { ...m, ...measurementRecord } : m,
                 ),
               };
             } else {
               changed = true;
               const newMeasurements = [...dataset.measurements, measurementRecord].sort(
-                (a, b) => a.timestamp - b.timestamp
+                (a, b) => a.timestamp - b.timestamp,
               );
               return { ...dataset, measurements: newMeasurements };
             }
@@ -170,12 +168,12 @@ export const setupSubscriptions = () => {
     const updated = new Date(record.updated).getTime();
     const created = new Date(record.created).getTime();
 
-    const unitRecord: UnitRecord = { 
-      id: record.id, 
-      name: record.name, 
+    const unitRecord: UnitRecord = {
+      id: record.id,
+      name: record.name,
       symbol: record.symbol,
       created,
-      updated
+      updated,
     };
 
     if (action === "create" || action === "update") {
@@ -184,16 +182,17 @@ export const setupSubscriptions = () => {
         if (existing) {
           const localUpdated = (existing as any).updated || 0;
           if (updated <= localUpdated) {
-            if (existing.name === unitRecord.name && existing.symbol === unitRecord.symbol) return state;
+            if (existing.name === unitRecord.name && existing.symbol === unitRecord.symbol)
+              return state;
           }
         }
 
-        const newUnits = existing 
-          ? state.units.map(u => u.id === record.id ? unitRecord : u)
+        const newUnits = existing
+          ? state.units.map((u) => (u.id === record.id ? unitRecord : u))
           : [...state.units, unitRecord];
 
-        const newDatasets = state.datasets.map((d) => 
-          d.unit.id === unitRecord.id ? { ...d, unit: unitRecord } : d
+        const newDatasets = state.datasets.map((d) =>
+          d.unit.id === unitRecord.id ? { ...d, unit: unitRecord } : d,
         );
 
         return { units: newUnits, datasets: newDatasets };
@@ -201,7 +200,7 @@ export const setupSubscriptions = () => {
       await db.units.put(unitRecord);
     } else if (action === "delete") {
       useDatasetStore.setState((state) => {
-        if (!state.units.some(u => u.id === record.id)) return state;
+        if (!state.units.some((u) => u.id === record.id)) return state;
         return { units: state.units.filter((u) => u.id !== record.id) };
       });
       await db.units.delete(record.id);

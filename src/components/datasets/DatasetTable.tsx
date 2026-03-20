@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
-import type { Measurement } from "../../types/dataset";
 import { Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import type { Measurement } from "../../types/dataset";
 
 interface DatasetTableProps {
   measurements: Measurement[];
@@ -15,7 +15,7 @@ export function DatasetTable({ measurements, unit, onDelete }: DatasetTableProps
   }, []);
 
   const sortedMeasurements = [...measurements].sort(
-    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
   );
 
   return (
@@ -48,13 +48,20 @@ export function DatasetTable({ measurements, unit, onDelete }: DatasetTableProps
             {sortedMeasurements.map((measurement) => (
               <tr key={measurement.id} className="hover:bg-white/[0.02] transition-colors group">
                 <td className="px-8 py-5 whitespace-nowrap text-xs text-zinc-400 font-sans tracking-wider">
-                  {isClient ? new Date(measurement.timestamp).toLocaleString(undefined, {
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                  }).toUpperCase() : ""}
+                  {isClient
+                    ? new Date(measurement.timestamp)
+                        .toLocaleString(undefined, {
+                          dateStyle: "medium",
+                          timeStyle: "short",
+                        })
+                        .toUpperCase()
+                    : ""}
                 </td>
                 <td className="px-8 py-5 whitespace-nowrap text-base font-bold text-white font-sans">
-                  {measurement.value} <span className="text-brand/50 font-normal uppercase text-[10px] ml-1 tracking-[0.2em]">{unit}</span>
+                  {measurement.value}{" "}
+                  <span className="text-brand/50 font-normal uppercase text-[10px] ml-1 tracking-[0.2em]">
+                    {unit}
+                  </span>
                 </td>
                 <td className="px-8 py-5 whitespace-nowrap text-right">
                   <button
@@ -69,7 +76,10 @@ export function DatasetTable({ measurements, unit, onDelete }: DatasetTableProps
             ))}
             {sortedMeasurements.length === 0 && (
               <tr>
-                <td colSpan={3} className="px-8 py-16 text-center text-zinc-600 font-bold uppercase tracking-[0.3em] text-xs">
+                <td
+                  colSpan={3}
+                  className="px-8 py-16 text-center text-zinc-600 font-bold uppercase tracking-[0.3em] text-xs"
+                >
                   Records empty.
                 </td>
               </tr>

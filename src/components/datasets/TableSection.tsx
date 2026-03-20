@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { DatasetTable } from "./DatasetTable";
-import { ConfirmDialog } from "../ui/ConfirmDialog";
 import { useDatasetStore } from "@/store";
 import type { Dataset } from "../../types/dataset";
+import { ConfirmDialog } from "../ui/ConfirmDialog";
+import { DatasetTable } from "./DatasetTable";
 
 interface TableSectionProps {
   dataset: Dataset;
@@ -11,9 +11,7 @@ interface TableSectionProps {
 
 export function TableSection({ dataset }: TableSectionProps) {
   const { updateDataset } = useDatasetStore();
-  const [confirmDeleteMeasurement, setConfirmDeleteMeasurement] = useState<
-    string | null
-  >(null);
+  const [confirmDeleteMeasurement, setConfirmDeleteMeasurement] = useState<string | null>(null);
 
   const handleDeleteMeasurement = (id: string) => {
     const updatedDataset = {
@@ -47,8 +45,7 @@ export function TableSection({ dataset }: TableSectionProps) {
         isOpen={!!confirmDeleteMeasurement}
         onClose={() => setConfirmDeleteMeasurement(null)}
         onConfirm={() =>
-          confirmDeleteMeasurement &&
-          handleDeleteMeasurement(confirmDeleteMeasurement)
+          confirmDeleteMeasurement && handleDeleteMeasurement(confirmDeleteMeasurement)
         }
         title="Purge Entry"
         message="Are you certain you wish to purge this data point? This operation permanently modifies the sequence log."

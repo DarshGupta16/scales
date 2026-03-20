@@ -1,4 +1,4 @@
-import { type Unit } from "../types/dataset";
+import type { Unit } from "../types/dataset";
 
 /**
  * Formats a timestamp into a readable date string.

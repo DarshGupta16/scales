@@ -1,19 +1,19 @@
 import { Link } from "@tanstack/react-router";
+import { AnimatePresence, motion } from "framer-motion";
 import { MoreVertical, Pencil, Trash2 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import type { Dataset, Measurement } from "../../types/dataset";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  LineChart,
-  Line,
-  ResponsiveContainer,
-  AreaChart,
   Area,
-  BarChart,
+  AreaChart,
   Bar,
-  XAxis,
+  BarChart,
+  Line,
+  LineChart,
+  ResponsiveContainer,
   Tooltip,
+  XAxis,
 } from "recharts";
-import { useEffect, useState, useMemo, useRef } from "react";
+import type { Dataset, Measurement } from "../../types/dataset";
 import { formatDate } from "../../utils/format";
 
 interface DatasetCardProps {
@@ -27,13 +27,7 @@ interface PreviewData extends Measurement {
   displayDate: string;
 }
 
-const CustomTooltip = ({
-  active,
-  payload,
-}: {
-  active?: boolean;
-  payload?: any[];
-}) => {
+const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: any[] }) => {
   if (active && payload && payload.length > 0) {
     const data = payload[0].payload as PreviewData;
     return (

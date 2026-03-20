@@ -4,9 +4,7 @@ import tsconfigPaths from "vite-tsconfig-paths";
 async function buildServiceWorker() {
   await build({
     configFile: false,
-    plugins: [
-      tsconfigPaths({ projects: ["./tsconfig.json"] }),
-    ],
+    plugins: [tsconfigPaths({ projects: ["./tsconfig.json"] })],
     define: {
       "process.env.NODE_ENV": JSON.stringify("production"),
     },

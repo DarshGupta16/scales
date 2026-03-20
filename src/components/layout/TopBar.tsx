@@ -9,17 +9,13 @@ interface TopBarProps {
 export function TopBar({ searchQuery, onSearchChange }: TopBarProps) {
   return (
     <header className="sticky top-0 z-50 bg-[#050505]/80 backdrop-blur-xl border-b border-white/5">
-      <div 
-        suppressHydrationWarning 
+      <div
+        suppressHydrationWarning
         className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4"
       >
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-brand/10 border border-brand/20 rounded-xl flex items-center justify-center overflow-hidden">
-            <img
-              src="/icon.png"
-              alt="Scales Logo"
-              className="w-full h-full object-cover"
-            />
+            <img src="/icon.png" alt="Scales Logo" className="w-full h-full object-cover" />
           </div>
           <h1 className="text-xl font-display font-bold text-white tracking-tight uppercase hidden sm:block">
             Scales

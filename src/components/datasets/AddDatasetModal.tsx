@@ -1,9 +1,9 @@
 import { useState } from "react";
+import { useDatasetStore } from "@/store";
+import type { Dataset, Unit } from "../../types/dataset";
+import { generatePbId } from "../../utils/id";
 import { Modal } from "../ui/Modal";
 import { UnitSelector } from "../ui/UnitSelector";
-import type { Dataset, Unit } from "../../types/dataset";
-import { useDatasetStore } from "@/store";
-import { generatePbId } from "../../utils/id";
 
 interface AddDatasetModalProps {
   isOpen: boolean;
@@ -11,11 +11,7 @@ interface AddDatasetModalProps {
   onAdd: (dataset: Dataset) => void;
 }
 
-export function AddDatasetModal({
-  isOpen,
-  onClose,
-  onAdd,
-}: AddDatasetModalProps) {
+export function AddDatasetModal({ isOpen, onClose, onAdd }: AddDatasetModalProps) {
   const { units } = useDatasetStore();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -35,8 +31,8 @@ export function AddDatasetModal({
       unit: selectedUnit,
       measurements: [],
       views: ["line"],
-      created: new Date().getTime(),
-      updated: new Date().getTime(),
+      created: Date.now(),
+      updated: Date.now(),
     };
 
     onAdd(newDataset);
@@ -56,7 +52,6 @@ export function AddDatasetModal({
             Title
           </label>
           <input
-            autoFocus
             type="text"
             required
             placeholder="e.g. Daily Momentum"

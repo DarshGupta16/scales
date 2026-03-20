@@ -1,7 +1,7 @@
-import type { Unit } from "../../types/dataset";
-import { useState, useMemo } from "react";
 import { Check, ChevronsUpDown, Search } from "lucide-react";
+import { useMemo, useState } from "react";
 import { useDatasetStore } from "@/store";
+import type { Unit } from "../../types/dataset";
 
 interface UnitSelectorProps {
   value: Unit | null;
@@ -14,9 +14,10 @@ export function UnitSelector({ value, onChange }: UnitSelectorProps) {
   const [search, setSearch] = useState("");
 
   const filteredUnits = useMemo(() => {
-    return units.filter((u) =>
-      u.name.toLowerCase().includes(search.toLowerCase()) ||
-      u.symbol.toLowerCase().includes(search.toLowerCase())
+    return units.filter(
+      (u) =>
+        u.name.toLowerCase().includes(search.toLowerCase()) ||
+        u.symbol.toLowerCase().includes(search.toLowerCase()),
     );
   }, [units, search]);
 
@@ -35,15 +36,11 @@ export function UnitSelector({ value, onChange }: UnitSelectorProps) {
 
       {isOpen && (
         <>
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setIsOpen(false)}
-          />
+          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
           <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-900 border border-white/10 shadow-2xl z-50 overflow-hidden rounded-2xl animate-in fade-in slide-in-from-top-2 duration-200">
             <div className="p-3 border-b border-white/5 bg-white/[0.02] flex items-center gap-2">
               <Search className="w-4 h-4 text-zinc-500" />
               <input
-                autoFocus
                 type="text"
                 placeholder="Filter Units..."
                 className="w-full bg-transparent border-none focus:ring-0 text-xs py-1 placeholder-zinc-600 text-white uppercase tracking-widest font-bold"

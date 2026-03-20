@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Modal } from "../ui/Modal";
 import type { Measurement } from "../../types/dataset";
 import { generatePbId } from "../../utils/id";
+import { Modal } from "../ui/Modal";
 
 interface AddMeasurementModalProps {
   isOpen: boolean;
@@ -10,12 +10,7 @@ interface AddMeasurementModalProps {
   unit: string;
 }
 
-export function AddMeasurementModal({
-  isOpen,
-  onClose,
-  onAdd,
-  unit,
-}: AddMeasurementModalProps) {
+export function AddMeasurementModal({ isOpen, onClose, onAdd, unit }: AddMeasurementModalProps) {
   const getLocalDatetimeLocal = () => {
     const now = new Date();
     const offset = now.getTimezoneOffset(); // in minutes
@@ -28,7 +23,7 @@ export function AddMeasurementModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!value || isNaN(Number(value))) return;
+    if (!value || Number.isNaN(Number(value))) return;
 
     const newMeasurement = {
       id: generatePbId(),
@@ -52,7 +47,6 @@ export function AddMeasurementModal({
             Magnitude ({unit})
           </label>
           <input
-            autoFocus
             type="number"
             step="any"
             required

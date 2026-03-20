@@ -1,5 +1,5 @@
+import { AreaChart, BarChart2, LineChart, PieChart, Plus, ScatterChart, X } from "lucide-react";
 import type { ViewType } from "../../types/dataset";
-import { LineChart, BarChart2, AreaChart, PieChart, ScatterChart, Plus, X } from "lucide-react";
 
 interface ViewSwitcherProps {
   views: ViewType[];
@@ -46,7 +46,7 @@ export function ViewSwitcher({
               <Icon className="w-4 h-4" />
               <span>{view}</span>
             </button>
-            
+
             {views.length > 1 && (
               <button
                 onClick={(e) => {

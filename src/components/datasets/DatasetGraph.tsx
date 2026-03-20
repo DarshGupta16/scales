@@ -1,23 +1,23 @@
+import { useEffect, useMemo, useState } from "react";
 import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  AreaChart,
   Area,
-  PieChart,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Line,
+  LineChart,
   Pie,
-  ScatterChart,
+  PieChart,
+  ResponsiveContainer,
   Scatter,
+  ScatterChart,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
 } from "recharts";
-import type { ViewType, Measurement } from "../../types/dataset";
-import { useMemo, useState, useEffect } from "react";
+import type { Measurement, ViewType } from "../../types/dataset";
 import { formatDate } from "../../utils/format";
 
 interface DatasetGraphProps {
@@ -58,9 +58,7 @@ const CustomTooltip = ({
           </p>
           <p className="text-xl font-display font-extrabold text-brand uppercase">
             {firstPayload.value}{" "}
-            <span className="text-white/50 text-xs tracking-widest">
-              {unit}
-            </span>
+            <span className="text-white/50 text-xs tracking-widest">{unit}</span>
           </p>
         </div>
       );
@@ -99,11 +97,7 @@ const CommonYAxis = () => (
 );
 
 const CommonGrid = () => (
-  <CartesianGrid
-    strokeDasharray="5 5"
-    vertical={false}
-    stroke="rgba(255,255,255,0.05)"
-  />
+  <CartesianGrid strokeDasharray="5 5" vertical={false} stroke="rgba(255,255,255,0.05)" />
 );
 
 const CommonTooltip = ({ unit }: { unit: string }) => (
@@ -114,7 +108,7 @@ const CommonTooltip = ({ unit }: { unit: string }) => (
 );
 
 // Modular Chart Renderers
-const LineRenderer = ({ chartData, unit }: { chartData: ChartData[], unit: string }) => (
+const LineRenderer = ({ chartData, unit }: { chartData: ChartData[]; unit: string }) => (
   <LineChart data={chartData} margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
     <CommonGrid />
     <CommonXAxis chartData={chartData} />
@@ -132,22 +126,17 @@ const LineRenderer = ({ chartData, unit }: { chartData: ChartData[], unit: strin
   </LineChart>
 );
 
-const BarRenderer = ({ chartData, unit }: { chartData: ChartData[], unit: string }) => (
+const BarRenderer = ({ chartData, unit }: { chartData: ChartData[]; unit: string }) => (
   <BarChart data={chartData} margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
     <CommonGrid />
     <CommonXAxis chartData={chartData} />
     <CommonYAxis />
     <CommonTooltip unit={unit} />
-    <Bar
-      dataKey="value"
-      fill="#8b5cf6"
-      radius={[10, 10, 0, 0]}
-      animationDuration={1500}
-    />
+    <Bar dataKey="value" fill="#8b5cf6" radius={[10, 10, 0, 0]} animationDuration={1500} />
   </BarChart>
 );
 
-const AreaRenderer = ({ chartData, unit }: { chartData: ChartData[], unit: string }) => (
+const AreaRenderer = ({ chartData, unit }: { chartData: ChartData[]; unit: string }) => (
   <AreaChart data={chartData} margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
     <defs>
       <linearGradient id="colorMain" x1="0" y1="0" x2="0" y2="1">
@@ -171,7 +160,7 @@ const AreaRenderer = ({ chartData, unit }: { chartData: ChartData[], unit: strin
   </AreaChart>
 );
 
-const PieRenderer = ({ chartData, unit }: { chartData: ChartData[], unit: string }) => (
+const PieRenderer = ({ chartData, unit }: { chartData: ChartData[]; unit: string }) => (
   <PieChart>
     <Pie
       data={chartData}
@@ -193,18 +182,13 @@ const PieRenderer = ({ chartData, unit }: { chartData: ChartData[], unit: string
   </PieChart>
 );
 
-const ScatterRenderer = ({ chartData, unit }: { chartData: ChartData[], unit: string }) => (
+const ScatterRenderer = ({ chartData, unit }: { chartData: ChartData[]; unit: string }) => (
   <ScatterChart margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
     <CommonGrid />
     <CommonXAxis chartData={chartData} />
     <CommonYAxis />
     <CommonTooltip unit={unit} />
-    <Scatter
-      name="Measurements"
-      data={chartData}
-      fill="#8b5cf6"
-      animationDuration={1500}
-    />
+    <Scatter name="Measurements" data={chartData} fill="#8b5cf6" animationDuration={1500} />
   </ScatterChart>
 );
 
@@ -224,14 +208,20 @@ export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
 
   const renderContent = () => {
     if (!isClient) return null;
-    
+
     switch (viewType) {
-      case "line": return <LineRenderer chartData={chartData} unit={unit} />;
-      case "bar": return <BarRenderer chartData={chartData} unit={unit} />;
-      case "area": return <AreaRenderer chartData={chartData} unit={unit} />;
-      case "pie": return <PieRenderer chartData={chartData} unit={unit} />;
-      case "scatter": return <ScatterRenderer chartData={chartData} unit={unit} />;
-      default: return null;
+      case "line":
+        return <LineRenderer chartData={chartData} unit={unit} />;
+      case "bar":
+        return <BarRenderer chartData={chartData} unit={unit} />;
+      case "area":
+        return <AreaRenderer chartData={chartData} unit={unit} />;
+      case "pie":
+        return <PieRenderer chartData={chartData} unit={unit} />;
+      case "scatter":
+        return <ScatterRenderer chartData={chartData} unit={unit} />;
+      default:
+        return null;
     }
   };
 

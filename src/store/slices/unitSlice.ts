@@ -1,25 +1,58 @@
-import { type StateCreator } from "zustand";
-import { type DatasetState } from "../types";
+import type { StateCreator } from "zustand";
 import { db } from "../../lib/dexieDb";
 import { pb } from "../../lib/pocketbase";
+import type { DatasetState } from "../types";
 
 export const createUnitSlice: StateCreator<
   DatasetState,
   [],
   [],
-  Pick<
-    DatasetState,
-    "addUnit" | "updateUnit" | "removeUnit" | "populateDefaultUnits"
-  >
+  Pick<DatasetState, "addUnit" | "updateUnit" | "removeUnit" | "populateDefaultUnits">
 > = (set, get) => ({
   populateDefaultUnits: async () => {
     const defaultUnits = [
-      { id: "unit000000000kg", name: "Kilogram", symbol: "kg", created: Date.now(), updated: Date.now() },
-      { id: "unit0000000000m", name: "Meter", symbol: "m", created: Date.now(), updated: Date.now() },
-      { id: "unit0000000000s", name: "Second", symbol: "s", created: Date.now(), updated: Date.now() },
-      { id: "unit0000000000l", name: "Liter", symbol: "l", created: Date.now(), updated: Date.now() },
-      { id: "unit00000000pct", name: "Percentage", symbol: "%", created: Date.now(), updated: Date.now() },
-      { id: "unit0000000kcal", name: "Calories", symbol: "kcal", created: Date.now(), updated: Date.now() },
+      {
+        id: "unit000000000kg",
+        name: "Kilogram",
+        symbol: "kg",
+        created: Date.now(),
+        updated: Date.now(),
+      },
+      {
+        id: "unit0000000000m",
+        name: "Meter",
+        symbol: "m",
+        created: Date.now(),
+        updated: Date.now(),
+      },
+      {
+        id: "unit0000000000s",
+        name: "Second",
+        symbol: "s",
+        created: Date.now(),
+        updated: Date.now(),
+      },
+      {
+        id: "unit0000000000l",
+        name: "Liter",
+        symbol: "l",
+        created: Date.now(),
+        updated: Date.now(),
+      },
+      {
+        id: "unit00000000pct",
+        name: "Percentage",
+        symbol: "%",
+        created: Date.now(),
+        updated: Date.now(),
+      },
+      {
+        id: "unit0000000kcal",
+        name: "Calories",
+        symbol: "kcal",
+        created: Date.now(),
+        updated: Date.now(),
+      },
     ];
 
     // 1. ZUSTAND

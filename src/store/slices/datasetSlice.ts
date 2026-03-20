@@ -1,12 +1,8 @@
-import { type StateCreator } from "zustand";
-import { type DatasetState } from "../types";
+import type { StateCreator } from "zustand";
 import { db } from "../../lib/dexieDb";
 import { pb } from "../../lib/pocketbase";
-import {
-  type DatasetRecord,
-  type MeasurementRecord,
-  type Dataset,
-} from "../../types/dataset";
+import type { Dataset, DatasetRecord, MeasurementRecord } from "../../types/dataset";
+import type { DatasetState } from "../types";
 
 export interface DatasetSlice {
   addDataset: (dataset: Dataset) => Promise<void>;
@@ -19,10 +15,7 @@ export const createDatasetSlice: StateCreator<
   DatasetState,
   [],
   [],
-  Pick<
-    DatasetState,
-    "addDataset" | "updateDataset" | "removeDataset" | "setSelectedDatasetId"
-  >
+  Pick<DatasetState, "addDataset" | "updateDataset" | "removeDataset" | "setSelectedDatasetId">
 > = (set, get) => ({
   addDataset: async (dataset) => {
     const previousDatasets = get().datasets;
@@ -41,14 +34,12 @@ export const createDatasetSlice: StateCreator<
         updated: Date.now(),
       };
 
-      const measurementRecords: MeasurementRecord[] = dataset.measurements.map(
-        (m) => ({
-          ...m,
-          datasetId: dataset.id,
-          created: m.timestamp,
-          updated: Date.now(),
-        }),
-      );
+      const measurementRecords: MeasurementRecord[] = dataset.measurements.map((m) => ({
+        ...m,
+        datasetId: dataset.id,
+        created: m.timestamp,
+        updated: Date.now(),
+      }));
 
       // 2. DEXIE: Local Persistence
       await db.datasets.put(datasetRecord);
@@ -101,9 +92,7 @@ export const createDatasetSlice: StateCreator<
 
     // 1. ZUSTAND: Optimistic Update
     set((state) => ({
-      datasets: state.datasets.map((d) =>
-        d.id === updatedDataset.id ? updatedDataset : d,
-      ),
+      datasets: state.datasets.map((d) => (d.id === updatedDataset.id ? updatedDataset : d)),
     }));
 
     try {
@@ -117,13 +106,12 @@ export const createDatasetSlice: StateCreator<
         updated: Date.now(),
       };
 
-      const measurementRecords: MeasurementRecord[] =
-        updatedDataset.measurements.map((m) => ({
-          ...m,
-          datasetId: updatedDataset.id,
-          created: (m as any).created || m.timestamp,
-          updated: Date.now(),
-        }));
+      const measurementRecords: MeasurementRecord[] = updatedDataset.measurements.map((m) => ({
+        ...m,
+        datasetId: updatedDataset.id,
+        created: (m as any).created || m.timestamp,
+        updated: Date.now(),
+      }));
 
       // 2. DEXIE: Local Persistence
       await db.transaction("rw", db.datasets, db.measurements, async () => {
@@ -158,11 +146,9 @@ export const createDatasetSlice: StateCreator<
         const pbExisting = await pb
           .collection("measurements")
           .getFullList({ filter: `dataset_id="${updatedDataset.id}"` });
-        
+
         const pbToUpdate = measurementRecords;
-        const pbToDelete = pbExisting.filter(
-          (ex) => !pbToUpdate.some((up) => up.id === ex.id)
-        );
+        const pbToDelete = pbExisting.filter((ex) => !pbToUpdate.some((up) => up.id === ex.id));
 
         for (const del of pbToDelete) {
           await pb.collection("measurements").delete(del.id);

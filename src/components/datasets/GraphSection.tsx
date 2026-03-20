@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
-import { DatasetGraph } from "./DatasetGraph";
-import { ViewSwitcher } from "./ViewSwitcher";
-import { InitializeModuleModal } from "./InitializeModuleModal";
-import { ConfirmDialog } from "../ui/ConfirmDialog";
+import { useEffect, useState } from "react";
 import type { Dataset, ViewType } from "../../types/dataset";
+import { ConfirmDialog } from "../ui/ConfirmDialog";
+import { DatasetGraph } from "./DatasetGraph";
+import { InitializeModuleModal } from "./InitializeModuleModal";
+import { ViewSwitcher } from "./ViewSwitcher";
 
 interface GraphSectionProps {
   dataset: Dataset;
@@ -11,14 +11,10 @@ interface GraphSectionProps {
 }
 
 export function GraphSection({ dataset, onUpdateDataset }: GraphSectionProps) {
-  const [activeView, setActiveView] = useState<ViewType | null>(
-    dataset.views[0] || "line",
-  );
+  const [activeView, setActiveView] = useState<ViewType | null>(dataset.views[0] || "line");
 
   const [isAddViewOpen, setIsAddViewOpen] = useState(false);
-  const [confirmRemoveView, setConfirmRemoveView] = useState<ViewType | null>(
-    null,
-  );
+  const [confirmRemoveView, setConfirmRemoveView] = useState<ViewType | null>(null);
 
   useEffect(() => {
     if (dataset && activeView && !dataset.views.includes(activeView)) {
@@ -86,9 +82,7 @@ export function GraphSection({ dataset, onUpdateDataset }: GraphSectionProps) {
       <ConfirmDialog
         isOpen={!!confirmRemoveView}
         onClose={() => setConfirmRemoveView(null)}
-        onConfirm={() =>
-          confirmRemoveView && handleRemoveView(confirmRemoveView)
-        }
+        onConfirm={() => confirmRemoveView && handleRemoveView(confirmRemoveView)}
         title="Deactivate Module"
         message={`Confirm deactivation of the ${confirmRemoveView?.toUpperCase()} renderer from this dataset.`}
         confirmText="Deactivate"

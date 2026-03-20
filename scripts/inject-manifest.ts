@@ -1,6 +1,6 @@
-import { readdirSync, readFileSync, writeFileSync } from "fs";
-import { join, relative } from "path";
-import { createHash } from "crypto";
+import { createHash } from "node:crypto";
+import { readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join, relative } from "node:path";
 
 const DIST_DIR = "dist/client";
 const SW_PATH = join(DIST_DIR, "sw.js");
@@ -28,7 +28,7 @@ async function injectManifest() {
   const precacheEntries = allFiles
     .filter((f) => !f.endsWith("sw.js") && !f.endsWith(".map"))
     .map((f) => {
-      const url = "/" + relative(DIST_DIR, f).replace(/\\/g, "/");
+      const url = `/${relative(DIST_DIR, f).replace(/\\/g, "/")}`;
       return {
         url,
         revision: getRevision(f),
@@ -36,9 +36,7 @@ async function injectManifest() {
     });
 
   // Add the root / to the manifest using the main bundle revision to ensure it's cached
-  const mainBundle = allFiles.find(
-    (f) => f.includes("main-") && f.endsWith(".js"),
-  );
+  const mainBundle = allFiles.find((f) => f.includes("main-") && f.endsWith(".js"));
   if (mainBundle) {
     precacheEntries.push({
       url: "/",
@@ -52,9 +50,7 @@ async function injectManifest() {
   if (swContent.includes("self.__SW_MANIFEST")) {
     swContent = swContent.replace("self.__SW_MANIFEST", manifestString);
     writeFileSync(SW_PATH, swContent);
-    console.log(
-      `Successfully injected ${precacheEntries.length} entries into sw.js`,
-    );
+    console.log(`Successfully injected ${precacheEntries.length} entries into sw.js`);
   } else {
     console.error("Could not find self.__SW_MANIFEST in sw.js");
   }

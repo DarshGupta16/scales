@@ -1,7 +1,7 @@
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { Info } from "lucide-react";
-import { DatasetCard } from "./DatasetCard";
 import type { Dataset } from "../../types/dataset";
+import { DatasetCard } from "./DatasetCard";
 
 interface DatasetGridProps {
   datasets: Dataset[];
@@ -39,11 +39,7 @@ export function DatasetGrid({ datasets, onEdit, onDelete }: DatasetGridProps) {
                     exit={{ opacity: 0, scale: 0.9 }}
                     transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
                   >
-                    <DatasetCard
-                      dataset={dataset}
-                      onEdit={onEdit}
-                      onDelete={onDelete}
-                    />
+                    <DatasetCard dataset={dataset} onEdit={onEdit} onDelete={onDelete} />
                   </motion.div>
                 ))}
               </AnimatePresence>
