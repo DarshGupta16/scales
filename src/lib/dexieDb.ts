@@ -1,5 +1,10 @@
 import { Dexie, type EntityTable } from "dexie";
-import type { DatasetRecord, MeasurementRecord, UnitRecord } from "../types/dataset";
+import type {
+  DatasetRecord,
+  MeasurementRecord,
+  PreferenceRecord,
+  UnitRecord,
+} from "../types/dataset";
 
 const isBrowser = typeof window !== "undefined";
 
@@ -8,7 +13,13 @@ export interface OfflineOp {
   collection: "datasets" | "measurements" | "units" | "preferences";
   action: "create" | "update" | "delete";
   recordId: string;
-  data: any;
+  data:
+    | DatasetRecord
+    | MeasurementRecord
+    | UnitRecord
+    | PreferenceRecord
+    | { datasetRecord: DatasetRecord; measurementRecords: MeasurementRecord[] }
+    | null;
   timestamp: number;
 }
 
@@ -20,7 +31,7 @@ export const db = (isBrowser ? new Dexie("ScalesDatabase") : ({} as unknown)) as
   datasets: EntityTable<DatasetRecord, "id">;
   units: EntityTable<UnitRecord, "id">;
   measurements: EntityTable<MeasurementRecord, "id">;
-  preferences: EntityTable<any, "id">;
+  preferences: EntityTable<PreferenceRecord, "id">;
   offline_ops: EntityTable<OfflineOp, "id">;
 };
 
@@ -36,4 +47,4 @@ if (isBrowser) {
   });
 }
 
-export type { DatasetRecord, MeasurementRecord, UnitRecord };
+export type { DatasetRecord, MeasurementRecord, PreferenceRecord, UnitRecord };

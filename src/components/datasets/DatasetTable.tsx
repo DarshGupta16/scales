@@ -65,6 +65,7 @@ export function DatasetTable({ measurements, unit, onDelete }: DatasetTableProps
                 </td>
                 <td className="px-8 py-5 whitespace-nowrap text-right">
                   <button
+                    type="button"
                     onClick={() => onDelete(measurement.id)}
                     className="text-zinc-600 hover:text-red-400 transition-colors p-2 rounded-xl hover:bg-red-400/10"
                     title="Delete entry"

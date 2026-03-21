@@ -100,6 +100,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         />
         <Scripts />
         <script
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: Needed for Service Worker registration
           dangerouslySetInnerHTML={{
             __html: `
                 if ('serviceWorker' in navigator && window.location.hostname !== 'localhost') {

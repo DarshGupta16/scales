@@ -48,10 +48,14 @@ export function AddDatasetModal({ isOpen, onClose, onAdd }: AddDatasetModalProps
     <Modal isOpen={isOpen} onClose={onClose} title="Create Collection">
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <div className="flex flex-col gap-2">
-          <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] ml-1">
+          <label
+            htmlFor="dataset-title"
+            className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] ml-1"
+          >
             Title
           </label>
           <input
+            id="dataset-title"
             type="text"
             required
             placeholder="e.g. Daily Momentum"
@@ -62,10 +66,14 @@ export function AddDatasetModal({ isOpen, onClose, onAdd }: AddDatasetModalProps
         </div>
 
         <div className="flex flex-col gap-2">
-          <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] ml-1">
+          <label
+            htmlFor="dataset-description"
+            className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] ml-1"
+          >
             Description
           </label>
           <textarea
+            id="dataset-description"
             rows={3}
             placeholder="What defines this metric?"
             className="brutal-input resize-none"
@@ -75,9 +83,9 @@ export function AddDatasetModal({ isOpen, onClose, onAdd }: AddDatasetModalProps
         </div>
 
         <div className="flex flex-col gap-2">
-          <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] ml-1">
+          <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] ml-1">
             Unit
-          </label>
+          </span>
           <UnitSelector value={unit || units[0] || null} onChange={setUnit} />
         </div>
 

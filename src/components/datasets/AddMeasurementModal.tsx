@@ -43,10 +43,14 @@ export function AddMeasurementModal({ isOpen, onClose, onAdd, unit }: AddMeasure
     <Modal isOpen={isOpen} onClose={onClose} title="Record Measurement">
       <form onSubmit={handleSubmit} className="flex flex-col gap-8">
         <div className="flex flex-col gap-2">
-          <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] ml-1">
+          <label
+            htmlFor="measurement-value"
+            className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] ml-1"
+          >
             Magnitude ({unit})
           </label>
           <input
+            id="measurement-value"
             type="number"
             step="any"
             required
@@ -57,10 +61,14 @@ export function AddMeasurementModal({ isOpen, onClose, onAdd, unit }: AddMeasure
           />
         </div>
         <div className="flex flex-col gap-2">
-          <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] ml-1">
+          <label
+            htmlFor="measurement-timestamp"
+            className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] ml-1"
+          >
             Timestamp
           </label>
           <input
+            id="measurement-timestamp"
             type="datetime-local"
             required
             className="brutal-input scheme-dark"

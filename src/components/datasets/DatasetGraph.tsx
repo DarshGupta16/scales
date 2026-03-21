@@ -174,8 +174,11 @@ const PieRenderer = ({ chartData, unit }: { chartData: ChartData[]; unit: string
       stroke="none"
       cornerRadius={10}
     >
-      {chartData.map((_, index) => (
-        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+      {chartData.map((entry) => (
+        <Cell
+          key={`cell-${entry.tooltipId}`}
+          fill={COLORS[chartData.indexOf(entry) % COLORS.length]}
+        />
       ))}
     </Pie>
     <CommonTooltip unit={unit} />

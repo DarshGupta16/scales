@@ -49,3 +49,11 @@ export interface Dataset {
   created: number;
   updated: number;
 }
+
+export interface PreferenceRecord {
+  id: string;
+  preference: string;
+  value: unknown;
+  created: number;
+  updated: number;
+}

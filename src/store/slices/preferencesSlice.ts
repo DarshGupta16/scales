@@ -68,14 +68,14 @@ export const createPreferencesSlice: StateCreator<
         } else if (finalOp === "delete") {
           await pb.collection("preferences").delete(finalId);
         }
-      } catch (pbErr: any) {
-        if (pbErr.status === 0) {
+      } catch (pbErr: unknown) {
+        if (pbErr && typeof pbErr === "object" && "status" in pbErr && pbErr.status === 0) {
           // Record offline operation
           await db.offline_ops.add({
             collection: "preferences",
-            action: finalOp, // This will be "create", "update" or "delete" which syncSlice expects
+            action: finalOp as "create" | "update" | "delete", // This will be "create", "update" or "delete" which syncSlice expects
             recordId: finalId,
-            data: finalOp === "delete" ? null : currentPref,
+            data: finalOp === "delete" ? null : currentPref || null,
             timestamp: Date.now(),
           });
           console.warn(`Offline: Recorded preference ${finalOp} in op logs.`);

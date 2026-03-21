@@ -1,6 +1,6 @@
 import { LayoutGrid, List, Settings2 } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
-import { useDatasetStore, useAppStore } from "@/store";
+import { useEffect, useRef, useState } from "react";
+import { useAppStore, useDatasetStore } from "@/store";
 import { SearchBar } from "../ui/SearchBar";
 
 interface TopBarProps {
@@ -91,8 +91,8 @@ export function TopBar({ searchQuery, onSearchChange }: TopBarProps) {
               type="button"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className={`p-3 rounded-xl border transition-all ${
-                isMobileMenuOpen 
-                  ? "bg-brand/10 border-brand/50 text-white" 
+                isMobileMenuOpen
+                  ? "bg-brand/10 border-brand/50 text-white"
                   : "bg-white/5 border-white/5 text-zinc-400 hover:text-white"
               }`}
             >
@@ -109,7 +109,11 @@ export function TopBar({ searchQuery, onSearchChange }: TopBarProps) {
                   }}
                   className="w-full flex items-center gap-3 px-4 py-4 text-[10px] font-bold text-zinc-400 hover:text-white hover:bg-white/5 transition-all uppercase tracking-widest text-left"
                 >
-                  {viewMode === "grid" ? <List className="w-4 h-4 text-brand" /> : <LayoutGrid className="w-4 h-4 text-brand" />}
+                  {viewMode === "grid" ? (
+                    <List className="w-4 h-4 text-brand" />
+                  ) : (
+                    <LayoutGrid className="w-4 h-4 text-brand" />
+                  )}
                   {viewMode === "grid" ? "Switch to List" : "Switch to Grid"}
                 </button>
                 <div className="h-px bg-white/5 mx-4" />

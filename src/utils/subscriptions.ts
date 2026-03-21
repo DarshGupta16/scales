@@ -27,7 +27,7 @@ export const setupSubscriptions = () => {
 
         if (existing) {
           // CHECK: Is this update actually new?
-          const localUpdated = (existing as any).updated || 0;
+          const localUpdated = existing.updated || 0;
           if (updated <= localUpdated) {
             // Even if timestamps match, double check if data is actually different
             const isDifferent =
@@ -113,7 +113,7 @@ export const setupSubscriptions = () => {
             const existing = dataset.measurements.find((m) => m.id === record.id);
 
             if (existing) {
-              const localUpdated = (existing as any).updated || 0;
+              const localUpdated = existing.updated || 0;
               if (updated <= localUpdated) {
                 const isDifferent =
                   existing.value !== measurementRecord.value ||
@@ -180,7 +180,7 @@ export const setupSubscriptions = () => {
       useDatasetStore.setState((state) => {
         const existing = state.units.find((u) => u.id === record.id);
         if (existing) {
-          const localUpdated = (existing as any).updated || 0;
+          const localUpdated = existing.updated || 0;
           if (updated <= localUpdated) {
             if (existing.name === unitRecord.name && existing.symbol === unitRecord.symbol)
               return state;

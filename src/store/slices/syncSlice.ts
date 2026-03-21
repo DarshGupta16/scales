@@ -23,7 +23,11 @@ export const createSyncSlice: StateCreator<DatasetState, [], [], SyncSlice> = (s
 
         if (op.action === "create") {
           if (op.collection === "datasets") {
-            const { datasetRecord, measurementRecords } = op.data;
+            const data = op.data as {
+              datasetRecord: DatasetRecord;
+              measurementRecords: MeasurementRecord[];
+            };
+            const { datasetRecord, measurementRecords } = data;
             await collection.create({
               id: datasetRecord.id,
               title: datasetRecord.title,
@@ -42,13 +46,14 @@ export const createSyncSlice: StateCreator<DatasetState, [], [], SyncSlice> = (s
               });
             }
           } else if (op.collection === "preferences") {
-            await collection.create(op.data);
+            if (op.data) await collection.create(op.data);
           } else {
-            await collection.create(op.data);
+            if (op.data) await collection.create(op.data);
           }
         } else if (op.action === "update") {
           if (op.collection === "datasets") {
-            const { datasetRecord } = op.data;
+            const data = op.data as { datasetRecord: DatasetRecord };
+            const { datasetRecord } = data;
             await collection.update(op.recordId, {
               title: datasetRecord.title,
               description: datasetRecord.description,
@@ -56,20 +61,22 @@ export const createSyncSlice: StateCreator<DatasetState, [], [], SyncSlice> = (s
               views: datasetRecord.views,
             });
           } else if (op.collection === "preferences") {
-            await collection.update(op.recordId, op.data);
+            if (op.data) await collection.update(op.recordId, op.data);
           } else {
-            await collection.update(op.recordId, op.data);
+            if (op.data) await collection.update(op.recordId, op.data);
           }
         } else if (op.action === "delete") {
           try {
             await collection.delete(op.recordId);
-          } catch (err: any) {
+          } catch (err: unknown) {
             // Ignore 404s on delete (already gone)
-            if (err.status !== 404) throw err;
+            if (err && typeof err === "object" && "status" in err && err.status !== 404) throw err;
           }
         }
 
-        await db.offline_ops.delete(op.id!);
+        if (op.id !== undefined) {
+          await db.offline_ops.delete(op.id);
+        }
       } catch (err) {
         console.error(`Failed to sync op ${op.id}:`, err);
         if (!navigator.onLine) break;
@@ -88,7 +95,7 @@ export const createSyncSlice: StateCreator<DatasetState, [], [], SyncSlice> = (s
       ]);
 
       // 2. Map to local record formats
-      const datasetRecords: DatasetRecord[] = pbDatasets.map((d: any) => ({
+      const datasetRecords: DatasetRecord[] = pbDatasets.map((d) => ({
         id: d.id,
         title: d.title,
         description: d.description,
@@ -98,7 +105,7 @@ export const createSyncSlice: StateCreator<DatasetState, [], [], SyncSlice> = (s
         updated: new Date(d.updated).getTime(),
       }));
 
-      const measurementRecords: MeasurementRecord[] = pbMeasurements.map((m: any) => ({
+      const measurementRecords: MeasurementRecord[] = pbMeasurements.map((m) => ({
         id: m.id,
         datasetId: m.dataset_id,
         timestamp: m.timestamp,
@@ -107,7 +114,7 @@ export const createSyncSlice: StateCreator<DatasetState, [], [], SyncSlice> = (s
         updated: new Date(m.updated).getTime(),
       }));
 
-      const unitRecords: UnitRecord[] = pbUnits.map((u: any) => ({
+      const unitRecords: UnitRecord[] = pbUnits.map((u) => ({
         id: u.id,
         name: u.name,
         symbol: u.symbol,
@@ -115,7 +122,7 @@ export const createSyncSlice: StateCreator<DatasetState, [], [], SyncSlice> = (s
         updated: new Date(u.updated).getTime(),
       }));
 
-      const preferenceRecords: any[] = pbPreferences.map((p: any) => ({
+      const preferenceRecords = pbPreferences.map((p) => ({
         id: p.id,
         preference: p.preference,
         value: p.value,

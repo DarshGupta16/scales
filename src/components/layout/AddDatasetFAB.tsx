@@ -3,7 +3,7 @@ import { Plus } from "lucide-react";
 import { useAppStore } from "../../store";
 
 export function AddDatasetFAB() {
-  const setAddDatasetModalOpen = useAppStore(state => state.setAddDatasetModalOpen);
+  const setAddDatasetModalOpen = useAppStore((state) => state.setAddDatasetModalOpen);
 
   return (
     <motion.button

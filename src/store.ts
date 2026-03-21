@@ -39,23 +39,15 @@ export const useDatasetStore = create<DatasetState>((set, get, ...args) => ({
 
     try {
       // 3. Load initial state from DEXIE (Fast local-first start)
-      const [
-        datasetRecords,
-        unitRecords,
-        measurementRecords,
-        preferenceRecords,
-      ] = await Promise.all([
-        db.datasets.toArray(),
-        db.units.toArray(),
-        db.measurements.toArray(),
-        db.preferences.toArray(),
-      ]);
+      const [datasetRecords, unitRecords, measurementRecords, preferenceRecords] =
+        await Promise.all([
+          db.datasets.toArray(),
+          db.units.toArray(),
+          db.measurements.toArray(),
+          db.preferences.toArray(),
+        ]);
 
-      const datasets = buildDatasets(
-        datasetRecords,
-        unitRecords,
-        measurementRecords,
-      );
+      const datasets = buildDatasets(datasetRecords, unitRecords, measurementRecords);
 
       set({
         datasets,

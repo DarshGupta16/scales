@@ -24,6 +24,7 @@ export function InitializeModuleModal({
           const isAlreadyAdded = existingViews.includes(view);
           return (
             <button
+              type="button"
               key={view}
               disabled={isAlreadyAdded}
               onClick={() => onAddView(view)}

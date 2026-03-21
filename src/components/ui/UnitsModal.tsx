@@ -143,7 +143,6 @@ export function UnitsModal({ isOpen, onClose, zIndex }: UnitsModalProps) {
                 onChange={(e) => setNewSymbol(e.target.value)}
                 placeholder="Sym (e.g. kg)"
                 className="w-24 brutal-input text-[10px] font-bold py-2 px-3"
-                autoFocus
               />
               <input
                 type="text"

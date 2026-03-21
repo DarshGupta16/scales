@@ -73,7 +73,7 @@ export function LoadingScreen({ isVisible }: LoadingScreenProps) {
                 "Establishing secure handshake",
               ].map((text, i) => (
                 <motion.div
-                  key={i}
+                  key={text}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{
                     opacity: progress > (i + 1) * 20 ? 1 : 0.2,
@@ -95,7 +95,7 @@ export function LoadingScreen({ isVisible }: LoadingScreenProps) {
           {/* Branding Footer */}
           <div className="absolute bottom-12 left-0 right-0 text-center">
             <p className="text-[10px] font-bold text-zinc-700 uppercase tracking-[0.5em]">
-              Scales v1.0 // System Kernel
+              Scales v1.0 {/* System Kernel */}
             </p>
           </div>
         </motion.div>

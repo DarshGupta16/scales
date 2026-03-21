@@ -28,16 +28,15 @@ export function Modal({ isOpen, onClose, title, children, zIndex = 100 }: ModalP
   return (
     <AnimatePresence>
       {isOpen && (
-        <div 
-          className="fixed inset-0 flex items-center justify-center p-4"
-          style={{ zIndex }}
-        >
-          <motion.div
+        <div className="fixed inset-0 flex items-center justify-center p-4" style={{ zIndex }}>
+          <motion.button
+            type="button"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black/80 backdrop-blur-md"
+            className="absolute inset-0 bg-black/80 backdrop-blur-md cursor-default"
+            aria-label="Close modal"
           />
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -51,6 +50,7 @@ export function Modal({ isOpen, onClose, title, children, zIndex = 100 }: ModalP
                 {title}
               </h3>
               <button
+                type="button"
                 onClick={onClose}
                 className="p-2 text-zinc-500 hover:text-white hover:bg-white/10 transition-all rounded-full"
               >

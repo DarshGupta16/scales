@@ -66,9 +66,8 @@ export const createUnitSlice: StateCreator<
       for (const unit of defaultUnits) {
         try {
           await pb.collection("units").create(unit);
-        } catch (pbErr: any) {
-          // If it fails with 400, it might already exist on server
-          if (pbErr.status === 400) {
+        } catch (pbErr: unknown) {
+          if (pbErr && typeof pbErr === "object" && "status" in pbErr && pbErr.status === 400) {
             console.warn(`Unit ${unit.id} already exists on PocketBase.`);
             continue;
           }
@@ -103,8 +102,8 @@ export const createUnitSlice: StateCreator<
       // 3. POCKETBASE: Remote Persistence
       try {
         await pb.collection("units").create(unitWithTime);
-      } catch (pbErr: any) {
-        if (pbErr.status === 0) {
+      } catch (pbErr: unknown) {
+        if (pbErr && typeof pbErr === "object" && "status" in pbErr && pbErr.status === 0) {
           // Record offline operation
           await db.offline_ops.add({
             collection: "units",
@@ -126,7 +125,7 @@ export const createUnitSlice: StateCreator<
   updateUnit: async (unit) => {
     const previousUnits = get().units;
     const previousDatasets = get().datasets;
-    const unitWithTime = { ...unit, updated: Date.now() } as any;
+    const unitWithTime = { ...unit, updated: Date.now() };
 
     // 1. ZUSTAND: Optimistic Update
     set((state) => ({
@@ -143,8 +142,8 @@ export const createUnitSlice: StateCreator<
       // 3. POCKETBASE: Remote Persistence
       try {
         await pb.collection("units").update(unit.id, unitWithTime);
-      } catch (pbErr: any) {
-        if (pbErr.status === 0) {
+      } catch (pbErr: unknown) {
+        if (pbErr && typeof pbErr === "object" && "status" in pbErr && pbErr.status === 0) {
           // Record offline operation
           await db.offline_ops.add({
             collection: "units",
@@ -173,13 +172,13 @@ export const createUnitSlice: StateCreator<
 
     try {
       // 2. DEXIE: Local Persistence
-      await db.units.delete(id as any);
+      await db.units.delete(id);
 
       // 3. POCKETBASE: Remote Persistence
       try {
         await pb.collection("units").delete(id);
-      } catch (pbErr: any) {
-        if (pbErr.status === 0) {
+      } catch (pbErr: unknown) {
+        if (pbErr && typeof pbErr === "object" && "status" in pbErr && pbErr.status === 0) {
           // Record offline operation
           await db.offline_ops.add({
             collection: "units",

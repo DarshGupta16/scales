@@ -27,9 +27,15 @@ interface PreviewData extends Measurement {
   displayDate: string;
 }
 
-const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: any[] }) => {
+const CustomTooltip = ({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: { value: number; payload: PreviewData }[];
+}) => {
   if (active && payload && payload.length > 0) {
-    const data = payload[0].payload as PreviewData;
+    const data = payload[0].payload;
     return (
       <div className="bg-zinc-900 border border-white/20 p-2 rounded-lg shadow-xl pointer-events-none">
         <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider leading-none mb-1">
@@ -156,6 +162,7 @@ export function DatasetCard({ dataset, onEdit, onDelete }: DatasetCardProps) {
 
           <div className="relative" ref={menuRef}>
             <button
+              type="button"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -175,6 +182,7 @@ export function DatasetCard({ dataset, onEdit, onDelete }: DatasetCardProps) {
                   className="absolute right-0 mt-2 w-48 bg-zinc-900 border border-white/10 rounded-xl shadow-2xl z-20 overflow-hidden"
                 >
                   <button
+                    type="button"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -187,6 +195,7 @@ export function DatasetCard({ dataset, onEdit, onDelete }: DatasetCardProps) {
                     Edit
                   </button>
                   <button
+                    type="button"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();

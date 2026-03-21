@@ -1,4 +1,13 @@
-import { AreaChart, BarChart2, LineChart, PieChart, Plus, ScatterChart, X } from "lucide-react";
+import {
+  AreaChart,
+  BarChart2,
+  LineChart,
+  type LucideIcon,
+  PieChart,
+  Plus,
+  ScatterChart,
+  X,
+} from "lucide-react";
 import type { ViewType } from "../../types/dataset";
 
 interface ViewSwitcherProps {
@@ -9,7 +18,7 @@ interface ViewSwitcherProps {
   onRemoveView: (view: ViewType) => void;
 }
 
-const viewIcons: Record<ViewType, any> = {
+const viewIcons: Record<ViewType, LucideIcon> = {
   line: LineChart,
   bar: BarChart2,
   area: AreaChart,
@@ -33,6 +42,7 @@ export function ViewSwitcher({
         return (
           <div key={view} className="relative group">
             <button
+              type="button"
               onClick={() => onViewChange(view)}
               className={`
                 flex items-center gap-2 px-4 py-2 border text-[10px] font-bold uppercase tracking-[0.2em] transition-all rounded-xl
@@ -49,6 +59,7 @@ export function ViewSwitcher({
 
             {views.length > 1 && (
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   onRemoveView(view);
@@ -67,6 +78,7 @@ export function ViewSwitcher({
       })}
 
       <button
+        type="button"
         onClick={onAddView}
         className="flex items-center gap-2 px-4 py-2 border border-dashed border-white/10 text-[10px] font-bold uppercase tracking-[0.2em] bg-transparent text-zinc-500 hover:border-brand/50 hover:text-brand transition-all rounded-xl"
       >

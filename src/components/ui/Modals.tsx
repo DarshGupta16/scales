@@ -1,17 +1,13 @@
 import { useAppStore, useDatasetStore } from "../../store";
+import type { Dataset } from "../../types/dataset";
 import { AddDatasetModal } from "../datasets/AddDatasetModal";
 import { UnitsModal } from "./UnitsModal";
-import type { Dataset } from "../../types/dataset";
 
 export function Modals() {
-  const { 
-    isAddDatasetModalOpen, 
-    setAddDatasetModalOpen,
-    isUnitsModalOpen,
-    setUnitsModalOpen
-  } = useAppStore();
-  
-  const addDataset = useDatasetStore(state => state.addDataset);
+  const { isAddDatasetModalOpen, setAddDatasetModalOpen, isUnitsModalOpen, setUnitsModalOpen } =
+    useAppStore();
+
+  const addDataset = useDatasetStore((state) => state.addDataset);
 
   const handleAddDataset = (newDataset: Dataset) => {
     addDataset(newDataset);

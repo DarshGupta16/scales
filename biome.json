@@ -1,6 +1,10 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.4.8/schema.json",
-  "assist": { "actions": { "source": { "organizeImports": "on" } } },
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
   "linter": {
     "enabled": true,
     "rules": {
@@ -38,18 +42,12 @@
       "tailwindDirectives": true
     }
   },
-  "files": {
-    "includes": [
-      "**",
-      "!dist",
-      "!node_modules",
-      "!.output",
-      "!.vinxi",
-      "!.tanstack",
-      "!*.gen.ts",
-      "!bun.lock",
-      "!pb_migrations",
-      "!pb_data"
-    ]
-  }
+  "overrides": [
+    {
+      "includes": ["pb_migrations/**", "src/routeTree.gen.ts", "dist/**", "pb_data/**"],
+      "linter": { "enabled": false },
+      "formatter": { "enabled": false },
+      "assist": { "enabled": false }
+    }
+  ]
 }

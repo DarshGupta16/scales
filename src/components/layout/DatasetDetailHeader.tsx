@@ -36,6 +36,7 @@ export function DatasetDetailHeader({
 
         <div className="flex items-center shrink-0 gap-2 sm:gap-4">
           <button
+            type="button"
             onClick={onOpenSettings}
             className="p-3 text-zinc-400 border border-white/10 hover:border-white/30 hover:text-white hover:bg-white/5 transition-all rounded-xl active:scale-95"
           >
@@ -43,6 +44,7 @@ export function DatasetDetailHeader({
           </button>
 
           <button
+            type="button"
             onClick={onAddMeasurement}
             className="hidden sm:flex items-center gap-3 px-6 py-3 bg-brand text-white font-bold uppercase tracking-widest text-xs rounded-xl shadow-lg shadow-brand/20 hover:brightness-110 transition-all active:scale-95"
           >
@@ -51,6 +53,7 @@ export function DatasetDetailHeader({
           </button>
 
           <button
+            type="button"
             onClick={onAddMeasurement}
             className="sm:hidden flex items-center justify-center w-12 h-12 bg-brand text-white rounded-xl shadow-lg shadow-brand/20 active:scale-95"
           >

@@ -1,13 +1,7 @@
-import type { Dataset, Unit } from "../types/dataset";
+import type { Dataset, PreferenceRecord, Unit } from "../types/dataset";
 import type { SyncSlice } from "./slices/syncSlice";
 
-export interface Preference {
-  id: string;
-  preference: string;
-  value: any;
-  created?: number;
-  updated?: number;
-}
+export type Preference = PreferenceRecord;
 
 export type PreferenceOp = "upsert" | "delete";
 

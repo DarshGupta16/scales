@@ -27,12 +27,14 @@ export function ConfirmDialog({
         </p>
         <div className="flex justify-end gap-4 mt-2">
           <button
+            type="button"
             onClick={onClose}
             className="px-6 py-3 bg-white/5 text-zinc-400 font-bold uppercase tracking-widest text-xs hover:bg-white/10 hover:text-white transition-all rounded-xl"
           >
             Abort
           </button>
           <button
+            type="button"
             onClick={() => {
               onConfirm();
               onClose();

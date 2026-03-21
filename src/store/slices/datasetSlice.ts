@@ -67,8 +67,8 @@ export const createDatasetSlice: StateCreator<
             created: new Date(m.created).toISOString(),
           });
         }
-      } catch (pbErr: any) {
-        if (pbErr.status === 0) {
+      } catch (pbErr: unknown) {
+        if (pbErr && typeof pbErr === "object" && "status" in pbErr && pbErr.status === 0) {
           // Record offline operation if it's a network error
           await db.offline_ops.add({
             collection: "datasets",
@@ -109,7 +109,7 @@ export const createDatasetSlice: StateCreator<
       const measurementRecords: MeasurementRecord[] = updatedDataset.measurements.map((m) => ({
         ...m,
         datasetId: updatedDataset.id,
-        created: (m as any).created || m.timestamp,
+        created: m.created || m.timestamp,
         updated: Date.now(),
       }));
 
@@ -170,8 +170,8 @@ export const createDatasetSlice: StateCreator<
             });
           }
         }
-      } catch (pbErr: any) {
-        if (pbErr.status === 0) {
+      } catch (pbErr: unknown) {
+        if (pbErr && typeof pbErr === "object" && "status" in pbErr && pbErr.status === 0) {
           // Record offline operation
           await db.offline_ops.add({
             collection: "datasets",
@@ -201,15 +201,15 @@ export const createDatasetSlice: StateCreator<
     try {
       // 2. DEXIE: Local Persistence
       await Promise.all([
-        db.datasets.delete(id as any),
+        db.datasets.delete(id),
         db.measurements.where("datasetId").equals(id).delete(),
       ]);
 
       // 3. POCKETBASE: Remote Persistence
       try {
         await pb.collection("datasets").delete(id);
-      } catch (pbErr: any) {
-        if (pbErr.status === 0) {
+      } catch (pbErr: unknown) {
+        if (pbErr && typeof pbErr === "object" && "status" in pbErr && pbErr.status === 0) {
           // Record offline operation
           await db.offline_ops.add({
             collection: "datasets",
