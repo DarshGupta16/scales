@@ -3,6 +3,7 @@ import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-r
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { useEffect, useState } from "react";
 import { LoadingScreen } from "../components/LoadingScreen";
+import { Modals } from "../components/ui/Modals";
 import { useDatasetStore } from "../store";
 
 import appCss from "../styles.css?url";
@@ -72,6 +73,7 @@ function RootComponent() {
       <LoadingScreen isVisible={isLoading} />
       <div style={{ visibility: isLoading ? "hidden" : "visible" }}>
         <Outlet />
+        <Modals />
       </div>
     </>
   );

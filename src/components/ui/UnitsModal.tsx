@@ -8,9 +8,10 @@ import { Modal } from "./Modal";
 interface UnitsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  zIndex?: number;
 }
 
-export function UnitsModal({ isOpen, onClose }: UnitsModalProps) {
+export function UnitsModal({ isOpen, onClose, zIndex }: UnitsModalProps) {
   const { units, addUnit, updateUnit, removeUnit } = useDatasetStore();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
@@ -53,7 +54,7 @@ export function UnitsModal({ isOpen, onClose }: UnitsModalProps) {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Manage Units">
+    <Modal isOpen={isOpen} onClose={onClose} title="Manage Units" zIndex={zIndex}>
       <div className="flex flex-col gap-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
         {units.map((unit) => (
           <div

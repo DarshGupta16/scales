@@ -1,22 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useDatasetStore } from "@/store";
-import { AddDatasetModal } from "../components/datasets/AddDatasetModal";
-import { DatasetSettingsModal } from "../components/datasets/DatasetSettingsModal";
 import { DatasetView } from "../components/datasets/DatasetView";
+import { DatasetSettingsModal } from "../components/datasets/DatasetSettingsModal";
 import { AddDatasetFAB } from "../components/layout/AddDatasetFAB";
 import { TopBar } from "../components/layout/TopBar";
 import type { Dataset } from "../types/dataset";
+
 
 export const Route = createFileRoute("/")({
   component: Index,
 });
 
 function Index() {
-  const { datasets, addDataset, updateDataset, removeDataset } = useDatasetStore();
+  const { datasets, updateDataset, removeDataset } = useDatasetStore();
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingDataset, setEditingDataset] = useState<Dataset | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -31,11 +30,6 @@ function Index() {
       )
       .sort((a, b) => (a.created || 0) - (b.created || 0));
   }, [datasets, searchQuery]);
-
-  const handleAddDataset = (newDataset: Dataset) => {
-    addDataset(newDataset);
-    setIsAddModalOpen(false);
-  };
 
   const handleUpdateDataset = (updatedDataset: Dataset) => {
     updateDataset(updatedDataset);
@@ -73,13 +67,7 @@ function Index() {
         }}
       />
 
-      <AddDatasetFAB onClick={() => setIsAddModalOpen(true)} />
-
-      <AddDatasetModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        onAdd={handleAddDataset}
-      />
+      <AddDatasetFAB />
 
       {editingDataset && (
         <DatasetSettingsModal
