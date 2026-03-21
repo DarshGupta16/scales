@@ -1,7 +1,8 @@
-import { Check, ChevronsUpDown, Search } from "lucide-react";
+import { Check, ChevronsUpDown, Search, Settings2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useDatasetStore } from "@/store";
 import type { Unit } from "../../types/dataset";
+import { UnitsModal } from "./UnitsModal";
 
 interface UnitSelectorProps {
   value: Unit | null;
@@ -11,6 +12,7 @@ interface UnitSelectorProps {
 export function UnitSelector({ value, onChange }: UnitSelectorProps) {
   const { units } = useDatasetStore();
   const [isOpen, setIsOpen] = useState(false);
+  const [isUnitsModalOpen, setIsUnitsModalOpen] = useState(false);
   const [search, setSearch] = useState("");
 
   const filteredUnits = useMemo(() => {
@@ -48,7 +50,7 @@ export function UnitSelector({ value, onChange }: UnitSelectorProps) {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            <div className="max-h-60 overflow-y-auto p-2 bg-zinc-900">
+            <div className="max-h-60 sm:max-h-48 md:max-h-40 overflow-y-auto p-2 bg-zinc-900 custom-scrollbar">
               {filteredUnits.map((unit) => (
                 <button
                   key={unit.id}
@@ -80,9 +82,27 @@ export function UnitSelector({ value, onChange }: UnitSelectorProps) {
                 </div>
               )}
             </div>
+            <div className="p-2 border-t border-white/5 bg-white/[0.02]">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsUnitsModalOpen(true);
+                  setIsOpen(false);
+                }}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 text-[10px] text-zinc-400 hover:text-white hover:bg-white/5 transition-all uppercase tracking-widest font-bold rounded-xl"
+              >
+                <Settings2 className="w-4 h-4 text-brand" />
+                Manage Units
+              </button>
+            </div>
           </div>
         </>
       )}
+
+      <UnitsModal
+        isOpen={isUnitsModalOpen}
+        onClose={() => setIsUnitsModalOpen(false)}
+      />
     </div>
   );
 }
