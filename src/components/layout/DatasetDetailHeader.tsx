@@ -16,16 +16,16 @@ export function DatasetDetailHeader({
 }: DatasetDetailHeaderProps) {
   return (
     <header className="bg-[#050505]/80 backdrop-blur-xl border-b border-white/5 z-50 sticky top-0">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-24 flex items-center justify-between">
-        <div className="flex items-center gap-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-24 py-4 sm:py-0 sm:h-24 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4 sm:gap-8 min-w-0 flex-1">
           <Link
             to="/"
-            className="p-3 text-zinc-400 border border-white/10 hover:border-brand/50 hover:text-white hover:bg-white/5 transition-all rounded-xl"
+            className="p-3 shrink-0 text-zinc-400 border border-white/10 hover:border-brand/50 hover:text-white hover:bg-white/5 transition-all rounded-xl"
           >
             <ArrowLeft className="w-5 h-5 stroke-[2.5]" />
           </Link>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-display font-bold text-white uppercase tracking-tight">
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-display font-bold text-white uppercase tracking-tight wrap-break-word">
               {title}
             </h1>
             <p className="text-[10px] font-sans font-bold text-brand uppercase tracking-[0.4em] mt-2 ml-1">
@@ -34,7 +34,7 @@ export function DatasetDetailHeader({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-4">
+        <div className="flex items-center shrink-0 gap-2 sm:gap-4">
           <button
             onClick={onOpenSettings}
             className="p-3 text-zinc-400 border border-white/10 hover:border-white/30 hover:text-white hover:bg-white/5 transition-all rounded-xl active:scale-95"

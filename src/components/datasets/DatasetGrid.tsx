@@ -15,7 +15,7 @@ export function DatasetGrid({ datasets, onEdit, onDelete }: DatasetGridProps) {
       <div className="flex flex-col gap-16">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
           <div className="max-w-2xl">
-            <h2 className="text-4xl md:text-6xl font-display font-extrabold text-white tracking-tighter uppercase leading-none mb-6">
+            <h2 className="text-3xl sm:text-4xl md:text-6xl font-display font-extrabold text-white tracking-tighter uppercase leading-none mb-6 break-words sm:break-normal">
               Your
               <br />
               <span className="text-brand">Collections</span>

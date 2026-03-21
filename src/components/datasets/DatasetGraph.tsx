@@ -199,7 +199,10 @@ export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
   }, []);
 
   const chartData = useMemo<ChartData[]>(() => {
-    return data.map((m, index) => ({
+    const sortedData = [...data].sort(
+      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+    );
+    return sortedData.map((m, index) => ({
       ...m,
       tooltipId: `${m.id || index.toString()}-${m.timestamp}`,
       displayDate: isClient ? formatDate(m.timestamp, "full") : "",
@@ -226,7 +229,7 @@ export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
   };
 
   return (
-    <div className="w-full h-[300px] sm:h-[400px] min-w-0 bg-[#070707] rounded-3xl p-2 sm:p-6 relative">
+    <div className="w-full h-75 sm:h-100 min-w-0 bg-[#070707] rounded-3xl p-2 sm:p-6 relative">
       <ResponsiveContainer width="100%" height="100%">
         {renderContent()}
       </ResponsiveContainer>

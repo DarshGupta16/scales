@@ -124,7 +124,10 @@ export function DatasetCard({ dataset, onEdit, onDelete }: DatasetCardProps) {
   }, [isMenuOpen]);
 
   const previewData = useMemo<PreviewData[]>(() => {
-    return (dataset.measurements || []).slice(-7).map((m, index) => ({
+    const sortedData = [...(dataset.measurements || [])].sort(
+      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
+    return sortedData.slice(-7).map((m, index) => ({
       ...m,
       tooltipId: `${m.id || index}-${m.timestamp}`,
       displayDate: isClient ? formatDate(m.timestamp, "short") : "",
