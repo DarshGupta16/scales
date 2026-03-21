@@ -41,6 +41,8 @@ export const createSyncSlice: StateCreator<DatasetState, [], [], SyncSlice> = (s
                 created: new Date(m.created).toISOString(),
               });
             }
+          } else if (op.collection === "preferences") {
+            await collection.create(op.data);
           } else {
             await collection.create(op.data);
           }
@@ -53,6 +55,8 @@ export const createSyncSlice: StateCreator<DatasetState, [], [], SyncSlice> = (s
               unit_id: datasetRecord.unitId,
               views: datasetRecord.views,
             });
+          } else if (op.collection === "preferences") {
+            await collection.update(op.recordId, op.data);
           } else {
             await collection.update(op.recordId, op.data);
           }
@@ -76,10 +80,11 @@ export const createSyncSlice: StateCreator<DatasetState, [], [], SyncSlice> = (s
   pbToLocalSync: async () => {
     try {
       // 1. Fetch ALL fresh data from PocketBase
-      const [pbDatasets, pbMeasurements, pbUnits] = await Promise.all([
+      const [pbDatasets, pbMeasurements, pbUnits, pbPreferences] = await Promise.all([
         pb.collection("datasets").getFullList(),
         pb.collection("measurements").getFullList(),
         pb.collection("units").getFullList(),
+        pb.collection("preferences").getFullList(),
       ]);
 
       // 2. Map to local record formats
@@ -110,11 +115,20 @@ export const createSyncSlice: StateCreator<DatasetState, [], [], SyncSlice> = (s
         updated: new Date(u.updated).getTime(),
       }));
 
+      const preferenceRecords: any[] = pbPreferences.map((p: any) => ({
+        id: p.id,
+        preference: p.preference,
+        value: p.value,
+        created: new Date(p.created).getTime(),
+        updated: new Date(p.updated).getTime(),
+      }));
+
       // 3. Update ZUSTAND Store FIRST
       const datasets = buildDatasets(datasetRecords, unitRecords, measurementRecords);
       set({
         datasets,
         units: unitRecords,
+        preferences: preferenceRecords,
         isLoading: false,
         isHydrated: true,
       });
@@ -144,6 +158,16 @@ export const createSyncSlice: StateCreator<DatasetState, [], [], SyncSlice> = (s
         );
         if (measurementOrphans.length > 0)
           await db.measurements.bulkDelete(measurementOrphans as string[]);
+
+        // PREFERENCES: Put fresh, delete orphans
+        await db.preferences.bulkPut(preferenceRecords);
+        const localPreferenceIds = await db.preferences.toCollection().primaryKeys();
+        const pbPreferenceIds = preferenceRecords.map((p) => p.id);
+        const preferenceOrphans = localPreferenceIds.filter(
+          (id) => !pbPreferenceIds.includes(id as string),
+        );
+        if (preferenceOrphans.length > 0)
+          await db.preferences.bulkDelete(preferenceOrphans as string[]);
       };
 
       // Execute pruning without blocking UI

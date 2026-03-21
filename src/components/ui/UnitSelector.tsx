@@ -99,10 +99,7 @@ export function UnitSelector({ value, onChange }: UnitSelectorProps) {
         </>
       )}
 
-      <UnitsModal
-        isOpen={isUnitsModalOpen}
-        onClose={() => setIsUnitsModalOpen(false)}
-      />
+      <UnitsModal isOpen={isUnitsModalOpen} onClose={() => setIsUnitsModalOpen(false)} />
     </div>
   );
 }

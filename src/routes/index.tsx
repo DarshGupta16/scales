@@ -2,8 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useDatasetStore } from "@/store";
 import { AddDatasetModal } from "../components/datasets/AddDatasetModal";
-import { DatasetGrid } from "../components/datasets/DatasetGrid";
 import { DatasetSettingsModal } from "../components/datasets/DatasetSettingsModal";
+import { DatasetView } from "../components/datasets/DatasetView";
 import { AddDatasetFAB } from "../components/layout/AddDatasetFAB";
 import { TopBar } from "../components/layout/TopBar";
 import type { Dataset } from "../types/dataset";
@@ -61,7 +61,7 @@ function Index() {
 
       <TopBar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
 
-      <DatasetGrid
+      <DatasetView
         datasets={filteredDatasets as Dataset[]}
         onEdit={(dataset) => {
           setEditingDataset(dataset);

@@ -8,11 +8,7 @@ interface DatasetTableProps {
   onDelete: (id: string) => void;
 }
 
-export function DatasetTable({
-  measurements,
-  unit,
-  onDelete,
-}: DatasetTableProps) {
+export function DatasetTable({ measurements, unit, onDelete }: DatasetTableProps) {
   const [isClient, setIsClient] = useState(false);
   useEffect(() => {
     setIsClient(true);
@@ -50,10 +46,7 @@ export function DatasetTable({
           </thead>
           <tbody className="divide-y divide-white/5">
             {sortedMeasurements.map((measurement) => (
-              <tr
-                key={measurement.id}
-                className="hover:bg-white/[0.02] transition-colors group"
-              >
+              <tr key={measurement.id} className="hover:bg-white/[0.02] transition-colors group">
                 <td className="px-8 py-5 whitespace-nowrap text-xs text-zinc-400 font-sans tracking-wider">
                   {isClient
                     ? new Date(measurement.timestamp)

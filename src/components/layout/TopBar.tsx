@@ -1,4 +1,5 @@
-import { LayoutGrid } from "lucide-react";
+import { LayoutGrid, List } from "lucide-react";
+import { useDatasetStore } from "@/store";
 import { SearchBar } from "../ui/SearchBar";
 
 interface TopBarProps {
@@ -7,6 +8,18 @@ interface TopBarProps {
 }
 
 export function TopBar({ searchQuery, onSearchChange }: TopBarProps) {
+  const { preferences, updatePreferences } = useDatasetStore();
+  const viewPref = preferences.find((p) => p.preference === "view_mode");
+  const viewMode = viewPref?.value || "grid";
+
+  const handleToggleView = () => {
+    const nextMode = viewMode === "grid" ? "list" : "grid";
+    updatePreferences(viewPref?.id, "upsert", {
+      preference: "view_mode",
+      value: nextMode,
+    });
+  };
+
   return (
     <header className="sticky top-0 z-50 bg-[#050505]/80 backdrop-blur-xl border-b border-white/5">
       <div
@@ -27,9 +40,22 @@ export function TopBar({ searchQuery, onSearchChange }: TopBarProps) {
         </div>
 
         <div className="flex items-center gap-2">
-          <button className="hidden sm:flex items-center gap-2 px-4 py-2 text-zinc-400 hover:text-white transition-colors font-bold uppercase tracking-widest text-xs h-full">
-            <LayoutGrid className="w-4 h-4" />
-            <span>Grid</span>
+          <button
+            type="button"
+            onClick={handleToggleView}
+            className="hidden sm:flex items-center gap-2 px-4 py-2 text-zinc-400 hover:text-white transition-colors font-bold uppercase tracking-widest text-xs h-full"
+          >
+            {viewMode === "grid" ? (
+              <>
+                <LayoutGrid className="w-4 h-4 text-brand" />
+                <span>Grid</span>
+              </>
+            ) : (
+              <>
+                <List className="w-4 h-4 text-brand" />
+                <span>List</span>
+              </>
+            )}
           </button>
         </div>
       </div>

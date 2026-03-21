@@ -1,4 +1,4 @@
-import { Plus, Trash2, Edit2, Check, X } from "lucide-react";
+import { Check, Edit2, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { useDatasetStore } from "@/store";
 import type { Unit } from "../../types/dataset";
@@ -177,9 +177,7 @@ export function UnitsModal({ isOpen, onClose }: UnitsModalProps) {
             className="w-full flex items-center justify-center gap-2 p-4 border border-dashed border-white/10 text-zinc-500 hover:text-brand hover:border-brand/50 hover:bg-brand/5 transition-all rounded-2xl"
           >
             <Plus className="w-4 h-4" />
-            <span className="text-[10px] font-bold uppercase tracking-widest">
-              Add New Unit
-            </span>
+            <span className="text-[10px] font-bold uppercase tracking-widest">Add New Unit</span>
           </button>
         )}
       </div>

@@ -1,9 +1,20 @@
 import type { Dataset, Unit } from "../types/dataset";
 import type { SyncSlice } from "./slices/syncSlice";
 
+export interface Preference {
+  id: string;
+  preference: string;
+  value: any;
+  created?: number;
+  updated?: number;
+}
+
+export type PreferenceOp = "upsert" | "delete";
+
 export interface DatasetState extends SyncSlice {
   datasets: Dataset[];
   units: Unit[];
+  preferences: Preference[];
   selectedDatasetId: string | null;
   isLoading: boolean;
   error: string | null;
@@ -24,6 +35,13 @@ export interface DatasetState extends SyncSlice {
   updateUnit: (unit: Unit) => Promise<void>;
   removeUnit: (id: string) => Promise<void>;
   populateDefaultUnits: () => Promise<void>;
+
+  // Preference Actions
+  updatePreferences: (
+    id: string | undefined,
+    op: PreferenceOp,
+    data?: Partial<Omit<Preference, "id">>,
+  ) => Promise<void>;
 
   setLoading: (isLoading: boolean) => void;
   setError: (error: string | null) => void;

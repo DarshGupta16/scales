@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { db } from "./lib/dexieDb";
 import { buildDatasets } from "./store/helpers";
 import { createDatasetSlice } from "./store/slices/datasetSlice";
+import { createPreferencesSlice } from "./store/slices/preferencesSlice";
 import { createSyncSlice } from "./store/slices/syncSlice";
 import { createUnitSlice } from "./store/slices/unitSlice";
 import type { DatasetState } from "./store/types";
@@ -12,6 +13,7 @@ let subscriptionsSetup = false;
 export const useDatasetStore = create<DatasetState>((set, get, ...args) => ({
   datasets: [],
   units: [],
+  preferences: [],
   selectedDatasetId: null,
   isLoading: false,
   error: null,
@@ -37,17 +39,20 @@ export const useDatasetStore = create<DatasetState>((set, get, ...args) => ({
 
     try {
       // 3. Load initial state from DEXIE (Fast local-first start)
-      const [datasetRecords, unitRecords, measurementRecords] = await Promise.all([
-        db.datasets.toArray(),
-        db.units.toArray(),
-        db.measurements.toArray(),
-      ]);
+      const [datasetRecords, unitRecords, measurementRecords, preferenceRecords] =
+        await Promise.all([
+          db.datasets.toArray(),
+          db.units.toArray(),
+          db.measurements.toArray(),
+          db.preferences.toArray(),
+        ]);
 
       const datasets = buildDatasets(datasetRecords, unitRecords, measurementRecords);
 
       set({
         datasets,
         units: unitRecords,
+        preferences: preferenceRecords,
         isHydrated: true,
       });
 
@@ -72,6 +77,7 @@ export const useDatasetStore = create<DatasetState>((set, get, ...args) => ({
   ...createDatasetSlice(set, get, ...args),
   ...createUnitSlice(set, get, ...args),
   ...createSyncSlice(set, get, ...args),
+  ...createPreferencesSlice(set, get, ...args),
 
   setLoading: (isLoading) => set({ isLoading }),
   setError: (error) => set({ error, isLoading: false }),

@@ -125,7 +125,7 @@ export function DatasetCard({ dataset, onEdit, onDelete }: DatasetCardProps) {
 
   const previewData = useMemo<PreviewData[]>(() => {
     const sortedData = [...(dataset.measurements || [])].sort(
-      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
     );
     return sortedData.slice(-7).map((m, index) => ({
       ...m,

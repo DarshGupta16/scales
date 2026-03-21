@@ -5,7 +5,7 @@ const isBrowser = typeof window !== "undefined";
 
 export interface OfflineOp {
   id?: number;
-  collection: "datasets" | "measurements" | "units";
+  collection: "datasets" | "measurements" | "units" | "preferences";
   action: "create" | "update" | "delete";
   recordId: string;
   data: any;
@@ -20,16 +20,18 @@ export const db = (isBrowser ? new Dexie("ScalesDatabase") : ({} as unknown)) as
   datasets: EntityTable<DatasetRecord, "id">;
   units: EntityTable<UnitRecord, "id">;
   measurements: EntityTable<MeasurementRecord, "id">;
+  preferences: EntityTable<any, "id">;
   offline_ops: EntityTable<OfflineOp, "id">;
 };
 
 if (isBrowser) {
   // Schema declaration:
   // Version bumped to reflect normalized structure and offline ops.
-  db.version(4).stores({
+  db.version(5).stores({
     datasets: "id, title, unitId, created",
     units: "id, name, symbol",
     measurements: "id, datasetId, timestamp, value",
+    preferences: "id, preference",
     offline_ops: "++id, collection, action, recordId, timestamp",
   });
 }
