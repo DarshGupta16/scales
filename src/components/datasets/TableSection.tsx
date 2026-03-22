@@ -1,15 +1,16 @@
 import { useState } from "react";
 import { useDatasetStore } from "@/store";
-import type { Dataset } from "../../types/dataset";
+import type { Dataset, Measurement } from "../../types/dataset";
 import { ConfirmDialog } from "../ui/ConfirmDialog";
 import { DatasetTable } from "./DatasetTable";
 
 interface TableSectionProps {
   dataset: Dataset;
+  measurements?: Measurement[];
   onUpdateDataset: (updatedDataset: Dataset) => void;
 }
 
-export function TableSection({ dataset }: TableSectionProps) {
+export function TableSection({ dataset, measurements }: TableSectionProps) {
   const { updateDataset } = useDatasetStore();
   const [confirmDeleteMeasurement, setConfirmDeleteMeasurement] = useState<string | null>(null);
 
@@ -22,7 +23,7 @@ export function TableSection({ dataset }: TableSectionProps) {
     setConfirmDeleteMeasurement(null);
   };
 
-  const measurements = dataset.measurements || [];
+  const displayMeasurements = measurements || dataset.measurements || [];
 
   return (
     <section className="flex flex-col gap-10">
@@ -31,12 +32,12 @@ export function TableSection({ dataset }: TableSectionProps) {
           Sequence Log
         </h2>
         <span className="text-[10px] font-bold font-sans text-zinc-500 uppercase tracking-[0.3em] px-4 py-2 bg-white/5 rounded-full border border-white/5">
-          Entries: {measurements.length}
+          Entries: {displayMeasurements.length}
         </span>
       </div>
 
       <DatasetTable
-        measurements={measurements}
+        measurements={displayMeasurements}
         unit={dataset.unit.symbol || dataset.unit.name}
         onDelete={setConfirmDeleteMeasurement}
       />

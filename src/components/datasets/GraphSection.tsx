@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Dataset, ViewType } from "../../types/dataset";
+import type { Dataset, Measurement, ViewType } from "../../types/dataset";
 import { ConfirmDialog } from "../ui/ConfirmDialog";
 import { DatasetGraph } from "./DatasetGraph";
 import { InitializeModuleModal } from "./InitializeModuleModal";
@@ -7,14 +7,17 @@ import { ViewSwitcher } from "./ViewSwitcher";
 
 interface GraphSectionProps {
   dataset: Dataset;
+  measurements?: Measurement[];
   onUpdateDataset: (updatedDataset: Dataset) => void;
 }
 
-export function GraphSection({ dataset, onUpdateDataset }: GraphSectionProps) {
+export function GraphSection({ dataset, measurements, onUpdateDataset }: GraphSectionProps) {
   const [activeView, setActiveView] = useState<ViewType | null>(dataset.views[0] || "line");
 
   const [isAddViewOpen, setIsAddViewOpen] = useState(false);
   const [confirmRemoveView, setConfirmRemoveView] = useState<ViewType | null>(null);
+
+  const displayMeasurements = measurements || dataset.measurements || [];
 
   useEffect(() => {
     if (dataset && activeView && !dataset.views.includes(activeView)) {
@@ -60,7 +63,7 @@ export function GraphSection({ dataset, onUpdateDataset }: GraphSectionProps) {
         <div className="flex-1 min-h-0 bg-black/40 rounded-3xl overflow-hidden border border-white/5">
           {activeView ? (
             <DatasetGraph
-              data={dataset.measurements || []}
+              data={displayMeasurements}
               viewType={activeView}
               unit={dataset.unit.symbol || dataset.unit.name}
             />

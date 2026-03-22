@@ -7,7 +7,8 @@ import { DatasetSettingsModal } from "../components/datasets/DatasetSettingsModa
 import { GraphSection } from "../components/datasets/GraphSection";
 import { TableSection } from "../components/datasets/TableSection";
 import { DatasetDetailHeader } from "../components/layout/DatasetDetailHeader";
-import type { Dataset, Measurement } from "../types/dataset";
+import { TimelineSelector } from "../components/ui/TimelineSelector";
+import type { CustomRange, Dataset, Measurement, Timeline } from "../types/dataset";
 
 export const Route = createFileRoute("/datasets/$datasetId")({
   component: DatasetDetail,
@@ -20,6 +21,37 @@ function DatasetDetail() {
   const dataset = useMemo(() => {
     return datasets.find((d) => d.id === datasetId);
   }, [datasets, datasetId]);
+
+  // Timeline state
+  const [timeline, setTimeline] = useState<Timeline>("all");
+  const [customRange, setCustomRange] = useState<CustomRange>({
+    start: Date.now() - 24 * 60 * 60 * 1000,
+    end: Date.now(),
+  });
+
+  const filteredMeasurements = useMemo(() => {
+    if (!dataset) return [];
+    const now = Date.now();
+    let start = 0;
+    let end = Infinity;
+
+    switch (timeline) {
+      case "day":
+        start = now - 24 * 60 * 60 * 1000;
+        break;
+      case "week":
+        start = now - 7 * 24 * 60 * 60 * 1000;
+        break;
+      case "custom":
+        start = customRange.start;
+        end = customRange.end;
+        break;
+      default:
+        return dataset.measurements;
+    }
+
+    return dataset.measurements.filter((m) => m.timestamp >= start && m.timestamp <= end);
+  }, [dataset, timeline, customRange]);
 
   // Modals state
   const [isAddMeasurementOpen, setIsAddMeasurementOpen] = useState(false);
@@ -66,10 +98,32 @@ function DatasetDetail() {
       />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative z-0">
-        <div className="grid grid-cols-1 gap-20">
-          <GraphSection dataset={dataset} onUpdateDataset={handleUpdateDataset} />
+        <div className="flex flex-col gap-14">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between border-l-2 border-brand/50 pl-6">
+              <h2 className="text-xl font-display font-bold text-white uppercase tracking-tight">
+                Temporal Window
+              </h2>
+            </div>
+            <TimelineSelector
+              activeTimeline={timeline}
+              onTimelineChange={setTimeline}
+              customRange={customRange}
+              onCustomRangeChange={setCustomRange}
+            />
+          </div>
 
-          <TableSection dataset={dataset} onUpdateDataset={handleUpdateDataset} />
+          <GraphSection
+            dataset={dataset}
+            measurements={filteredMeasurements}
+            onUpdateDataset={handleUpdateDataset}
+          />
+
+          <TableSection
+            dataset={dataset}
+            measurements={filteredMeasurements}
+            onUpdateDataset={handleUpdateDataset}
+          />
         </div>
       </main>
 

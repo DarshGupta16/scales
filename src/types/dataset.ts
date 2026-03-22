@@ -57,3 +57,10 @@ export interface PreferenceRecord {
   created: number;
   updated: number;
 }
+
+export type Timeline = "all" | "week" | "day" | "custom";
+
+export interface CustomRange {
+  start: number;
+  end: number;
+}
