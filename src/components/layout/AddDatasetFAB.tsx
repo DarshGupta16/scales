@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { Plus } from "lucide-react";
 import { useAppStore } from "../../store";
 
@@ -6,7 +6,7 @@ export function AddDatasetFAB() {
   const setAddDatasetModalOpen = useAppStore((state) => state.setAddDatasetModalOpen);
 
   return (
-    <motion.button
+    <m.button
       whileHover={{ scale: 1.05, y: -4 }}
       whileTap={{ scale: 0.95 }}
       onClick={() => setAddDatasetModalOpen(true)}
@@ -14,6 +14,6 @@ export function AddDatasetFAB() {
       aria-label="Add new dataset"
     >
       <Plus className="w-8 h-8 stroke-[2.5]" />
-    </motion.button>
+    </m.button>
   );
 }

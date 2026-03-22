@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import { useEffect, useState } from "react";
 
 interface LoadingScreenProps {
@@ -25,7 +25,7 @@ export function LoadingScreen({ isVisible }: LoadingScreenProps) {
   return (
     <AnimatePresence>
       {isVisible && (
-        <motion.div
+        <m.div
           key="loading-screen"
           initial={{ opacity: 1 }}
           exit={{
@@ -56,7 +56,7 @@ export function LoadingScreen({ isVisible }: LoadingScreenProps) {
             {/* Progress Bar Container */}
             <div className="h-[2px] w-full bg-white/5 relative overflow-hidden">
               {/* The actual progress bar */}
-              <motion.div
+              <m.div
                 className="absolute inset-y-0 left-0 bg-brand shadow-[0_0_15px_rgba(139,92,246,0.5)]"
                 initial={{ width: "0%" }}
                 animate={{ width: `${progress}%` }}
@@ -72,7 +72,7 @@ export function LoadingScreen({ isVisible }: LoadingScreenProps) {
                 "Initializing Visual Renderers",
                 "Establishing secure handshake",
               ].map((text, i) => (
-                <motion.div
+                <m.div
                   key={text}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{
@@ -87,7 +87,7 @@ export function LoadingScreen({ isVisible }: LoadingScreenProps) {
                   <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-[0.2em]">
                     {text}
                   </span>
-                </motion.div>
+                </m.div>
               ))}
             </div>
           </div>
@@ -98,7 +98,7 @@ export function LoadingScreen({ isVisible }: LoadingScreenProps) {
               Scales v1.0 {/* System Kernel */}
             </p>
           </div>
-        </motion.div>
+        </m.div>
       )}
     </AnimatePresence>
   );

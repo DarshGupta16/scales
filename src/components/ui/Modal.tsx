@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import { X } from "lucide-react";
 import { useEffect } from "react";
 
@@ -29,7 +29,7 @@ export function Modal({ isOpen, onClose, title, children, zIndex = 100 }: ModalP
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 flex items-center justify-center p-4" style={{ zIndex }}>
-          <motion.button
+          <m.button
             type="button"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -38,7 +38,7 @@ export function Modal({ isOpen, onClose, title, children, zIndex = 100 }: ModalP
             className="absolute inset-0 bg-black/80 backdrop-blur-md cursor-default"
             aria-label="Close modal"
           />
-          <motion.div
+          <m.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -58,7 +58,7 @@ export function Modal({ isOpen, onClose, title, children, zIndex = 100 }: ModalP
               </button>
             </div>
             <div className="p-10 rounded-b-[2.5rem]">{children}</div>
-          </motion.div>
+          </m.div>
         </div>
       )}
     </AnimatePresence>

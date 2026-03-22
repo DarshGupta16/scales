@@ -1,6 +1,7 @@
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
+import { domAnimation, LazyMotion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { LoadingScreen } from "../components/LoadingScreen";
 import { Modals } from "../components/ui/Modals";
@@ -72,8 +73,10 @@ function RootComponent() {
     <>
       <LoadingScreen isVisible={isLoading} />
       <div style={{ visibility: isLoading ? "hidden" : "visible" }}>
-        <Outlet />
-        <Modals />
+        <LazyMotion features={domAnimation} strict>
+          <Outlet />
+          <Modals />
+        </LazyMotion>
       </div>
     </>
   );
