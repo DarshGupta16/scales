@@ -83,8 +83,9 @@ const CommonXAxis = ({ chartData }: { chartData: ChartData[] }) => (
   />
 );
 
-const CommonYAxis = () => (
+const CommonYAxis = ({ isFocused }: { isFocused: boolean }) => (
   <YAxis
+    domain={isFocused ? ["auto", "auto"] : [0, "auto"]}
     stroke="rgba(255,255,255,0.1)"
     tick={{
       fill: "rgba(255,255,255,0.4)",
@@ -108,11 +109,19 @@ const CommonTooltip = ({ unit }: { unit: string }) => (
 );
 
 // Modular Chart Renderers
-const LineRenderer = ({ chartData, unit }: { chartData: ChartData[]; unit: string }) => (
+const LineRenderer = ({
+  chartData,
+  unit,
+  isFocused,
+}: {
+  chartData: ChartData[];
+  unit: string;
+  isFocused: boolean;
+}) => (
   <LineChart data={chartData} margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
     <CommonGrid />
     <CommonXAxis chartData={chartData} />
-    <CommonYAxis />
+    <CommonYAxis isFocused={isFocused} />
     <CommonTooltip unit={unit} />
     <Line
       type="monotone"
@@ -126,17 +135,33 @@ const LineRenderer = ({ chartData, unit }: { chartData: ChartData[]; unit: strin
   </LineChart>
 );
 
-const BarRenderer = ({ chartData, unit }: { chartData: ChartData[]; unit: string }) => (
+const BarRenderer = ({
+  chartData,
+  unit,
+  isFocused,
+}: {
+  chartData: ChartData[];
+  unit: string;
+  isFocused: boolean;
+}) => (
   <BarChart data={chartData} margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
     <CommonGrid />
     <CommonXAxis chartData={chartData} />
-    <CommonYAxis />
+    <CommonYAxis isFocused={isFocused} />
     <CommonTooltip unit={unit} />
     <Bar dataKey="value" fill="#8b5cf6" radius={[10, 10, 0, 0]} animationDuration={1500} />
   </BarChart>
 );
 
-const AreaRenderer = ({ chartData, unit }: { chartData: ChartData[]; unit: string }) => (
+const AreaRenderer = ({
+  chartData,
+  unit,
+  isFocused,
+}: {
+  chartData: ChartData[];
+  unit: string;
+  isFocused: boolean;
+}) => (
   <AreaChart data={chartData} margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
     <defs>
       <linearGradient id="colorMain" x1="0" y1="0" x2="0" y2="1">
@@ -146,7 +171,7 @@ const AreaRenderer = ({ chartData, unit }: { chartData: ChartData[]; unit: strin
     </defs>
     <CommonGrid />
     <CommonXAxis chartData={chartData} />
-    <CommonYAxis />
+    <CommonYAxis isFocused={isFocused} />
     <CommonTooltip unit={unit} />
     <Area
       type="monotone"
@@ -185,11 +210,19 @@ const PieRenderer = ({ chartData, unit }: { chartData: ChartData[]; unit: string
   </PieChart>
 );
 
-const ScatterRenderer = ({ chartData, unit }: { chartData: ChartData[]; unit: string }) => (
+const ScatterRenderer = ({
+  chartData,
+  unit,
+  isFocused,
+}: {
+  chartData: ChartData[];
+  unit: string;
+  isFocused: boolean;
+}) => (
   <ScatterChart margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
     <CommonGrid />
     <CommonXAxis chartData={chartData} />
-    <CommonYAxis />
+    <CommonYAxis isFocused={isFocused} />
     <CommonTooltip unit={unit} />
     <Scatter name="Measurements" data={chartData} fill="#8b5cf6" animationDuration={1500} />
   </ScatterChart>
@@ -197,6 +230,8 @@ const ScatterRenderer = ({ chartData, unit }: { chartData: ChartData[]; unit: st
 
 export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
   const [isClient, setIsClient] = useState(false);
+  const [isFocused, setIsFocused] = useState(true);
+
   useEffect(() => {
     setIsClient(true);
   }, []);
@@ -217,22 +252,48 @@ export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
 
     switch (viewType) {
       case "line":
-        return <LineRenderer chartData={chartData} unit={unit} />;
+        return <LineRenderer chartData={chartData} unit={unit} isFocused={isFocused} />;
       case "bar":
-        return <BarRenderer chartData={chartData} unit={unit} />;
+        return <BarRenderer chartData={chartData} unit={unit} isFocused={isFocused} />;
       case "area":
-        return <AreaRenderer chartData={chartData} unit={unit} />;
+        return <AreaRenderer chartData={chartData} unit={unit} isFocused={isFocused} />;
       case "pie":
         return <PieRenderer chartData={chartData} unit={unit} />;
       case "scatter":
-        return <ScatterRenderer chartData={chartData} unit={unit} />;
+        return <ScatterRenderer chartData={chartData} unit={unit} isFocused={isFocused} />;
       default:
         return null;
     }
   };
 
   return (
-    <div className="w-full h-75 sm:h-100 min-w-0 bg-[#070707] rounded-3xl p-2 sm:p-6 relative">
+    <div className="w-full h-75 sm:h-100 min-w-0 bg-[#070707] rounded-3xl p-2 sm:p-6 relative group">
+      {/* Focused Scale Toggle */}
+      <div className="absolute top-4 right-6 z-10 flex items-center gap-3">
+        <label
+          htmlFor="focused-scale-toggle"
+          className="text-[9px] font-bold text-zinc-600 uppercase tracking-[0.2em] opacity-0 group-hover:opacity-100 transition-opacity"
+        >
+          {isFocused ? "Precision Focus" : "Standard Scale"}
+        </label>
+        <button
+          id="focused-scale-toggle"
+          type="button"
+          onClick={() => setIsFocused(!isFocused)}
+          className={`
+            w-10 h-5 rounded-full p-1 transition-colors duration-300 relative
+            ${isFocused ? "bg-brand/20 border border-brand/50" : "bg-zinc-800 border border-white/10"}
+          `}
+        >
+          <div
+            className={`
+              w-2.5 h-2.5 rounded-full transition-all duration-300
+              ${isFocused ? "translate-x-5 bg-brand shadow-[0_0_8px_rgba(139,92,246,0.5)]" : "translate-x-0 bg-zinc-500"}
+            `}
+          />
+        </button>
+      </div>
+
       <ResponsiveContainer width="100%" height="100%">
         {renderContent()}
       </ResponsiveContainer>
