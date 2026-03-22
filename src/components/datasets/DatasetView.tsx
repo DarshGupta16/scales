@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import { ChevronRight, Info, Pencil, Trash2 } from "lucide-react";
 import { useDatasetStore } from "@/store";
 import type { Dataset } from "../../types/dataset";
@@ -33,7 +33,7 @@ export function DatasetList({ datasets, onEdit, onDelete }: DatasetListProps) {
             <div className="flex flex-col gap-2">
               <AnimatePresence mode="popLayout">
                 {datasets.map((dataset) => (
-                  <motion.div
+                  <m.div
                     key={dataset.id}
                     layout
                     initial={{ opacity: 0, x: -10 }}
@@ -90,12 +90,12 @@ export function DatasetList({ datasets, onEdit, onDelete }: DatasetListProps) {
                         <ChevronRight className="w-5 h-5" />
                       </Link>
                     </div>
-                  </motion.div>
+                  </m.div>
                 ))}
               </AnimatePresence>
             </div>
           ) : (
-            <motion.div
+            <m.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className="text-center py-32 bg-white/5 border border-white/10 rounded-4xl"
@@ -109,7 +109,7 @@ export function DatasetList({ datasets, onEdit, onDelete }: DatasetListProps) {
               <p className="text-zinc-500 font-sans uppercase tracking-widest text-xs">
                 The void remains silent.
               </p>
-            </motion.div>
+            </m.div>
           )}
         </div>
       </div>

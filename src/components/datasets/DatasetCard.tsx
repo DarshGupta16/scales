@@ -1,20 +1,11 @@
 import { Link } from "@tanstack/react-router";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import { MoreVertical, Pencil, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  Area,
-  AreaChart,
-  Bar,
-  BarChart,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-} from "recharts";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import type { Dataset, Measurement } from "../../types/dataset";
 import { formatDate } from "../../utils/format";
+
+const PreviewChart = lazy(() => import("./PreviewChart"));
 
 interface DatasetCardProps {
   dataset: Dataset;
@@ -26,88 +17,6 @@ interface PreviewData extends Measurement {
   tooltipId: string;
   displayDate: string;
 }
-
-const CustomTooltip = ({
-  active,
-  payload,
-}: {
-  active?: boolean;
-  payload?: { value: number; payload: PreviewData }[];
-}) => {
-  if (active && payload && payload.length > 0) {
-    const data = payload[0].payload;
-    return (
-      <div className="bg-zinc-900 border border-white/20 p-2 rounded-lg shadow-xl pointer-events-none">
-        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider leading-none mb-1">
-          {data.displayDate}
-        </p>
-        <p className="text-sm font-display font-black text-brand leading-none">
-          {payload[0].value}
-        </p>
-      </div>
-    );
-  }
-  return null;
-};
-
-const PreviewChart = ({ dataset, data }: { dataset: Dataset; data: PreviewData[] }) => {
-  const viewType = dataset.views[0] ?? "line";
-  const commonAxis = <XAxis dataKey="tooltipId" hide />;
-  const tooltip = (
-    <Tooltip
-      content={<CustomTooltip />}
-      cursor={{ stroke: "rgba(139, 92, 246, 0.2)", strokeWidth: 2 }}
-      isAnimationActive={false}
-    />
-  );
-
-  switch (viewType) {
-    case "area":
-      return (
-        <AreaChart data={data}>
-          <defs>
-            <linearGradient id={`grad-${dataset.id}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
-              <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
-            </linearGradient>
-          </defs>
-          {commonAxis}
-          {tooltip}
-          <Area
-            type="monotone"
-            dataKey="value"
-            stroke="#8b5cf6"
-            fill={`url(#grad-${dataset.id})`}
-            strokeWidth={2}
-            isAnimationActive={false}
-          />
-        </AreaChart>
-      );
-    case "bar":
-      return (
-        <BarChart data={data}>
-          {commonAxis}
-          {tooltip}
-          <Bar dataKey="value" fill="#8b5cf6" radius={[4, 4, 0, 0]} isAnimationActive={false} />
-        </BarChart>
-      );
-    default:
-      return (
-        <LineChart data={data}>
-          {commonAxis}
-          {tooltip}
-          <Line
-            type="monotone"
-            dataKey="value"
-            stroke="#8b5cf6"
-            strokeWidth={2.5}
-            dot={false}
-            isAnimationActive={false}
-          />
-        </LineChart>
-      );
-  }
-};
 
 export function DatasetCard({ dataset, onEdit, onDelete }: DatasetCardProps) {
   const [isClient, setIsClient] = useState(false);
@@ -141,13 +50,14 @@ export function DatasetCard({ dataset, onEdit, onDelete }: DatasetCardProps) {
   }, [dataset.measurements, isClient]);
 
   return (
-    <motion.div
+    <m.div
       whileHover={{ y: -8, scale: 1.02 }}
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
     >
       <Link
         to="/datasets/$datasetId"
         params={{ datasetId: dataset.id }}
+        preload="intent"
         className="block h-full brutal-card group"
       >
         <div className="flex justify-between items-start mb-6">
@@ -175,7 +85,7 @@ export function DatasetCard({ dataset, onEdit, onDelete }: DatasetCardProps) {
 
             <AnimatePresence>
               {isMenuOpen && (
-                <motion.div
+                <m.div
                   initial={{ opacity: 0, scale: 0.95, y: -10 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: -10 }}
@@ -207,22 +117,28 @@ export function DatasetCard({ dataset, onEdit, onDelete }: DatasetCardProps) {
                     <Trash2 className="w-4 h-4" />
                     Delete
                   </button>
-                </motion.div>
+                </m.div>
               )}
             </AnimatePresence>
           </div>
         </div>
 
         <div className="h-28 w-full mb-6 bg-white/2 border border-white/5 rounded-2xl p-2 min-h-0 relative overflow-hidden group-hover:border-brand/20 transition-colors">
-          <ResponsiveContainer width="100%" height="100%">
-            {isClient ? <PreviewChart dataset={dataset} data={previewData} /> : <div />}
-          </ResponsiveContainer>
+          {isClient ? (
+            <Suspense
+              fallback={<div className="w-full h-full animate-pulse bg-white/5 rounded-lg" />}
+            >
+              <PreviewChart dataset={dataset} data={previewData} />
+            </Suspense>
+          ) : (
+            <div />
+          )}
         </div>
 
         <p className="text-xs font-sans text-zinc-500 line-clamp-2 leading-relaxed uppercase tracking-wider min-h-10">
           {dataset.description || "Refined tracking parameters."}
         </p>
       </Link>
-    </motion.div>
+    </m.div>
   );
 }

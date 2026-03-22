@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import { Info } from "lucide-react";
 import type { Dataset } from "../../types/dataset";
 import { DatasetCard } from "./DatasetCard";
@@ -31,7 +31,7 @@ export function DatasetGrid({ datasets, onEdit, onDelete }: DatasetGridProps) {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               <AnimatePresence mode="popLayout">
                 {datasets.map((dataset) => (
-                  <motion.div
+                  <m.div
                     key={dataset.id}
                     layout
                     initial={{ opacity: 0, y: 20 }}
@@ -40,12 +40,12 @@ export function DatasetGrid({ datasets, onEdit, onDelete }: DatasetGridProps) {
                     transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
                   >
                     <DatasetCard dataset={dataset} onEdit={onEdit} onDelete={onDelete} />
-                  </motion.div>
+                  </m.div>
                 ))}
               </AnimatePresence>
             </div>
           ) : (
-            <motion.div
+            <m.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className="text-center py-32 bg-white/5 border border-white/10 rounded-4xl"
@@ -59,7 +59,7 @@ export function DatasetGrid({ datasets, onEdit, onDelete }: DatasetGridProps) {
               <p className="text-zinc-500 font-sans uppercase tracking-widest text-xs">
                 The void remains silent.
               </p>
-            </motion.div>
+            </m.div>
           )}
         </div>
       </div>
