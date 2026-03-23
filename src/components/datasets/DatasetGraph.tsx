@@ -1,3 +1,5 @@
+import { AnimatePresence, motion } from "framer-motion";
+import { Info } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import {
   Area,
@@ -231,6 +233,7 @@ const ScatterRenderer = ({
 export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
   const [isClient, setIsClient] = useState(false);
   const [isFocused, setIsFocused] = useState(true);
+  const [showTooltip, setShowTooltip] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -269,7 +272,11 @@ export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
   return (
     <div className="w-full h-75 sm:h-100 min-w-0 bg-[#070707] rounded-3xl p-2 sm:p-6 relative group">
       {/* Focused Scale Toggle */}
-      <div className="absolute top-4 right-6 z-10 flex items-center gap-3">
+      <div
+        className="absolute top-4 right-6 z-10 flex items-center gap-3"
+        onMouseEnter={() => setShowTooltip(true)}
+        onMouseLeave={() => setShowTooltip(false)}
+      >
         <label
           htmlFor="focused-scale-toggle"
           className="text-[9px] font-bold text-zinc-600 uppercase tracking-[0.2em] opacity-0 group-hover:opacity-100 transition-opacity"
@@ -292,6 +299,27 @@ export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
             `}
           />
         </button>
+
+        <AnimatePresence>
+          {showTooltip && (
+            <motion.div
+              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+              className="absolute top-10 right-0 w-56 p-4 bg-zinc-900/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-20 pointer-events-none"
+            >
+              <div className="flex items-start gap-3">
+                <div className="p-1.5 bg-brand/10 border border-brand/20 rounded-lg">
+                  <Info className="w-3 h-3 text-brand" />
+                </div>
+                <p className="text-[10px] leading-relaxed text-zinc-400 font-sans uppercase tracking-[0.15em] font-medium">
+                  Precision Focus dynamically adjusts the Y-axis to highlight subtle temporal trends
+                  within your data range.
+                </p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <ResponsiveContainer width="100%" height="100%">
