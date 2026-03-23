@@ -36,8 +36,8 @@ export function TimelineSelector({
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center gap-3 p-1.5 bg-white/5 border border-white/10 rounded-2xl w-fit">
+    <div className="flex flex-col gap-6 w-full sm:w-fit">
+      <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 sm:gap-3 p-1 sm:p-1.5 bg-white/5 border border-white/10 rounded-2xl w-full sm:w-fit">
         {options.map((option) => {
           const isActive = activeTimeline === option.id;
           const Icon = option.icon;
@@ -48,7 +48,7 @@ export function TimelineSelector({
               type="button"
               onClick={() => onTimelineChange(option.id)}
               className={`
-                relative flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300
+                relative flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-all duration-300
                 ${isActive ? "text-white" : "text-zinc-500 hover:text-zinc-300"}
               `}
             >
@@ -60,7 +60,7 @@ export function TimelineSelector({
                 />
               )}
               <Icon className={`w-3.5 h-3.5 relative z-10 ${isActive ? "text-brand" : ""}`} />
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em] relative z-10">
+              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] relative z-10 truncate">
                 {option.label}
               </span>
             </button>
@@ -74,9 +74,9 @@ export function TimelineSelector({
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="flex flex-wrap items-center gap-6 overflow-hidden"
+            className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 sm:gap-6 overflow-hidden"
           >
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 flex-1">
               <label
                 htmlFor="temporal-start"
                 className="text-[9px] font-bold text-zinc-500 uppercase tracking-[0.3em] ml-1"
@@ -86,7 +86,7 @@ export function TimelineSelector({
               <input
                 id="temporal-start"
                 type="datetime-local"
-                className="brutal-input text-[10px] py-2 px-3 scheme-dark"
+                className="brutal-input text-[10px] py-2.5 px-3 scheme-dark w-full"
                 value={getLocalDatetimeLocal(customRange.start)}
                 onChange={(e) =>
                   onCustomRangeChange({
@@ -96,7 +96,7 @@ export function TimelineSelector({
                 }
               />
             </div>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 flex-1">
               <label
                 htmlFor="temporal-end"
                 className="text-[9px] font-bold text-zinc-500 uppercase tracking-[0.3em] ml-1"
@@ -106,7 +106,7 @@ export function TimelineSelector({
               <input
                 id="temporal-end"
                 type="datetime-local"
-                className="brutal-input text-[10px] py-2 px-3 scheme-dark"
+                className="brutal-input text-[10px] py-2.5 px-3 scheme-dark w-full"
                 value={getLocalDatetimeLocal(customRange.end)}
                 onChange={(e) =>
                   onCustomRangeChange({

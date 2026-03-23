@@ -273,29 +273,34 @@ export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
     <div className="w-full h-75 sm:h-100 min-w-0 bg-[#070707] rounded-3xl p-2 sm:p-6 relative group">
       {/* Focused Scale Toggle */}
       <div
-        className="absolute top-4 right-6 z-10 flex items-center gap-3"
+        className="absolute top-4 right-4 sm:right-6 z-10 flex items-center gap-3"
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
       >
-        <label
-          htmlFor="focused-scale-toggle"
-          className="text-[9px] font-bold text-zinc-600 uppercase tracking-[0.2em] opacity-0 group-hover:opacity-100 transition-opacity"
-        >
-          {isFocused ? "Precision Focus" : "Standard Scale"}
-        </label>
+        <div className="flex flex-col items-end gap-0.5">
+          <label
+            htmlFor="focused-scale-toggle"
+            className="text-[7px] font-bold text-zinc-600 uppercase tracking-[0.4em] opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            {isFocused ? "Precision" : "Standard"}
+          </label>
+          <span className="hidden sm:block text-[6px] font-bold text-zinc-800 uppercase tracking-[0.5em] opacity-0 group-hover:opacity-100 transition-opacity">
+            Scale Protocol
+          </span>
+        </div>
         <button
           id="focused-scale-toggle"
           type="button"
           onClick={() => setIsFocused(!isFocused)}
           className={`
-            w-10 h-5 rounded-full p-1 transition-colors duration-300 relative
-            ${isFocused ? "bg-brand/20 border border-brand/50" : "bg-zinc-800 border border-white/10"}
+            w-9 h-4.5 sm:w-10 sm:h-5 rounded-full p-0.5 sm:p-1 transition-all duration-300 relative border
+            ${isFocused ? "bg-brand/10 border-brand/40 shadow-[0_0_15px_rgba(139,92,246,0.1)]" : "bg-zinc-900 border-white/5"}
           `}
         >
           <div
             className={`
-              w-2.5 h-2.5 rounded-full transition-all duration-300
-              ${isFocused ? "translate-x-5 bg-brand shadow-[0_0_8px_rgba(139,92,246,0.5)]" : "translate-x-0 bg-zinc-500"}
+              w-3 h-3 sm:w-2.5 sm:h-2.5 rounded-full transition-all duration-500 ease-out
+              ${isFocused ? "translate-x-4.5 sm:translate-x-5 bg-brand shadow-[0_0_10px_rgba(139,92,246,0.6)]" : "translate-x-0 bg-zinc-700"}
             `}
           />
         </button>
@@ -306,16 +311,20 @@ export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
               initial={{ opacity: 0, y: 10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              className="absolute top-10 right-0 w-56 p-4 bg-zinc-900/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-20 pointer-events-none"
+              className="absolute top-10 right-0 w-48 sm:w-56 p-4 bg-black/90 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl z-20 pointer-events-none"
             >
               <div className="flex items-start gap-3">
-                <div className="p-1.5 bg-brand/10 border border-brand/20 rounded-lg">
+                <div className="p-1.5 bg-brand/10 border border-brand/20 rounded-lg shrink-0">
                   <Info className="w-3 h-3 text-brand" />
                 </div>
-                <p className="text-[10px] leading-relaxed text-zinc-400 font-sans uppercase tracking-[0.15em] font-medium">
-                  Precision Focus dynamically adjusts the Y-axis to highlight subtle temporal trends
-                  within your data range.
-                </p>
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-[8px] font-bold text-white uppercase tracking-widest">
+                    Precision Protocol
+                  </span>
+                  <p className="text-[9px] leading-relaxed text-zinc-500 font-sans uppercase tracking-[0.1em] font-medium">
+                    Dynamically adjusts Y-axis to highlight subtle temporal trends within the current data range.
+                  </p>
+                </div>
               </div>
             </motion.div>
           )}

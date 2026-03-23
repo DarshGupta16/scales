@@ -7,8 +7,14 @@ import { DatasetSettingsModal } from "../components/datasets/DatasetSettingsModa
 import { GraphSection } from "../components/datasets/GraphSection";
 import { TableSection } from "../components/datasets/TableSection";
 import { DatasetDetailHeader } from "../components/layout/DatasetDetailHeader";
+import { Modal } from "../components/ui/Modal";
 import { TimelineSelector } from "../components/ui/TimelineSelector";
-import type { CustomRange, Dataset, Measurement, Timeline } from "../types/dataset";
+import type {
+  CustomRange,
+  Dataset,
+  Measurement,
+  Timeline,
+} from "../types/dataset";
 
 export const Route = createFileRoute("/datasets/$datasetId")({
   component: DatasetDetail,
@@ -50,10 +56,12 @@ function DatasetDetail() {
         return dataset.measurements;
     }
 
-    return dataset.measurements.filter((m) => m.timestamp >= start && m.timestamp <= end);
+    return dataset.measurements.filter(
+      (m) => m.timestamp >= start && m.timestamp <= end,
+    );
   }, [dataset, timeline, customRange]);
 
-  // Modals state
+  const [isTimelineOpen, setIsTimelineOpen] = useState(false);
   const [isAddMeasurementOpen, setIsAddMeasurementOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const navigate = useNavigate();
@@ -80,13 +88,21 @@ function DatasetDetail() {
     setIsAddMeasurementOpen(false);
   };
 
+  const timelineLabels: Record<Timeline, string> = {
+    all: "Infinity",
+    week: "Septenary",
+    day: "Circadian",
+    custom: "Arbitrary",
+  };
+
   return (
     <div className="min-h-screen bg-[#050505] pb-32 selection:bg-brand selection:text-white relative">
       {/* Subtle Grain Overlay */}
       <div
         className="fixed inset-0 pointer-events-none opacity-[0.03] z-100"
         style={{
-          backgroundImage: 'url("https://grainy-gradients.vercel.app/noise.svg")',
+          backgroundImage:
+            'url("https://grainy-gradients.vercel.app/noise.svg")',
         }}
       ></div>
 
@@ -101,17 +117,67 @@ function DatasetDetail() {
         <div className="flex flex-col gap-14">
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between border-l-2 border-brand/50 pl-6">
-              <h2 className="text-xl font-display font-bold text-white uppercase tracking-tight">
+              <h2 className="text-md sm:text-xl font-display font-bold text-white uppercase tracking-tight">
                 Temporal Window
               </h2>
+              {/* Mobile Timeline Toggle */}
+              <button
+                type="button"
+                onClick={() => setIsTimelineOpen(true)}
+                className="sm:hidden flex items-center gap-3 px-5 py-2.5 bg-zinc-950 border border-white/10 rounded-xl shadow-[0_0_20px_rgba(139,92,246,0.05)] active:scale-95 transition-all group"
+              >
+                <div className="flex flex-col items-center gap-0.3 w-24">
+                  <span className="text-[6.3px] font-bold text-zinc-600 uppercase tracking-[0.4em]">
+                    Temporal Status
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse shadow-[0_0_8px_rgba(139,92,246,0.5)]"></div>
+                    <span className="text-[10px] font-bold text-white uppercase tracking-[0.2em] group-active:text-brand transition-colors">
+                      {timelineLabels[timeline]}
+                    </span>
+                  </div>
+                </div>
+              </button>
             </div>
-            <TimelineSelector
-              activeTimeline={timeline}
-              onTimelineChange={setTimeline}
-              customRange={customRange}
-              onCustomRangeChange={setCustomRange}
-            />
+            <div className="hidden sm:block">
+              <TimelineSelector
+                activeTimeline={timeline}
+                onTimelineChange={setTimeline}
+                customRange={customRange}
+                onCustomRangeChange={setCustomRange}
+              />
+            </div>
           </div>
+
+          <Modal
+            isOpen={isTimelineOpen}
+            onClose={() => setIsTimelineOpen(false)}
+            title="Temporal Adjustment"
+          >
+            <div className="flex flex-col gap-8">
+              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.3em] leading-relaxed">
+                Select the temporal resolution for data visualization.
+              </p>
+              <TimelineSelector
+                activeTimeline={timeline}
+                onTimelineChange={(t) => {
+                  setTimeline(t);
+                  if (t !== "custom") setIsTimelineOpen(false);
+                }}
+                customRange={customRange}
+                onCustomRangeChange={setCustomRange}
+              />
+              {timeline === "custom" && (
+                <button
+                  type="button"
+                  onClick={() => setIsTimelineOpen(false)}
+                  className="w-full py-4 bg-brand text-white font-bold uppercase tracking-[0.2em] text-[10px] rounded-2xl shadow-lg shadow-brand/20 active:scale-95 transition-all"
+                >
+                  Confirm Parameters
+                </button>
+              )}
+            </div>
+          </Modal>
 
           <GraphSection
             dataset={dataset}
