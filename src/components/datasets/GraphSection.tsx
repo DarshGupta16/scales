@@ -11,11 +11,19 @@ interface GraphSectionProps {
   onUpdateDataset: (updatedDataset: Dataset) => void;
 }
 
-export function GraphSection({ dataset, measurements, onUpdateDataset }: GraphSectionProps) {
-  const [activeView, setActiveView] = useState<ViewType | null>(dataset.views[0] || "line");
+export function GraphSection({
+  dataset,
+  measurements,
+  onUpdateDataset,
+}: GraphSectionProps) {
+  const [activeView, setActiveView] = useState<ViewType | null>(
+    dataset.views[0] || "line",
+  );
 
   const [isAddViewOpen, setIsAddViewOpen] = useState(false);
-  const [confirmRemoveView, setConfirmRemoveView] = useState<ViewType | null>(null);
+  const [confirmRemoveView, setConfirmRemoveView] = useState<ViewType | null>(
+    null,
+  );
 
   const displayMeasurements = measurements || dataset.measurements || [];
 
@@ -49,7 +57,7 @@ export function GraphSection({ dataset, measurements, onUpdateDataset }: GraphSe
         <div className="flex flex-wrap items-center justify-between gap-8 mb-12 border-b border-white/5 pb-8">
           <h2 className="text-xl font-display font-bold text-white uppercase tracking-tight flex items-center gap-4">
             <div className="w-2 h-2 rounded-full bg-brand animate-pulse"></div>
-            Neural Matrix
+            Matrix
           </h2>
           <ViewSwitcher
             views={dataset.views}
@@ -85,7 +93,9 @@ export function GraphSection({ dataset, measurements, onUpdateDataset }: GraphSe
       <ConfirmDialog
         isOpen={!!confirmRemoveView}
         onClose={() => setConfirmRemoveView(null)}
-        onConfirm={() => confirmRemoveView && handleRemoveView(confirmRemoveView)}
+        onConfirm={() =>
+          confirmRemoveView && handleRemoveView(confirmRemoveView)
+        }
         title="Deactivate Module"
         message={`Confirm deactivation of the ${confirmRemoveView?.toUpperCase()} renderer from this dataset.`}
         confirmText="Deactivate"
