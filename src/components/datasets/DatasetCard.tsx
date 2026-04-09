@@ -130,9 +130,7 @@ export function DatasetCard({ dataset, onEdit, onDelete }: DatasetCardProps) {
   }, [isMenuOpen]);
 
   const previewData = useMemo<PreviewData[]>(() => {
-    const sortedData = [...(dataset.measurements || [])].sort(
-      (a, b) => a.timestamp - b.timestamp,
-    );
+    const sortedData = [...(dataset.measurements || [])].sort((a, b) => a.timestamp - b.timestamp);
     return sortedData.slice(-7).map((m, index) => ({
       ...m,
       value: m.values[0]?.value || 0, // Default to first metric's value

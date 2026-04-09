@@ -9,17 +9,18 @@ import { useDatasetStore } from "../../store";
  */
 // Tested in tests/utils/subscriptions/createSubscription.test.ts
 export function createSubscription<T extends { id: string; updated: number }>(
-	collectionName: string,
-	dexieTable: EntityTable<T, "id">,
+  collectionName: string,
+  dexieTable: EntityTable<T, "id">,
 ) {
-	return () =>
-		pb.collection(collectionName).subscribe("*", async (e) => {
-			const { record } = e;
-			const remoteUpdated = new Date(record.updated).getTime();
+  return () =>
+    pb.collection(collectionName).subscribe("*", async (e) => {
+      const { record } = e;
+      const remoteUpdated = new Date(record.updated).getTime();
 
-			const local = await dexieTable.get(record.id as any);
-			if (local && local.updated >= remoteUpdated) return;
+      // biome-ignore lint/suspicious/noExplicitAny: Expected string lookup
+      const local = await dexieTable.get(record.id as any);
+      if (local && local.updated >= remoteUpdated) return;
 
-			await useDatasetStore.getState().pbDeltaSync();
-		});
+      await useDatasetStore.getState().pbDeltaSync();
+    });
 }

@@ -2,8 +2,8 @@ import { Dexie, type EntityTable } from "dexie";
 import type {
   DatasetRecord,
   MeasurementRecord,
-  MetricRecord,
   MeasurementValueRecord,
+  MetricRecord,
   PreferenceRecord,
   UnitRecord,
 } from "../types/dataset";
@@ -12,7 +12,13 @@ const isBrowser = typeof window !== "undefined";
 
 export interface OfflineOp {
   id?: number;
-  collection: "datasets" | "metrics" | "measurements" | "measurement_values" | "units" | "preferences";
+  collection:
+    | "datasets"
+    | "metrics"
+    | "measurements"
+    | "measurement_values"
+    | "units"
+    | "preferences";
   action: "create" | "update" | "delete";
   recordId: string;
   data:
@@ -22,8 +28,8 @@ export interface OfflineOp {
     | MeasurementValueRecord
     | UnitRecord
     | PreferenceRecord
-    | { 
-        datasetRecord: DatasetRecord; 
+    | {
+        datasetRecord: DatasetRecord;
         metricRecords: MetricRecord[];
         measurementRecords: MeasurementRecord[];
         measurementValueRecords: MeasurementValueRecord[];
@@ -76,4 +82,11 @@ if (isBrowser) {
   });
 }
 
-export type { DatasetRecord, MeasurementRecord, MetricRecord, MeasurementValueRecord, PreferenceRecord, UnitRecord };
+export type {
+  DatasetRecord,
+  MeasurementRecord,
+  MeasurementValueRecord,
+  MetricRecord,
+  PreferenceRecord,
+  UnitRecord,
+};

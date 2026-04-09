@@ -9,12 +9,7 @@ import { TableSection } from "../components/datasets/TableSection";
 import { DatasetDetailHeader } from "../components/layout/DatasetDetailHeader";
 import { Modal } from "../components/ui/Modal";
 import { TimelineSelector } from "../components/ui/TimelineSelector";
-import type {
-  CustomRange,
-  Dataset,
-  Measurement,
-  Timeline,
-} from "../types/dataset";
+import type { CustomRange, Dataset, Measurement, Timeline } from "../types/dataset";
 
 export const Route = createFileRoute("/datasets/$datasetId")({
   component: DatasetDetail,
@@ -51,8 +46,8 @@ function DatasetDetail() {
     }
 
     const measurements = dataset.measurements || [];
-    return (timeline === "all") 
-      ? measurements 
+    return timeline === "all"
+      ? measurements
       : measurements.filter((m) => m.timestamp >= start && m.timestamp <= end);
   }, [dataset, timeline, customRange]);
 
@@ -92,8 +87,7 @@ function DatasetDetail() {
       <div
         className="fixed inset-0 pointer-events-none opacity-[0.03] z-100"
         style={{
-          backgroundImage:
-            'url("https://grainy-gradients.vercel.app/noise.svg")',
+          backgroundImage: 'url("https://grainy-gradients.vercel.app/noise.svg")',
         }}
       ></div>
 

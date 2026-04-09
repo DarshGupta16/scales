@@ -11,19 +11,11 @@ interface GraphSectionProps {
   onUpdateDataset: (updatedDataset: Dataset) => void;
 }
 
-export function GraphSection({
-  dataset,
-  measurements,
-  onUpdateDataset,
-}: GraphSectionProps) {
-  const [activeView, setActiveView] = useState<ViewType | null>(
-    dataset.views[0] || "line",
-  );
+export function GraphSection({ dataset, measurements, onUpdateDataset }: GraphSectionProps) {
+  const [activeView, setActiveView] = useState<ViewType | null>(dataset.views[0] || "line");
 
   const [isAddViewOpen, setIsAddViewOpen] = useState(false);
-  const [confirmRemoveView, setConfirmRemoveView] = useState<ViewType | null>(
-    null,
-  );
+  const [confirmRemoveView, setConfirmRemoveView] = useState<ViewType | null>(null);
 
   const displayMeasurements = measurements || dataset.measurements || [];
 
@@ -93,9 +85,7 @@ export function GraphSection({
       <ConfirmDialog
         isOpen={!!confirmRemoveView}
         onClose={() => setConfirmRemoveView(null)}
-        onConfirm={() =>
-          confirmRemoveView && handleRemoveView(confirmRemoveView)
-        }
+        onConfirm={() => confirmRemoveView && handleRemoveView(confirmRemoveView)}
         title="Deactivate Module"
         message={`Confirm deactivation of the ${confirmRemoveView?.toUpperCase()} renderer from this dataset.`}
         confirmText="Deactivate"

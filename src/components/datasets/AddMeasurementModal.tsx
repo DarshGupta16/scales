@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Measurement, Dataset, MeasurementValue } from "../../types/dataset";
+import type { Dataset, Measurement, MeasurementValue } from "../../types/dataset";
 import { generatePbId } from "../../utils/id";
 import { Modal } from "../ui/Modal";
 
@@ -27,7 +27,7 @@ export function AddMeasurementModal({ isOpen, onClose, onAdd, dataset }: AddMeas
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const measurementValues: MeasurementValue[] = dataset.metrics
       .filter((m) => values[m.id] && !Number.isNaN(Number(values[m.id])))
       .map((m) => ({
@@ -62,7 +62,10 @@ export function AddMeasurementModal({ isOpen, onClose, onAdd, dataset }: AddMeas
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <div className="flex flex-col gap-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
           {dataset.metrics.map((metric) => (
-            <div key={metric.id} className="flex flex-col gap-2 p-4 bg-zinc-900/30 rounded-2xl border border-white/5">
+            <div
+              key={metric.id}
+              className="flex flex-col gap-2 p-4 bg-zinc-900/30 rounded-2xl border border-white/5"
+            >
               <label
                 htmlFor={`metric-${metric.id}`}
                 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] ml-1"

@@ -1,0 +1,134 @@
+$ bunx biome check .
+tests\store\pbSync.test.ts:5:1 suppressions/unused ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Suppression comment has no effect. Remove the suppression or make sure you are suppressing the correct rule.
+  
+    3 │ // ─── Mocks (hoisted by Bun before imports) ───────────────────────
+    4 │ 
+  > 5 │ // biome-ignore lint/suspicious/noExplicitAny: Mock callback
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    6 │ const mockAdd = mock((_op: unknown) => Promise.resolve());
+    7 │ 
+  
+
+tests\store\slices\preferencesSlice.test.ts:46:22 lint/suspicious/noExplicitAny ━━━━━━━━━━━━━━━━━━━━
+
+  ! Unexpected any. Specify a different type.
+  
+    45 │ function createTestStore(initialPrefs: import("@/types/dataset").PreferenceRecord[] = []) {
+  > 46 │   return createStore<any>((set, get, api) => ({
+       │                      ^^^
+    47 │     preferences: initialPrefs,
+    48 │     error: null,
+  
+  i any disables many type checking rules. Its use should be avoided.
+  
+
+tests\store\pbSync.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     49  49 │   
+     50  50 │       expect(mockAdd).toHaveBeenCalledTimes(1);
+     51     │ - ····const·addedOp·=·mockAdd.mock.calls[0][0]·as·{·collection:·string;·action:·string;·recordId:·string;·data:·Record<string,·unknown>;·timestamp:·number·};
+         51 │ + ····const·addedOp·=·mockAdd.mock.calls[0][0]·as·{
+         52 │ + ······collection:·string;
+         53 │ + ······action:·string;
+         54 │ + ······recordId:·string;
+         55 │ + ······data:·Record<string,·unknown>;
+         56 │ + ······timestamp:·number;
+         57 │ + ····};
+     52  58 │       expect(addedOp.collection).toBe("datasets");
+     53  59 │       expect(addedOp.action).toBe("create");
+  
+
+tests\store\slices\preferencesSlice.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     91  91 │       });
+     92  92 │   
+     93     │ - ····const·pref·=·store.getState().preferences.find((p:·import("@/types/dataset").PreferenceRecord)·=>·p.id·===·"pref1");
+         93 │ + ····const·pref·=·store
+         94 │ + ······.getState()
+         95 │ + ······.preferences.find((p:·import("@/types/dataset").PreferenceRecord)·=>·p.id·===·"pref1");
+     94  96 │       expect(pref.value).toBe("dark");
+     95  97 │     });
+    ······· │ 
+    110 112 │       });
+    111 113 │   
+    112     │ - ····const·pref·=·store.getState().preferences.find((p:·import("@/types/dataset").PreferenceRecord)·=>·p.id·===·"pref1");
+        114 │ + ····const·pref·=·store
+        115 │ + ······.getState()
+        116 │ + ······.preferences.find((p:·import("@/types/dataset").PreferenceRecord)·=>·p.id·===·"pref1");
+    113 117 │       expect(pref.value).toBe("dark");
+    114 118 │     });
+    ······· │ 
+    181 185 │   
+    182 186 │       expect(mockTryPbOrQueue).toHaveBeenCalledTimes(1);
+    183     │ - ····const·offlineOp·=·mockTryPbOrQueue.mock.calls[0][1]·as·{·collection:·string;·action:·string;·data:·{·value:·string·}·};
+        187 │ + ····const·offlineOp·=·mockTryPbOrQueue.mock.calls[0][1]·as·{
+        188 │ + ······collection:·string;
+        189 │ + ······action:·string;
+        190 │ + ······data:·{·value:·string·};
+        191 │ + ····};
+    184 192 │       expect(offlineOp.collection).toBe("preferences");
+    185 193 │       expect(offlineOp.action).toBe("create");
+    ······· │ 
+    198 206 │       await store.getState().updatePreferences("pref1", "upsert", { value: "dark" });
+    199 207 │   
+    200     │ - ····const·offlineOp·=·mockTryPbOrQueue.mock.calls[0][1]·as·{·collection:·string;·action:·string;·data:·{·value:·string·}·};
+        208 │ + ····const·offlineOp·=·mockTryPbOrQueue.mock.calls[0][1]·as·{
+        209 │ + ······collection:·string;
+        210 │ + ······action:·string;
+        211 │ + ······data:·{·value:·string·};
+        212 │ + ····};
+    201 213 │       expect(offlineOp.action).toBe("update");
+    202 214 │     });
+    ······· │ 
+    214 226 │       await store.getState().updatePreferences("pref1", "delete");
+    215 227 │   
+    216     │ - ····const·offlineOp·=·mockTryPbOrQueue.mock.calls[0][1]·as·{·collection:·string;·action:·string;·data:·{·value:·string·}·};
+        228 │ + ····const·offlineOp·=·mockTryPbOrQueue.mock.calls[0][1]·as·{
+        229 │ + ······collection:·string;
+        230 │ + ······action:·string;
+        231 │ + ······data:·{·value:·string·};
+        232 │ + ····};
+    217 233 │       expect(offlineOp.action).toBe("delete");
+    218 234 │       expect(offlineOp.data).toBeNull();
+  
+
+tests\store\slices\syncSlice.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+      5   5 │   
+      6   6 │   // Per-collection mock storage so we can assert on individual collections
+      7     │ - const·collections:·Record<string,·Record<string,·import("bun:test").Mock<(...args:·unknown[])·=>·Promise<unknown>>>>·=·{};
+          7 │ + const·collections:·Record<
+          8 │ + ··string,
+          9 │ + ··Record<string,·import("bun:test").Mock<(...args:·unknown[])·=>·Promise<unknown>>>
+         10 │ + >·=·{};
+      8  11 │   function getMockCollection(name: string) {
+      9  12 │     if (!collections[name]) {
+    ······· │ 
+    651 654 │       // last_sync_time should have been written via db.preferences.put inside the transaction
+    652 655 │       expect(dbTables.preferences.put).toHaveBeenCalledTimes(1);
+    653     │ - ····const·putArg·=·dbTables.preferences.put.mock.calls[0][0]·as·{·preference:·string;·value:·string·};
+        656 │ + ····const·putArg·=·dbTables.preferences.put.mock.calls[0][0]·as·{
+        657 │ + ······preference:·string;
+        658 │ + ······value:·string;
+        659 │ + ····};
+    654 660 │       expect(putArg.preference).toBe("last_sync_time");
+    655 661 │       expect(typeof putArg.value).toBe("string");
+  
+
+Checked 66 files in 106ms. No fixes applied.
+Found 3 errors.
+Found 2 warnings.
+check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Some errors were emitted while running checks.
+  
+
+error: script "lint" exited with code 1

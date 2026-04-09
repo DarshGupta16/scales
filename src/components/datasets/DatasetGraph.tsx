@@ -242,7 +242,7 @@ export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
   const chartData = useMemo<ChartData[]>(() => {
     // Explicitly sort ascending (oldest first) for the chart flow
     const sortedData = [...data].sort((a, b) => a.timestamp - b.timestamp);
-    
+
     return sortedData.map((m, index) => ({
       ...m,
       value: m.values[0]?.value || 0, // Default to first metric's value
@@ -273,6 +273,7 @@ export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
   return (
     <div className="w-full h-75 sm:h-100 min-w-0 bg-[#070707] rounded-3xl p-2 sm:p-6 relative group">
       {/* Focused Scale Toggle */}
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: Tooltip triggering container */}
       <div
         className="absolute top-4 right-4 sm:right-6 z-10 flex items-center gap-3"
         onMouseEnter={() => setShowTooltip(true)}
@@ -323,7 +324,8 @@ export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
                     Precision Protocol
                   </span>
                   <p className="text-[9px] leading-relaxed text-zinc-500 font-sans uppercase tracking-[0.1em] font-medium">
-                    Dynamically adjusts Y-axis to highlight subtle temporal trends within the current data range.
+                    Dynamically adjusts Y-axis to highlight subtle temporal trends within the
+                    current data range.
                   </p>
                 </div>
               </div>

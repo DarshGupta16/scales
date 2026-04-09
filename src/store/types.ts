@@ -1,6 +1,6 @@
 import type { Dataset, PreferenceRecord, Unit } from "../types/dataset";
-import type { SyncSlice } from "./slices/syncSlice";
 import type { MeasurementSlice } from "./slices/measurementSlice";
+import type { SyncSlice } from "./slices/syncSlice";
 
 export type Preference = PreferenceRecord;
 

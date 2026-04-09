@@ -1,5 +1,5 @@
 import { Check, ChevronsUpDown, Search, Settings2 } from "lucide-react";
-import { useMemo, useState, useRef, useLayoutEffect } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useDatasetStore } from "@/store";
 import type { Unit } from "../../types/dataset";
@@ -16,7 +16,11 @@ export function UnitSelector({ value, onChange }: UnitSelectorProps) {
   const [isUnitsModalOpen, setIsUnitsModalOpen] = useState(false);
   const [search, setSearch] = useState("");
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number; width: number } | null>(null);
+  const [dropdownPosition, setDropdownPosition] = useState<{
+    top: number;
+    left: number;
+    width: number;
+  } | null>(null);
 
   const filteredUnits = useMemo(() => {
     return units.filter(
@@ -47,7 +51,7 @@ export function UnitSelector({ value, onChange }: UnitSelectorProps) {
         onClick={() => setIsOpen(false)}
         aria-label="Close selector"
       />
-      <div 
+      <div
         className="fixed bg-zinc-900 border border-white/10 shadow-2xl z-[201] overflow-hidden rounded-2xl animate-in fade-in slide-in-from-top-2 duration-200"
         style={{
           top: dropdownPosition.top,
