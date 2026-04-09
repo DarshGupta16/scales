@@ -2,6 +2,7 @@
  * Formats a timestamp into a readable date string.
  * Supports different levels of detail.
  */
+// Tested in tests/utils/format.test.ts
 export function formatDate(
   timestamp: number,
   options: "short" | "medium" | "full" = "medium",

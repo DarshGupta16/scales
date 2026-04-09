@@ -22,6 +22,7 @@ const UNKNOWN_UNIT: UnitRecord = {
  * Assembles denormalized Dataset objects from normalized records.
  * Uses Map-based lookups for O(n) performance instead of nested .filter()/.find().
  */
+// Tested in tests/store/helpers.test.ts
 export const buildDatasets = (
 	datasetRecords: DatasetRecord[],
 	metricRecords: MetricRecord[],

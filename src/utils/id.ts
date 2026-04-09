@@ -2,6 +2,7 @@
  * Generates a valid PocketBase ID.
  * PocketBase IDs are exactly 15 characters long and consist of lowercase letters and numbers.
  */
+// Tested in tests/utils/id.test.ts
 export const generatePbId = (): string => {
   const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
   let id = "";

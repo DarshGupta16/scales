@@ -9,7 +9,7 @@
     "dev": "bun --bun vite dev --port 3000",
     "build": "bun --bun vite build && bun run scripts/build-sw.ts && bun run scripts/inject-manifest.ts",
     "preview": "bun --bun vite preview",
-    "test": "vitest run",
+    "test": "bun test",
     "lint": "bunx biome check .",
     "lint:fix": "bunx biome check --write .",
     "format": "bunx biome format --write ."

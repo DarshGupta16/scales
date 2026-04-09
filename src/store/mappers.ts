@@ -12,6 +12,7 @@ import type {
  * Single source of truth — used by pbToLocalSync, pbDeltaSync, and subscriptions.
  */
 
+// Tested in tests/store/mappers.test.ts
 export const mapPbDataset = (d: Record<string, any>): DatasetRecord => ({
 	id: d.id,
 	title: d.title,
@@ -22,6 +23,7 @@ export const mapPbDataset = (d: Record<string, any>): DatasetRecord => ({
 	updated: new Date(d.updated).getTime(),
 });
 
+// Tested in tests/store/mappers.test.ts
 export const mapPbMetric = (m: Record<string, any>): MetricRecord => ({
 	id: m.id,
 	datasetId: m.dataset_id,
@@ -31,6 +33,7 @@ export const mapPbMetric = (m: Record<string, any>): MetricRecord => ({
 	updated: new Date(m.updated).getTime(),
 });
 
+// Tested in tests/store/mappers.test.ts
 export const mapPbMeasurement = (m: Record<string, any>): MeasurementRecord => ({
 	id: m.id,
 	datasetId: m.dataset_id,
@@ -39,6 +42,7 @@ export const mapPbMeasurement = (m: Record<string, any>): MeasurementRecord => (
 	updated: new Date(m.updated).getTime(),
 });
 
+// Tested in tests/store/mappers.test.ts
 export const mapPbMeasurementValue = (v: Record<string, any>): MeasurementValueRecord => ({
 	id: v.id,
 	measurementId: v.measurement_id,
@@ -48,6 +52,7 @@ export const mapPbMeasurementValue = (v: Record<string, any>): MeasurementValueR
 	updated: new Date(v.updated).getTime(),
 });
 
+// Tested in tests/store/mappers.test.ts
 export const mapPbUnit = (u: Record<string, any>): UnitRecord => ({
 	id: u.id,
 	name: u.name,
@@ -56,6 +61,7 @@ export const mapPbUnit = (u: Record<string, any>): UnitRecord => ({
 	updated: new Date(u.updated).getTime(),
 });
 
+// Tested in tests/store/mappers.test.ts
 export const mapPbPreference = (p: Record<string, any>): PreferenceRecord => ({
 	id: p.id,
 	preference: p.preference,

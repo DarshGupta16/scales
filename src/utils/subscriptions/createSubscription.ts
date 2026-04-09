@@ -7,6 +7,7 @@ import { useDatasetStore } from "../../store";
  * Subscribes to a collection, performs an idempotency check against the
  * local Dexie table, and triggers a delta sync if the remote record is newer.
  */
+// Tested in tests/utils/subscriptions/createSubscription.test.ts
 export function createSubscription<T extends { id: string; updated: number }>(
 	collectionName: string,
 	dexieTable: EntityTable<T, "id">,

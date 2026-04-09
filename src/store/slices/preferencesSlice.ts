@@ -5,6 +5,7 @@ import { generatePbId } from "../../utils/id";
 import { tryPbOrQueue } from "../pbSync";
 import type { DatasetState, Preference } from "../types";
 
+// Tested in tests/store/slices/preferencesSlice.test.ts
 export const createPreferencesSlice: StateCreator<
 	DatasetState,
 	[],

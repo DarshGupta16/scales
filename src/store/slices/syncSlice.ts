@@ -23,6 +23,7 @@ export interface SyncSlice {
 	pbDeltaSync: () => Promise<void>;
 }
 
+// Tested in tests/store/slices/syncSlice.test.ts
 export const createSyncSlice: StateCreator<DatasetState, [], [], SyncSlice> = (set, _get) => ({
 	localToPbSync: async () => {
 		const ops = await db.offline_ops.orderBy("timestamp").toArray();

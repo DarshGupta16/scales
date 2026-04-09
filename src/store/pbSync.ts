@@ -4,6 +4,7 @@ import { db, type OfflineOp } from "../lib/dexieDb";
  * Attempts a PocketBase operation. If the error indicates offline (status === 0),
  * queues the operation for later sync. Re-throws all other errors.
  */
+// Tested in tests/store/pbSync.test.ts
 export async function tryPbOrQueue(
 	pbFn: () => Promise<void>,
 	offlineOp: Omit<OfflineOp, "id" | "timestamp">,
