@@ -22,7 +22,7 @@ export const Route = createFileRoute("/datasets/$datasetId")({
 
 function DatasetDetail() {
   const { datasetId } = Route.useParams();
-  const { datasets, updateDataset, removeDataset } = useDatasetStore();
+  const { datasets, updateDataset, removeDataset, addMeasurement } = useDatasetStore();
 
   const dataset = useMemo(() => {
     return datasets.find((d) => d.id === datasetId);
@@ -41,24 +41,19 @@ function DatasetDetail() {
     let start = 0;
     let end = Infinity;
 
-    switch (timeline) {
-      case "day":
-        start = now - 24 * 60 * 60 * 1000;
-        break;
-      case "week":
-        start = now - 7 * 24 * 60 * 60 * 1000;
-        break;
-      case "custom":
-        start = customRange.start;
-        end = customRange.end;
-        break;
-      default:
-        return dataset.measurements;
+    if (timeline === "day") {
+      start = now - 24 * 60 * 60 * 1000;
+    } else if (timeline === "week") {
+      start = now - 7 * 24 * 60 * 60 * 1000;
+    } else if (timeline === "custom") {
+      start = customRange.start;
+      end = customRange.end;
     }
 
-    return dataset.measurements.filter(
-      (m) => m.timestamp >= start && m.timestamp <= end,
-    );
+    const measurements = dataset.measurements || [];
+    return (timeline === "all") 
+      ? measurements 
+      : measurements.filter((m) => m.timestamp >= start && m.timestamp <= end);
   }, [dataset, timeline, customRange]);
 
   const [isTimelineOpen, setIsTimelineOpen] = useState(false);
@@ -80,11 +75,7 @@ function DatasetDetail() {
   };
 
   const handleAddMeasurement = (newMeasurement: Measurement) => {
-    const updatedDataset: Dataset = {
-      ...dataset,
-      measurements: [...dataset.measurements, newMeasurement],
-    };
-    updateDataset(updatedDataset);
+    addMeasurement(datasetId, newMeasurement);
     setIsAddMeasurementOpen(false);
   };
 
@@ -193,20 +184,24 @@ function DatasetDetail() {
         </div>
       </main>
 
-      <AddMeasurementModal
-        isOpen={isAddMeasurementOpen}
-        onClose={() => setIsAddMeasurementOpen(false)}
-        onAdd={handleAddMeasurement}
-        unit={dataset.unit.symbol || dataset.unit.name}
-      />
+      {isAddMeasurementOpen && (
+        <AddMeasurementModal
+          isOpen={isAddMeasurementOpen}
+          onClose={() => setIsAddMeasurementOpen(false)}
+          onAdd={handleAddMeasurement}
+          dataset={dataset}
+        />
+      )}
 
-      <DatasetSettingsModal
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        dataset={dataset}
-        onUpdate={handleUpdateDataset}
-        onDelete={handleDeleteDataset}
-      />
+      {isSettingsOpen && (
+        <DatasetSettingsModal
+          isOpen={isSettingsOpen}
+          onClose={() => setIsSettingsOpen(false)}
+          dataset={dataset}
+          onUpdate={handleUpdateDataset}
+          onDelete={handleDeleteDataset}
+        />
+      )}
     </div>
   );
 }

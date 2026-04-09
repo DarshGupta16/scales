@@ -15,7 +15,7 @@ export function DatasetTable({ measurements, unit, onDelete }: DatasetTableProps
   }, []);
 
   const sortedMeasurements = [...measurements].sort(
-    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+    (a, b) => b.timestamp - a.timestamp,
   );
 
   return (
@@ -58,7 +58,7 @@ export function DatasetTable({ measurements, unit, onDelete }: DatasetTableProps
                     : ""}
                 </td>
                 <td className="px-8 py-5 whitespace-nowrap text-base font-bold text-white font-sans">
-                  {measurement.value}{" "}
+                  {measurement.values[0]?.value ?? 0}{" "}
                   <span className="text-brand/50 font-normal uppercase text-[10px] ml-1 tracking-[0.2em]">
                     {unit}
                   </span>

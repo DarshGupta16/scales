@@ -11,15 +11,11 @@ interface TableSectionProps {
 }
 
 export function TableSection({ dataset, measurements }: TableSectionProps) {
-  const { updateDataset } = useDatasetStore();
+  const { removeMeasurement } = useDatasetStore();
   const [confirmDeleteMeasurement, setConfirmDeleteMeasurement] = useState<string | null>(null);
 
   const handleDeleteMeasurement = (id: string) => {
-    const updatedDataset = {
-      ...dataset,
-      measurements: dataset.measurements.filter((m) => m.id !== id),
-    };
-    updateDataset(updatedDataset);
+    removeMeasurement(id);
     setConfirmDeleteMeasurement(null);
   };
 

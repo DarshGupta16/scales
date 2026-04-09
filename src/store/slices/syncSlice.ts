@@ -1,13 +1,20 @@
 import type { StateCreator } from "zustand";
 import { db } from "../../lib/dexieDb";
 import { pb } from "../../lib/pocketbase";
-import type { DatasetRecord, MeasurementRecord, UnitRecord } from "../../types/dataset";
+import type { 
+  DatasetRecord, 
+  MetricRecord, 
+  MeasurementRecord, 
+  MeasurementValueRecord, 
+  UnitRecord 
+} from "../../types/dataset";
 import { buildDatasets } from "../helpers";
 import type { DatasetState } from "../types";
 
 export interface SyncSlice {
   localToPbSync: () => Promise<void>;
   pbToLocalSync: () => Promise<void>;
+  pbDeltaSync: () => Promise<void>;
 }
 
 export const createSyncSlice: StateCreator<DatasetState, [], [], SyncSlice> = (set, _get) => ({
@@ -25,26 +32,63 @@ export const createSyncSlice: StateCreator<DatasetState, [], [], SyncSlice> = (s
           if (op.collection === "datasets") {
             const data = op.data as {
               datasetRecord: DatasetRecord;
-              measurementRecords: MeasurementRecord[];
+              metricRecords: MetricRecord[];
             };
-            const { datasetRecord, measurementRecords } = data;
-            await collection.create({
+            const { datasetRecord, metricRecords } = data;
+            
+            // 1. Create Dataset
+            await pb.collection("datasets").create({
               id: datasetRecord.id,
               title: datasetRecord.title,
               description: datasetRecord.description,
-              unit_id: datasetRecord.unitId,
+              type: datasetRecord.type,
               views: datasetRecord.views,
               created: new Date(datasetRecord.created).toISOString(),
             });
-            for (const m of measurementRecords) {
-              await pb.collection("measurements").create({
-                id: m.id,
-                dataset_id: m.datasetId,
-                value: m.value,
-                timestamp: m.timestamp,
-                created: new Date(m.created).toISOString(),
+
+            // 2. Create Metrics
+            for (const metric of metricRecords) {
+              await pb.collection("metrics").create({
+                id: metric.id,
+                dataset_id: metric.datasetId,
+                name: metric.name,
+                unit_id: metric.unitId,
+                created: new Date(metric.created).toISOString(),
               });
             }
+          } else if (op.collection === "measurements") {
+            const data = op.data as any;
+            
+            // Handle both bundled and legacy header-only measurements
+            const measurementRecord = data.measurementRecord || data;
+            const valueRecords = data.valueRecords || [];
+
+            await pb.collection("measurements").create({
+              id: measurementRecord.id,
+              dataset_id: measurementRecord.datasetId,
+              timestamp: measurementRecord.timestamp,
+              created: new Date(measurementRecord.created).toISOString(),
+            });
+
+            // If bundled, create values too
+            for (const v of valueRecords) {
+              await pb.collection("measurement_values").create({
+                id: v.id,
+                measurement_id: v.measurementId,
+                metric_id: v.metricId,
+                value: v.value,
+                created: new Date(v.created).toISOString(),
+              });
+            }
+          } else if (op.collection === "measurement_values") {
+            const data = op.data as MeasurementValueRecord;
+            await pb.collection("measurement_values").create({
+              id: data.id,
+              measurement_id: data.measurementId,
+              metric_id: data.metricId,
+              value: data.value,
+              created: new Date(data.created).toISOString(),
+            });
           } else if (op.collection === "preferences") {
             if (op.data) await collection.create(op.data);
           } else {
@@ -57,7 +101,6 @@ export const createSyncSlice: StateCreator<DatasetState, [], [], SyncSlice> = (s
             await collection.update(op.recordId, {
               title: datasetRecord.title,
               description: datasetRecord.description,
-              unit_id: datasetRecord.unitId,
               views: datasetRecord.views,
             });
           } else if (op.collection === "preferences") {
@@ -87,11 +130,20 @@ export const createSyncSlice: StateCreator<DatasetState, [], [], SyncSlice> = (s
   pbToLocalSync: async () => {
     try {
       // 1. Fetch ALL fresh data from PocketBase
-      const [pbDatasets, pbMeasurements, pbUnits, pbPreferences] = await Promise.all([
-        pb.collection("datasets").getFullList(),
-        pb.collection("measurements").getFullList(),
-        pb.collection("units").getFullList(),
-        pb.collection("preferences").getFullList(),
+      const [
+        pbDatasets, 
+        pbMetrics,
+        pbMeasurements, 
+        pbMeasurementValues,
+        pbUnits, 
+        pbPreferences
+      ] = await Promise.all([
+        pb.collection("datasets").getFullList({ requestKey: null }),
+        pb.collection("metrics").getFullList({ requestKey: null }),
+        pb.collection("measurements").getFullList({ requestKey: null }),
+        pb.collection("measurement_values").getFullList({ requestKey: null }),
+        pb.collection("units").getFullList({ requestKey: null }),
+        pb.collection("preferences").getFullList({ requestKey: null }),
       ]);
 
       // 2. Map to local record formats
@@ -99,19 +151,36 @@ export const createSyncSlice: StateCreator<DatasetState, [], [], SyncSlice> = (s
         id: d.id,
         title: d.title,
         description: d.description,
-        unitId: d.unit_id,
+        type: d.type as "single" | "composite",
         views: d.views,
         created: new Date(d.created).getTime(),
         updated: new Date(d.updated).getTime(),
+      }));
+
+      const metricRecords: MetricRecord[] = pbMetrics.map((m) => ({
+        id: m.id,
+        datasetId: m.dataset_id,
+        name: m.name,
+        unitId: m.unit_id,
+        created: new Date(m.created).getTime(),
+        updated: new Date(m.updated).getTime(),
       }));
 
       const measurementRecords: MeasurementRecord[] = pbMeasurements.map((m) => ({
         id: m.id,
         datasetId: m.dataset_id,
         timestamp: m.timestamp,
-        value: m.value,
         created: new Date(m.created).getTime(),
         updated: new Date(m.updated).getTime(),
+      }));
+
+      const valueRecords: MeasurementValueRecord[] = pbMeasurementValues.map((v) => ({
+        id: v.id,
+        measurementId: v.measurement_id,
+        metricId: v.metric_id,
+        value: v.value,
+        created: new Date(v.created).getTime(),
+        updated: new Date(v.updated).getTime(),
       }));
 
       const unitRecords: UnitRecord[] = pbUnits.map((u) => ({
@@ -131,7 +200,13 @@ export const createSyncSlice: StateCreator<DatasetState, [], [], SyncSlice> = (s
       }));
 
       // 3. Update ZUSTAND Store FIRST
-      const datasets = buildDatasets(datasetRecords, unitRecords, measurementRecords);
+      const datasets = buildDatasets(
+        datasetRecords, 
+        metricRecords, 
+        unitRecords, 
+        measurementRecords, 
+        valueRecords
+      );
       set({
         datasets,
         units: unitRecords,
@@ -140,48 +215,143 @@ export const createSyncSlice: StateCreator<DatasetState, [], [], SyncSlice> = (s
         isHydrated: true,
       });
 
-      // 4. Background: Sync DEXIE (The Diffing/Pruning Approach)
+      // 4. Background: Sync DEXIE (Clean Slate)
       const syncDexie = async () => {
-        // DATASETS: Put fresh, delete orphans
-        await db.datasets.bulkPut(datasetRecords);
-        const localDatasetIds = await db.datasets.toCollection().primaryKeys();
-        const pbDatasetIds = datasetRecords.map((d) => d.id);
-        const datasetOrphans = localDatasetIds.filter((id) => !pbDatasetIds.includes(id as string));
-        if (datasetOrphans.length > 0) await db.datasets.bulkDelete(datasetOrphans as string[]);
+        await Promise.all([
+          db.datasets.clear(),
+          db.metrics.clear(),
+          db.units.clear(),
+          db.measurements.clear(),
+          db.measurement_values.clear(),
+          db.preferences.clear(),
+        ]);
 
-        // UNITS: Put fresh, delete orphans
-        await db.units.bulkPut(unitRecords);
-        const localUnitIds = await db.units.toCollection().primaryKeys();
-        const pbUnitIds = unitRecords.map((u) => u.id);
-        const unitOrphans = localUnitIds.filter((id) => !pbUnitIds.includes(id as string));
-        if (unitOrphans.length > 0) await db.units.bulkDelete(unitOrphans as string[]);
-
-        // MEASUREMENTS: Put fresh, delete orphans
-        await db.measurements.bulkPut(measurementRecords);
-        const localMeasurementIds = await db.measurements.toCollection().primaryKeys();
-        const pbMeasurementIds = measurementRecords.map((m) => m.id);
-        const measurementOrphans = localMeasurementIds.filter(
-          (id) => !pbMeasurementIds.includes(id as string),
-        );
-        if (measurementOrphans.length > 0)
-          await db.measurements.bulkDelete(measurementOrphans as string[]);
-
-        // PREFERENCES: Put fresh, delete orphans
-        await db.preferences.bulkPut(preferenceRecords);
-        const localPreferenceIds = await db.preferences.toCollection().primaryKeys();
-        const pbPreferenceIds = preferenceRecords.map((p) => p.id);
-        const preferenceOrphans = localPreferenceIds.filter(
-          (id) => !pbPreferenceIds.includes(id as string),
-        );
-        if (preferenceOrphans.length > 0)
-          await db.preferences.bulkDelete(preferenceOrphans as string[]);
+        await Promise.all([
+          db.datasets.bulkPut(datasetRecords),
+          db.metrics.bulkPut(metricRecords),
+          db.units.bulkPut(unitRecords),
+          db.measurements.bulkPut(measurementRecords),
+          db.measurement_values.bulkPut(valueRecords),
+          db.preferences.bulkPut(preferenceRecords),
+        ]);
       };
 
-      // Execute pruning without blocking UI
       syncDexie().catch((err) => console.error("Dexie background sync failed:", err));
     } catch (err) {
       console.error("Pocketbase fetch failed:", err);
       set({ error: (err as Error).message, isLoading: false });
+    }
+  },
+
+  pbDeltaSync: async () => {
+    try {
+      const preferences = await db.preferences.toArray();
+      const lastSyncPref = preferences.find(p => p.preference === "last_sync_time");
+      const lastSyncTime = lastSyncPref?.value as string || "1970-01-01 00:00:00";
+
+      const filter = `updated > "${lastSyncTime}"`;
+      const now = new Date().toISOString().replace("T", " ").split(".")[0];
+
+      const [
+        pbDatasets, pbMetrics, pbMeasurements, pbMeasurementValues, pbUnits, pbPreferences
+      ] = await Promise.all([
+        pb.collection("datasets").getFullList({ filter, requestKey: null }),
+        pb.collection("metrics").getFullList({ filter, requestKey: null }),
+        pb.collection("measurements").getFullList({ filter, requestKey: null }),
+        pb.collection("measurement_values").getFullList({ filter, requestKey: null }),
+        pb.collection("units").getFullList({ filter, requestKey: null }),
+        pb.collection("preferences").getFullList({ filter, requestKey: null }),
+      ]);
+
+      if ([pbDatasets, pbMetrics, pbMeasurements, pbMeasurementValues, pbUnits, pbPreferences].every(l => l.length === 0)) {
+        return;
+      }
+
+      const datasetRecords: DatasetRecord[] = pbDatasets.map((d) => ({
+        id: d.id,
+        title: d.title,
+        description: d.description,
+        type: d.type as "single" | "composite",
+        views: d.views,
+        created: new Date(d.created).getTime(),
+        updated: new Date(d.updated).getTime(),
+      }));
+
+      const metricRecords: MetricRecord[] = pbMetrics.map((m) => ({
+        id: m.id,
+        datasetId: m.dataset_id,
+        name: m.name,
+        unitId: m.unit_id,
+        created: new Date(m.created).getTime(),
+        updated: new Date(m.updated).getTime(),
+      }));
+
+      const measurementRecords: MeasurementRecord[] = pbMeasurements.map((m) => ({
+        id: m.id,
+        datasetId: m.dataset_id,
+        timestamp: m.timestamp,
+        created: new Date(m.created).getTime(),
+        updated: new Date(m.updated).getTime(),
+      }));
+
+      const valueRecords: MeasurementValueRecord[] = pbMeasurementValues.map((v) => ({
+        id: v.id,
+        measurementId: v.measurement_id,
+        metricId: v.metric_id,
+        value: v.value,
+        created: new Date(v.created).getTime(),
+        updated: new Date(v.updated).getTime(),
+      }));
+
+      const unitRecords: UnitRecord[] = pbUnits.map((u) => ({
+        id: u.id,
+        name: u.name,
+        symbol: u.symbol,
+        created: new Date(u.created).getTime(),
+        updated: new Date(u.updated).getTime(),
+      }));
+
+      const preferenceRecords = pbPreferences.map((p) => ({
+        id: p.id,
+        preference: p.preference,
+        value: p.value,
+        created: new Date(p.created).getTime(),
+        updated: new Date(p.updated).getTime(),
+      }));
+
+      await db.transaction("rw", [db.datasets, db.metrics, db.units, db.measurements, db.measurement_values, db.preferences], async () => {
+        if (datasetRecords.length > 0) await db.datasets.bulkPut(datasetRecords);
+        if (metricRecords.length > 0) await db.metrics.bulkPut(metricRecords);
+        if (unitRecords.length > 0) await db.units.bulkPut(unitRecords);
+        if (measurementRecords.length > 0) await db.measurements.bulkPut(measurementRecords);
+        if (valueRecords.length > 0) await db.measurement_values.bulkPut(valueRecords);
+        if (preferenceRecords.length > 0) await db.preferences.bulkPut(preferenceRecords);
+        
+        await db.preferences.put({
+          id: lastSyncPref?.id || "last_sync_time",
+          preference: "last_sync_time",
+          value: now,
+          created: lastSyncPref?.created || Date.now(),
+          updated: Date.now(),
+        });
+      });
+
+      const [allDs, allMet, allUnits, allM, allVal, allPref] = await Promise.all([
+        db.datasets.toArray(),
+        db.metrics.toArray(),
+        db.units.toArray(),
+        db.measurements.toArray(),
+        db.measurement_values.toArray(),
+        db.preferences.toArray(),
+      ]);
+
+      set({
+        datasets: buildDatasets(allDs, allMet, allUnits, allM, allVal),
+        units: allUnits,
+        preferences: allPref,
+      });
+    } catch (err) {
+      console.error("Delta sync failed:", err);
     }
   },
 });

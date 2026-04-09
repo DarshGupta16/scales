@@ -135,6 +135,7 @@ export function DatasetCard({ dataset, onEdit, onDelete }: DatasetCardProps) {
     );
     return sortedData.slice(-7).map((m, index) => ({
       ...m,
+      value: m.values[0]?.value || 0, // Default to first metric's value
       tooltipId: `${m.id || index}-${m.timestamp}`,
       displayDate: isClient ? formatDate(m.timestamp, "short") : "",
     }));

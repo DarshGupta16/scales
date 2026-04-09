@@ -1,11 +1,12 @@
 import type { Dataset, PreferenceRecord, Unit } from "../types/dataset";
 import type { SyncSlice } from "./slices/syncSlice";
+import type { MeasurementSlice } from "./slices/measurementSlice";
 
 export type Preference = PreferenceRecord;
 
 export type PreferenceOp = "upsert" | "delete";
 
-export interface DatasetState extends SyncSlice {
+export interface DatasetState extends SyncSlice, MeasurementSlice {
   datasets: Dataset[];
   units: Unit[];
   preferences: Preference[];
@@ -16,7 +17,6 @@ export interface DatasetState extends SyncSlice {
 
   // Actions
   hydrate: () => Promise<void>;
-  // sync: () => Promise<void>; // Removed in favor of SyncSlice actions
 
   // Dataset Actions
   addDataset: (dataset: Dataset) => Promise<void>;

@@ -240,11 +240,12 @@ export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
   }, []);
 
   const chartData = useMemo<ChartData[]>(() => {
-    const sortedData = [...data].sort(
-      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
-    );
+    // Explicitly sort ascending (oldest first) for the chart flow
+    const sortedData = [...data].sort((a, b) => a.timestamp - b.timestamp);
+    
     return sortedData.map((m, index) => ({
       ...m,
+      value: m.values[0]?.value || 0, // Default to first metric's value
       tooltipId: `${m.id || index.toString()}-${m.timestamp}`,
       displayDate: isClient ? formatDate(m.timestamp, "full") : "",
     }));
