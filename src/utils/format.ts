@@ -1,5 +1,3 @@
-import type { Unit } from "../types/dataset";
-
 /**
  * Formats a timestamp into a readable date string.
  * Supports different levels of detail.
@@ -33,11 +31,4 @@ export function formatDate(
     default:
       return date.toLocaleString();
   }
-}
-
-/**
- * Formats a numeric value with its associated unit.
- */
-export function formatValue(value: number, unit: Unit): string {
-  return `${value} ${unit}`;
 }

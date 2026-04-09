@@ -1,0 +1,65 @@
+import type {
+	DatasetRecord,
+	MeasurementRecord,
+	MeasurementValueRecord,
+	MetricRecord,
+	PreferenceRecord,
+	UnitRecord,
+} from "../types/dataset";
+
+/**
+ * Mappers for converting PocketBase records to local Dexie record formats.
+ * Single source of truth — used by pbToLocalSync, pbDeltaSync, and subscriptions.
+ */
+
+export const mapPbDataset = (d: Record<string, any>): DatasetRecord => ({
+	id: d.id,
+	title: d.title,
+	description: d.description,
+	type: d.type as "single" | "composite",
+	views: d.views,
+	created: new Date(d.created).getTime(),
+	updated: new Date(d.updated).getTime(),
+});
+
+export const mapPbMetric = (m: Record<string, any>): MetricRecord => ({
+	id: m.id,
+	datasetId: m.dataset_id,
+	name: m.name,
+	unitId: m.unit_id,
+	created: new Date(m.created).getTime(),
+	updated: new Date(m.updated).getTime(),
+});
+
+export const mapPbMeasurement = (m: Record<string, any>): MeasurementRecord => ({
+	id: m.id,
+	datasetId: m.dataset_id,
+	timestamp: m.timestamp,
+	created: new Date(m.created).getTime(),
+	updated: new Date(m.updated).getTime(),
+});
+
+export const mapPbMeasurementValue = (v: Record<string, any>): MeasurementValueRecord => ({
+	id: v.id,
+	measurementId: v.measurement_id,
+	metricId: v.metric_id,
+	value: v.value,
+	created: new Date(v.created).getTime(),
+	updated: new Date(v.updated).getTime(),
+});
+
+export const mapPbUnit = (u: Record<string, any>): UnitRecord => ({
+	id: u.id,
+	name: u.name,
+	symbol: u.symbol,
+	created: new Date(u.created).getTime(),
+	updated: new Date(u.updated).getTime(),
+});
+
+export const mapPbPreference = (p: Record<string, any>): PreferenceRecord => ({
+	id: p.id,
+	preference: p.preference,
+	value: p.value,
+	created: new Date(p.created).getTime(),
+	updated: new Date(p.updated).getTime(),
+});

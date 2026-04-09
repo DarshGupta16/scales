@@ -21,6 +21,17 @@ export function AddDatasetModal({ isOpen, onClose, onAdd }: AddDatasetModalProps
     { id: generatePbId(), name: "", unit: null }
   ]);
 
+  // Reset form state when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setTitle("");
+      setDescription("");
+      setType("single");
+      setSingleUnit(null);
+      setMetrics([{ id: generatePbId(), name: "", unit: null }]);
+    }
+  }, [isOpen]);
+
   const addMetric = () => {
     setMetrics([...metrics, { id: generatePbId(), name: "", unit: null }]);
   };

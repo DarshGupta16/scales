@@ -1,5 +1,5 @@
 import { Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Measurement } from "../../types/dataset";
 
 interface DatasetTableProps {
@@ -14,8 +14,9 @@ export function DatasetTable({ measurements, unit, onDelete }: DatasetTableProps
     setIsClient(true);
   }, []);
 
-  const sortedMeasurements = [...measurements].sort(
-    (a, b) => b.timestamp - a.timestamp,
+  const sortedMeasurements = useMemo(
+    () => [...measurements].sort((a, b) => b.timestamp - a.timestamp),
+    [measurements],
   );
 
   return (
