@@ -55,6 +55,49 @@ export const db = (isBrowser ? new Dexie("ScalesDatabase") : ({} as unknown)) as
 if (isBrowser) {
   // Schema declaration:
   // Add schemas for older Dexie versions 1-6 so older local databases upgrade correctly.
+  // Historical schemas to ensure safe upgrades for existing users
+  db.version(1).stores({
+    datasets: "id, title, unitId, createdAt",
+    units: "id, name, symbol",
+    measurements: "id, datasetId, timestamp, value",
+  });
+
+  db.version(2).stores({
+    datasets: "id, title, unitId, createdAt",
+    units: "id, name, symbol",
+    measurements: "id, datasetId, timestamp, value",
+  });
+
+  db.version(3).stores({
+    datasets: "id, title, unitId, createdAt",
+    units: "id, name, symbol",
+    measurements: "id, datasetId, timestamp, value",
+    offline_ops: "++id, collection, action, recordId, timestamp",
+  });
+
+  db.version(4).stores({
+    datasets: "id, title, unitId, created",
+    units: "id, name, symbol",
+    measurements: "id, datasetId, timestamp, value",
+    offline_ops: "++id, collection, action, recordId, timestamp",
+  });
+
+  db.version(5).stores({
+    datasets: "id, title, unitId, created",
+    units: "id, name, symbol",
+    measurements: "id, datasetId, timestamp, value",
+    preferences: "id, preference",
+    offline_ops: "++id, collection, action, recordId, timestamp",
+  });
+
+  db.version(6).stores({
+    datasets: "id, title, unitId, created",
+    units: "id, name, symbol",
+    measurements: "id, datasetId, timestamp, value",
+    preferences: "id, preference",
+    offline_ops: "++id, collection, action, recordId, timestamp",
+  });
+
   const schema = {
     datasets: "id, title, type, created, updated",
     metrics: "id, datasetId, unitId, updated",
@@ -64,13 +107,6 @@ if (isBrowser) {
     preferences: "id, preference, updated",
     offline_ops: "++id, collection, action, recordId, timestamp",
   };
-
-  db.version(1).stores(schema);
-  db.version(2).stores(schema);
-  db.version(3).stores(schema);
-  db.version(4).stores(schema);
-  db.version(5).stores(schema);
-  db.version(6).stores(schema);
 
   // Version bumped to reflect normalized 4-table structure and indexed updated field.
   db.version(7).stores(schema);

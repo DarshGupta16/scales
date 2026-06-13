@@ -47,23 +47,32 @@ export const pbToLocalSyncStrategy = async (
       isHydrated: true,
     });
 
-      await Promise.all([
-        db.datasets.clear(),
-        db.metrics.clear(),
-        db.units.clear(),
-        db.measurements.clear(),
-        db.measurement_values.clear(),
-        db.preferences.clear(),
-      ]);
+    // Background: Sync Dexie (Clean Slate)
+    const syncDexie = async () => {
+      await db.transaction(
+        "rw",
+        [db.datasets, db.metrics, db.units, db.measurements, db.measurement_values, db.preferences],
+        async () => {
+          await Promise.all([
+            db.datasets.clear(),
+            db.metrics.clear(),
+            db.units.clear(),
+            db.measurements.clear(),
+            db.measurement_values.clear(),
+            db.preferences.clear(),
+          ]);
 
-      await Promise.all([
-        db.datasets.bulkPut(datasetRecords),
-        db.metrics.bulkPut(metricRecords),
-        db.units.bulkPut(unitRecords),
-        db.measurements.bulkPut(measurementRecords),
-        db.measurement_values.bulkPut(valueRecords),
-        db.preferences.bulkPut(preferenceRecords),
-      ]);
+          await Promise.all([
+            db.datasets.bulkPut(datasetRecords),
+            db.metrics.bulkPut(metricRecords),
+            db.units.bulkPut(unitRecords),
+            db.measurements.bulkPut(measurementRecords),
+            db.measurement_values.bulkPut(valueRecords),
+            db.preferences.bulkPut(preferenceRecords),
+          ]);
+        },
+      );
+    };
 
     syncDexie().catch((err) => console.error("Dexie background sync failed:", err));
   } catch (err) {
