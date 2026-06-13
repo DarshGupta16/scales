@@ -33,8 +33,8 @@ export function TableSection({ dataset, measurements }: TableSectionProps) {
       </div>
 
       <DatasetTable
+        dataset={dataset}
         measurements={displayMeasurements}
-        unit={dataset.unit.symbol || dataset.unit.name}
         onDelete={setConfirmDeleteMeasurement}
       />
 

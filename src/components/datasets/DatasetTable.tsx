@@ -1,14 +1,14 @@
 import { Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import type { Measurement } from "../../types/dataset";
+import type { Dataset, Measurement } from "../../types/dataset";
 
 interface DatasetTableProps {
+  dataset: Dataset;
   measurements: Measurement[];
-  unit: string;
   onDelete: (id: string) => void;
 }
 
-export function DatasetTable({ measurements, unit, onDelete }: DatasetTableProps) {
+export function DatasetTable({ dataset, measurements, onDelete }: DatasetTableProps) {
   const [isClient, setIsClient] = useState(false);
   useEffect(() => {
     setIsClient(true);
@@ -31,12 +31,24 @@ export function DatasetTable({ measurements, unit, onDelete }: DatasetTableProps
               >
                 Timeline
               </th>
-              <th
-                scope="col"
-                className="px-8 py-5 text-left text-[10px] font-bold text-zinc-500 uppercase tracking-[0.3em]"
-              >
-                Magnitude
-              </th>
+              {dataset.type === "composite" ? (
+                dataset.metrics.map((metric) => (
+                  <th
+                    key={metric.id}
+                    scope="col"
+                    className="px-8 py-5 text-left text-[10px] font-bold text-zinc-500 uppercase tracking-[0.3em]"
+                  >
+                    {metric.name}
+                  </th>
+                ))
+              ) : (
+                <th
+                  scope="col"
+                  className="px-8 py-5 text-left text-[10px] font-bold text-zinc-500 uppercase tracking-[0.3em]"
+                >
+                  Magnitude
+                </th>
+              )}
               <th
                 scope="col"
                 className="px-8 py-5 text-right text-[10px] font-bold text-zinc-500 uppercase tracking-[0.3em]"
@@ -58,12 +70,35 @@ export function DatasetTable({ measurements, unit, onDelete }: DatasetTableProps
                         .toUpperCase()
                     : ""}
                 </td>
-                <td className="px-8 py-5 whitespace-nowrap text-base font-bold text-white font-sans">
-                  {measurement.values[0]?.value ?? 0}{" "}
-                  <span className="text-brand/50 font-normal uppercase text-[10px] ml-1 tracking-[0.2em]">
-                    {unit}
-                  </span>
-                </td>
+                {dataset.type === "composite" ? (
+                  dataset.metrics.map((metric) => {
+                    const valRecord = measurement.values.find((v) => v.metricId === metric.id);
+                    return (
+                      <td
+                        key={metric.id}
+                        className="px-8 py-5 whitespace-nowrap text-base font-bold text-white font-sans"
+                      >
+                        {valRecord !== undefined && valRecord !== null ? (
+                          <>
+                            {valRecord.value}{" "}
+                            <span className="text-brand/50 font-normal uppercase text-[10px] ml-1 tracking-[0.2em]">
+                              {metric.unit.symbol || metric.unit.name}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-zinc-600 font-normal">—</span>
+                        )}
+                      </td>
+                    );
+                  })
+                ) : (
+                  <td className="px-8 py-5 whitespace-nowrap text-base font-bold text-white font-sans">
+                    {measurement.values[0]?.value ?? 0}{" "}
+                    <span className="text-brand/50 font-normal uppercase text-[10px] ml-1 tracking-[0.2em]">
+                      {dataset.unit?.symbol || dataset.unit?.name || "?"}
+                    </span>
+                  </td>
+                )}
                 <td className="px-8 py-5 whitespace-nowrap text-right">
                   <button
                     type="button"
@@ -79,7 +114,7 @@ export function DatasetTable({ measurements, unit, onDelete }: DatasetTableProps
             {sortedMeasurements.length === 0 && (
               <tr>
                 <td
-                  colSpan={3}
+                  colSpan={dataset.type === "composite" ? dataset.metrics.length + 2 : 3}
                   className="px-8 py-16 text-center text-zinc-600 font-bold uppercase tracking-[0.3em] text-xs"
                 >
                   Records empty.

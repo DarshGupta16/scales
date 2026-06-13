@@ -45,8 +45,8 @@ export function GraphSection({ dataset, measurements, onUpdateDataset }: GraphSe
 
   return (
     <section className="flex flex-col gap-8">
-      <div className="bg-[#0a0a0a] p-8 sm:p-12 border border-white/5 rounded-[3rem] shadow-2xl min-h-137.5 flex flex-col">
-        <div className="flex flex-wrap items-center justify-between gap-8 mb-12 border-b border-white/5 pb-8">
+      <div className="bg-[#0a0a0a] p-5 sm:p-12 border border-white/5 rounded-[2rem] sm:rounded-[3rem] shadow-2xl min-h-137.5 flex flex-col">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6 sm:mb-12 border-b border-white/5 pb-4 sm:pb-8">
           <h2 className="text-xl font-display font-bold text-white uppercase tracking-tight flex items-center gap-4">
             <div className="w-2 h-2 rounded-full bg-brand animate-pulse"></div>
             Matrix
@@ -60,13 +60,9 @@ export function GraphSection({ dataset, measurements, onUpdateDataset }: GraphSe
           />
         </div>
 
-        <div className="flex-1 min-h-0 bg-black/40 rounded-3xl overflow-hidden border border-white/5">
+        <div className="flex-1 min-h-0 bg-black/40 rounded-3xl overflow-hidden border border-white/5 flex flex-col">
           {activeView ? (
-            <DatasetGraph
-              data={displayMeasurements}
-              viewType={activeView}
-              unit={dataset.unit.symbol || dataset.unit.name}
-            />
+            <DatasetGraph dataset={dataset} data={displayMeasurements} viewType={activeView} />
           ) : (
             <div className="h-full flex flex-col items-center justify-center text-zinc-700 font-sans uppercase tracking-[0.3em] font-bold text-xs">
               [ SYSTEM STANDBY. SELECT MODULE. ]

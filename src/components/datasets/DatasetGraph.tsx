@@ -19,21 +19,46 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import type { Measurement, ViewType } from "../../types/dataset";
+import type {
+  Dataset,
+  Measurement,
+  MeasurementValue,
+  Metric,
+  UnitRecord,
+  ViewType,
+} from "../../types/dataset";
 import { formatDate } from "../../utils/format";
 
 interface DatasetGraphProps {
+  dataset: Dataset;
   data: Measurement[];
   viewType: ViewType;
-  unit: string;
 }
 
 interface ChartData extends Measurement {
   tooltipId: string;
   displayDate: string;
+  value: number; // Fallback for single metric charts
+  [key: string]: string | number | MeasurementValue[] | undefined;
 }
 
-const COLORS = ["#8b5cf6", "#a78bfa", "#c4b5fd", "#ddd6fe", "#ede9fe"];
+const COLORS = [
+  "#8b5cf6", // Violet-500 (Brand)
+  "#06b6d4", // Cyan-500
+  "#10b981", // Emerald-500
+  "#ec4899", // Pink-500
+  "#f59e0b", // Amber-500
+  "#3b82f6", // Blue-500
+  "#a78bfa", // Lavender-400
+];
+
+const UNKNOWN_UNIT: UnitRecord = {
+  id: "unknown",
+  name: "Unknown",
+  symbol: "?",
+  created: 0,
+  updated: 0,
+};
 
 interface TooltipPayload {
   payload: ChartData;
@@ -43,25 +68,47 @@ interface TooltipPayload {
 const CustomTooltip = ({
   active,
   payload,
-  unit,
+  visibleMetrics,
 }: {
   active?: boolean;
   payload?: TooltipPayload[];
-  unit: string;
+  visibleMetrics: Metric[];
 }) => {
   if (active && payload && payload.length > 0) {
     const firstPayload = payload[0];
     if (firstPayload?.payload) {
       const data = firstPayload.payload;
       return (
-        <div className="bg-zinc-900/90 backdrop-blur-md p-4 border border-white/10 rounded-2xl shadow-2xl">
-          <p className="text-[10px] font-bold text-zinc-500 mb-2 uppercase tracking-[0.2em]">
+        <div className="bg-zinc-900/95 backdrop-blur-md p-2.5 sm:p-4 border border-white/10 rounded-xl sm:rounded-2xl shadow-2xl flex flex-col gap-1.5 sm:gap-2 min-w-[150px] sm:min-w-48 max-w-[240px] sm:max-w-xs">
+          <p className="text-[8px] sm:text-[9px] font-bold text-zinc-500 uppercase tracking-[0.2em] border-b border-white/5 pb-1 sm:pb-1.5 mb-0.5">
             {data.displayDate}
           </p>
-          <p className="text-xl font-display font-extrabold text-brand uppercase">
-            {firstPayload.value}{" "}
-            <span className="text-white/50 text-xs tracking-widest">{unit}</span>
-          </p>
+          <div className="flex flex-col gap-1 sm:gap-2">
+            {visibleMetrics.map((metric) => {
+              const val = data[metric.id];
+              const displayVal = typeof val === "number" || typeof val === "string" ? val : "—";
+              const metricIndex = visibleMetrics.findIndex((m) => m.id === metric.id);
+              const dotColor = COLORS[metricIndex % COLORS.length];
+
+              return (
+                <div key={metric.id} className="flex items-center justify-between gap-4 sm:gap-6">
+                  <span className="text-[8px] sm:text-[10px] font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1 sm:gap-1.5 truncate max-w-[100px] sm:max-w-none">
+                    <div
+                      className="w-1 sm:w-1.5 h-1 sm:h-1.5 rounded-full shrink-0"
+                      style={{ backgroundColor: dotColor }}
+                    />
+                    <span className="truncate">{metric.name}</span>
+                  </span>
+                  <span className="text-xs sm:text-sm font-display font-extrabold text-white shrink-0">
+                    {displayVal}{" "}
+                    <span className="text-white/40 text-[8px] sm:text-[9px] font-normal lowercase tracking-wider ml-0.5">
+                      {metric.unit.symbol || metric.unit.name}
+                    </span>
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       );
     }
@@ -82,11 +129,14 @@ const CommonXAxis = ({ chartData }: { chartData: ChartData[] }) => (
     }}
     tickLine={false}
     axisLine={false}
+    padding={{ left: 16, right: 16 }}
+    tickMargin={8}
   />
 );
 
 const CommonYAxis = ({ isFocused }: { isFocused: boolean }) => (
   <YAxis
+    width={35}
     domain={isFocused ? ["auto", "auto"] : [0, "auto"]}
     stroke="rgba(255,255,255,0.1)"
     tick={{
@@ -96,6 +146,7 @@ const CommonYAxis = ({ isFocused }: { isFocused: boolean }) => (
     }}
     tickLine={false}
     axisLine={false}
+    tickMargin={8}
   />
 );
 
@@ -103,176 +154,334 @@ const CommonGrid = () => (
   <CartesianGrid strokeDasharray="5 5" vertical={false} stroke="rgba(255,255,255,0.05)" />
 );
 
-const CommonTooltip = ({ unit }: { unit: string }) => (
-  <Tooltip
-    content={<CustomTooltip unit={unit} />}
-    cursor={{ stroke: "rgba(139, 92, 246, 0.2)", strokeWidth: 2 }}
-  />
-);
-
 // Modular Chart Renderers
 const LineRenderer = ({
   chartData,
-  unit,
+  visibleMetrics,
   isFocused,
 }: {
   chartData: ChartData[];
-  unit: string;
+  visibleMetrics: Metric[];
   isFocused: boolean;
 }) => (
   <LineChart data={chartData} margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
     <CommonGrid />
     <CommonXAxis chartData={chartData} />
     <CommonYAxis isFocused={isFocused} />
-    <CommonTooltip unit={unit} />
-    <Line
-      type="monotone"
-      dataKey="value"
-      stroke="#8b5cf6"
-      strokeWidth={3}
-      dot={{ r: 4, fill: "#8b5cf6", strokeWidth: 2, stroke: "#000" }}
-      activeDot={{ r: 6, strokeWidth: 3, stroke: "#fff", fill: "#8b5cf6" }}
-      animationDuration={1500}
+    <Tooltip
+      content={<CustomTooltip visibleMetrics={visibleMetrics} />}
+      cursor={{ stroke: "rgba(139, 92, 246, 0.2)", strokeWidth: 2 }}
     />
+    {visibleMetrics.map((metric, i) => (
+      <Line
+        key={metric.id}
+        type="monotone"
+        dataKey={metric.id}
+        stroke={COLORS[i % COLORS.length]}
+        strokeWidth={3}
+        dot={{ r: 4, fill: COLORS[i % COLORS.length], strokeWidth: 2, stroke: "#000" }}
+        activeDot={{ r: 6, strokeWidth: 3, stroke: "#fff", fill: COLORS[i % COLORS.length] }}
+        animationDuration={1500}
+      />
+    ))}
   </LineChart>
 );
 
 const BarRenderer = ({
   chartData,
-  unit,
+  visibleMetrics,
   isFocused,
 }: {
   chartData: ChartData[];
-  unit: string;
+  visibleMetrics: Metric[];
   isFocused: boolean;
 }) => (
   <BarChart data={chartData} margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
     <CommonGrid />
     <CommonXAxis chartData={chartData} />
     <CommonYAxis isFocused={isFocused} />
-    <CommonTooltip unit={unit} />
-    <Bar dataKey="value" fill="#8b5cf6" radius={[10, 10, 0, 0]} animationDuration={1500} />
+    <Tooltip
+      content={<CustomTooltip visibleMetrics={visibleMetrics} />}
+      cursor={{ fill: "rgba(255, 255, 255, 0.03)" }}
+    />
+    {visibleMetrics.map((metric, i) => (
+      <Bar
+        key={metric.id}
+        dataKey={metric.id}
+        fill={COLORS[i % COLORS.length]}
+        radius={[6, 6, 0, 0]}
+        animationDuration={1500}
+      />
+    ))}
   </BarChart>
 );
 
 const AreaRenderer = ({
   chartData,
-  unit,
+  visibleMetrics,
   isFocused,
 }: {
   chartData: ChartData[];
-  unit: string;
+  visibleMetrics: Metric[];
   isFocused: boolean;
 }) => (
   <AreaChart data={chartData} margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
     <defs>
-      <linearGradient id="colorMain" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.4} />
-        <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
-      </linearGradient>
+      {visibleMetrics.map((metric, i) => {
+        const color = COLORS[i % COLORS.length];
+        return (
+          <linearGradient key={metric.id} id={`color-${metric.id}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor={color} stopOpacity={0.3} />
+            <stop offset="95%" stopColor={color} stopOpacity={0} />
+          </linearGradient>
+        );
+      })}
     </defs>
     <CommonGrid />
     <CommonXAxis chartData={chartData} />
     <CommonYAxis isFocused={isFocused} />
-    <CommonTooltip unit={unit} />
-    <Area
-      type="monotone"
-      dataKey="value"
-      stroke="#8b5cf6"
-      strokeWidth={3}
-      fillOpacity={1}
-      fill="url(#colorMain)"
-      animationDuration={1500}
+    <Tooltip
+      content={<CustomTooltip visibleMetrics={visibleMetrics} />}
+      cursor={{ stroke: "rgba(139, 92, 246, 0.2)", strokeWidth: 2 }}
     />
+    {visibleMetrics.map((metric, i) => (
+      <Area
+        key={metric.id}
+        type="monotone"
+        dataKey={metric.id}
+        stroke={COLORS[i % COLORS.length]}
+        strokeWidth={3}
+        fillOpacity={1}
+        fill={`url(#color-${metric.id})`}
+        animationDuration={1500}
+      />
+    ))}
   </AreaChart>
 );
 
-const PieRenderer = ({ chartData, unit }: { chartData: ChartData[]; unit: string }) => (
+interface PieDataPoint {
+  name: string;
+  value: number;
+  unit: string;
+  displayDate: string;
+  tooltipId: string;
+  colorIndex?: number;
+}
+
+const PieRenderer = ({ pieData }: { pieData: PieDataPoint[] }) => (
   <PieChart>
     <Pie
-      data={chartData}
+      data={pieData}
       cx="50%"
       cy="50%"
       innerRadius={80}
       outerRadius={120}
       paddingAngle={8}
       dataKey="value"
+      nameKey="name"
       animationDuration={1500}
       stroke="none"
       cornerRadius={10}
     >
-      {chartData.map((entry) => (
-        <Cell
-          key={`cell-${entry.tooltipId}`}
-          fill={COLORS[chartData.indexOf(entry) % COLORS.length]}
-        />
+      {pieData.map((entry, index) => (
+        <Cell key={`cell-${entry.tooltipId || index}`} fill={COLORS[index % COLORS.length]} />
       ))}
     </Pie>
-    <CommonTooltip unit={unit} />
+    <Tooltip
+      content={({ active, payload }) => {
+        if (active && payload && payload.length > 0) {
+          const entry = payload[0].payload;
+          return (
+            <div className="bg-zinc-900/95 backdrop-blur-md p-4 border border-white/10 rounded-2xl shadow-2xl flex flex-col gap-1 min-w-48">
+              {entry.displayDate && (
+                <p className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 border-b border-white/5 pb-1">
+                  Latest: {entry.displayDate}
+                </p>
+              )}
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                {entry.name}
+              </span>
+              <span className="text-xl font-display font-extrabold text-white">
+                {entry.value}{" "}
+                <span className="text-white/40 text-xs font-normal lowercase tracking-wider ml-1">
+                  {entry.unit}
+                </span>
+              </span>
+            </div>
+          );
+        }
+        return null;
+      }}
+    />
   </PieChart>
 );
 
 const ScatterRenderer = ({
   chartData,
-  unit,
+  visibleMetrics,
   isFocused,
 }: {
   chartData: ChartData[];
-  unit: string;
+  visibleMetrics: Metric[];
   isFocused: boolean;
 }) => (
   <ScatterChart margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
     <CommonGrid />
     <CommonXAxis chartData={chartData} />
     <CommonYAxis isFocused={isFocused} />
-    <CommonTooltip unit={unit} />
-    <Scatter name="Measurements" data={chartData} fill="#8b5cf6" animationDuration={1500} />
+    <Tooltip
+      content={<CustomTooltip visibleMetrics={visibleMetrics} />}
+      cursor={{ stroke: "rgba(139, 92, 246, 0.2)", strokeWidth: 2 }}
+    />
+    {visibleMetrics.map((metric, i) => (
+      <Scatter
+        key={metric.id}
+        name={metric.name}
+        data={chartData}
+        dataKey={metric.id}
+        fill={COLORS[i % COLORS.length]}
+        animationDuration={1500}
+      />
+    ))}
   </ScatterChart>
 );
 
-export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
+export function DatasetGraph({ dataset, data, viewType }: DatasetGraphProps) {
   const [isClient, setIsClient] = useState(false);
   const [isFocused, setIsFocused] = useState(true);
   const [showTooltip, setShowTooltip] = useState(false);
+
+  // Track visible metric IDs locally for interactive legend toggles
+  const [visibleMetricIds, setVisibleMetricIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
+  // Initialize all metrics as visible when dataset changes
+  useEffect(() => {
+    if (dataset?.metrics) {
+      setVisibleMetricIds(new Set(dataset.metrics.map((m) => m.id)));
+    }
+  }, [dataset]);
+
+  const toggleMetricVisibility = (metricId: string) => {
+    setVisibleMetricIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(metricId)) {
+        // Enforce that at least one metric remains visible
+        if (next.size > 1) {
+          next.delete(metricId);
+        }
+      } else {
+        next.add(metricId);
+      }
+      return next;
+    });
+  };
+
+  const visibleMetrics = useMemo(() => {
+    return (dataset.metrics || []).filter((m) => visibleMetricIds.has(m.id));
+  }, [dataset.metrics, visibleMetricIds]);
+
   const chartData = useMemo<ChartData[]>(() => {
     // Explicitly sort ascending (oldest first) for the chart flow
     const sortedData = [...data].sort((a, b) => a.timestamp - b.timestamp);
 
-    return sortedData.map((m, index) => ({
-      ...m,
-      value: m.values[0]?.value || 0, // Default to first metric's value
-      tooltipId: `${m.id || index.toString()}-${m.timestamp}`,
-      displayDate: isClient ? formatDate(m.timestamp, "full") : "",
-    }));
+    return sortedData.map((m, index) => {
+      const dataPoint: ChartData = {
+        ...m,
+        value: m.values[0]?.value || 0, // Fallback for single metric charts
+        tooltipId: `${m.id || index.toString()}-${m.timestamp}`,
+        displayDate: isClient ? formatDate(m.timestamp, "full") : "",
+      };
+
+      // Map each metric value dynamically under its metricId
+      for (const val of m.values) {
+        dataPoint[val.metricId] = val.value;
+      }
+
+      return dataPoint;
+    });
   }, [data, isClient]);
+
+  const pieData = useMemo(() => {
+    if (dataset.type === "composite") {
+      // Find latest measurement
+      const sortedData = [...data].sort((a, b) => b.timestamp - a.timestamp);
+      const latest = sortedData[0];
+      if (!latest) return [];
+
+      return visibleMetrics.map((metric) => {
+        const valRecord = latest.values.find((v) => v.metricId === metric.id);
+        const metricIndex = (dataset.metrics || []).findIndex((m) => m.id === metric.id);
+        return {
+          name: metric.name,
+          value: valRecord ? valRecord.value : 0,
+          unit: metric.unit.symbol || metric.unit.name,
+          displayDate: isClient ? formatDate(latest.timestamp, "full") : "",
+          tooltipId: `pie-${metric.id}`,
+          colorIndex: metricIndex,
+        };
+      });
+    }
+
+    // Single dataset: slices represent historical values
+    return chartData.map((d) => ({
+      name: d.displayDate,
+      value: d.value,
+      unit: dataset.unit?.symbol || dataset.unit?.name || UNKNOWN_UNIT.symbol,
+      displayDate: d.displayDate,
+      tooltipId: d.tooltipId,
+    }));
+  }, [dataset, data, visibleMetrics, chartData, isClient]);
 
   const renderContent = () => {
     if (!isClient) return null;
 
     switch (viewType) {
       case "line":
-        return <LineRenderer chartData={chartData} unit={unit} isFocused={isFocused} />;
+        return (
+          <LineRenderer
+            chartData={chartData}
+            visibleMetrics={visibleMetrics}
+            isFocused={isFocused}
+          />
+        );
       case "bar":
-        return <BarRenderer chartData={chartData} unit={unit} isFocused={isFocused} />;
+        return (
+          <BarRenderer
+            chartData={chartData}
+            visibleMetrics={visibleMetrics}
+            isFocused={isFocused}
+          />
+        );
       case "area":
-        return <AreaRenderer chartData={chartData} unit={unit} isFocused={isFocused} />;
+        return (
+          <AreaRenderer
+            chartData={chartData}
+            visibleMetrics={visibleMetrics}
+            isFocused={isFocused}
+          />
+        );
       case "pie":
-        return <PieRenderer chartData={chartData} unit={unit} />;
+        return <PieRenderer pieData={pieData} />;
       case "scatter":
-        return <ScatterRenderer chartData={chartData} unit={unit} isFocused={isFocused} />;
+        return (
+          <ScatterRenderer
+            chartData={chartData}
+            visibleMetrics={visibleMetrics}
+            isFocused={isFocused}
+          />
+        );
       default:
         return null;
     }
   };
 
   return (
-    <div className="w-full h-75 sm:h-100 min-w-0 bg-[#070707] rounded-3xl p-2 sm:p-6 relative group">
-      {/* Focused Scale Toggle */}
+    <div className="w-full flex-1 min-h-0 bg-[#070707] rounded-3xl p-4 sm:p-6 relative group flex flex-col gap-4 sm:gap-6">
+      {/* Precision Scale Toggle */}
       {/* biome-ignore lint/a11y/noStaticElementInteractions: Tooltip triggering container */}
       <div
         className="absolute top-4 right-4 sm:right-6 z-10 flex items-center gap-3"
@@ -334,9 +543,50 @@ export function DatasetGraph({ data, viewType, unit }: DatasetGraphProps) {
         </AnimatePresence>
       </div>
 
-      <ResponsiveContainer width="100%" height="100%">
-        {renderContent()}
-      </ResponsiveContainer>
+      {/* Chart Canvas */}
+      <div className="flex-1 min-h-[220px] sm:min-h-[320px] w-full min-w-0 relative">
+        <div className="absolute inset-0">
+          <ResponsiveContainer width="100%" height="100%">
+            {renderContent()}
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Interactive Legend (Composite Only) */}
+      {dataset.type === "composite" && dataset.metrics && dataset.metrics.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 px-1 border-t border-white/5 pt-3 sm:gap-2 sm:px-2 sm:pt-4">
+          {dataset.metrics.map((metric, i) => {
+            const isVisible = visibleMetricIds.has(metric.id);
+            const color = COLORS[i % COLORS.length];
+            return (
+              <button
+                key={metric.id}
+                type="button"
+                onClick={() => toggleMetricVisibility(metric.id)}
+                className={`
+                  flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-full border text-[8px] sm:text-[10px] font-sans font-bold uppercase tracking-wider transition-all duration-200 active:scale-95 cursor-pointer
+                  ${
+                    isVisible
+                      ? "bg-zinc-900 border-white/10 text-white shadow-[0_0_10px_rgba(255,255,255,0.02)]"
+                      : "bg-black/20 border-white/5 text-zinc-600 hover:text-zinc-400"
+                  }
+                `}
+              >
+                <div
+                  className="w-1 sm:w-1.5 h-1 sm:h-1.5 rounded-full shrink-0 transition-opacity"
+                  style={{
+                    backgroundColor: color,
+                    opacity: isVisible ? 1 : 0.3,
+                  }}
+                />
+                <span>
+                  {metric.name} ({metric.unit.symbol || metric.unit.name})
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
