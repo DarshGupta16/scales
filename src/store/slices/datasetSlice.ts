@@ -146,7 +146,16 @@ export const createDatasetSlice: StateCreator<
       // 2. DEXIE: Local Persistence
       // Note: Dexie cascade hooks (dexieDb.ts) automatically handle
       // deleting related metrics, measurements, and measurement_values.
-      await db.datasets.delete(id);
+      await db.transaction(
+        "rw",
+        db.datasets,
+        db.metrics,
+        db.measurements,
+        db.measurement_values,
+        async () => {
+          await db.datasets.delete(id);
+        },
+      );
 
       // 3. POCKETBASE: Remote Persistence
       await tryPbOrQueue(
