@@ -6,8 +6,10 @@
 export const generatePbId = (): string => {
   const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
   let id = "";
+  const randomValues = new Uint8Array(15);
+  crypto.getRandomValues(randomValues);
   for (let i = 0; i < 15; i++) {
-    id += chars.charAt(Math.floor(Math.random() * chars.length));
+    id += chars[randomValues[i] % chars.length];
   }
   return id;
 };

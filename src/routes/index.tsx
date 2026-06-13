@@ -1,10 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useDatasetStore } from "@/store";
 import { DatasetSettingsModal } from "../components/datasets/DatasetSettingsModal";
 import { DatasetView } from "../components/datasets/DatasetView";
 import { AddDatasetFAB } from "../components/layout/AddDatasetFAB";
+import { AppLayout } from "../components/layout/AppLayout";
 import { TopBar } from "../components/layout/TopBar";
+import { useDatasetSearch } from "../hooks/useDatasetSearch";
 import type { Dataset } from "../types/dataset";
 
 export const Route = createFileRoute("/")({
@@ -14,21 +16,9 @@ export const Route = createFileRoute("/")({
 function Index() {
   const { datasets, updateDataset, removeDataset } = useDatasetStore();
 
-  const [searchQuery, setSearchQuery] = useState("");
+  const { searchQuery, setSearchQuery, filteredDatasets } = useDatasetSearch(datasets);
   const [editingDataset, setEditingDataset] = useState<Dataset | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-
-  // Core data filtering logic - datasets are already hydrated by the store
-  const filteredDatasets = useMemo(() => {
-    return (datasets || [])
-      .filter(
-        (d) =>
-          d.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          d.unit.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          d.unit.symbol.toLowerCase().includes(searchQuery.toLowerCase()),
-      )
-      .sort((a, b) => (a.created || 0) - (b.created || 0));
-  }, [datasets, searchQuery]);
 
   const handleUpdateDataset = (updatedDataset: Dataset) => {
     updateDataset(updatedDataset);
@@ -43,15 +33,7 @@ function Index() {
   };
 
   return (
-    <div className="min-h-screen pb-24 bg-[#050505] relative selection:bg-brand selection:text-white">
-      {/* Subtle Grain Overlay */}
-      <div
-        className="fixed inset-0 pointer-events-none opacity-[0.03] z-100"
-        style={{
-          backgroundImage: 'url("https://grainy-gradients.vercel.app/noise.svg")',
-        }}
-      ></div>
-
+    <AppLayout className="pb-24">
       <TopBar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
 
       <DatasetView
@@ -81,6 +63,6 @@ function Index() {
           showDeleteDirectly={isDeleting}
         />
       )}
-    </div>
+    </AppLayout>
   );
 }

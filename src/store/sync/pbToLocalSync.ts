@@ -1,0 +1,73 @@
+import { db } from "../../lib/dexieDb";
+import { pb } from "../../lib/pocketbase";
+import { buildDatasets } from "../helpers";
+import {
+  mapPbDataset,
+  mapPbMeasurement,
+  mapPbMeasurementValue,
+  mapPbMetric,
+  mapPbPreference,
+  mapPbUnit,
+} from "../mappers";
+import type { DatasetState } from "../types";
+
+export const pbToLocalSyncStrategy = async (
+  set: (state: Partial<DatasetState>) => void,
+): Promise<void> => {
+  try {
+    const [pbDatasets, pbMetrics, pbMeasurements, pbMeasurementValues, pbUnits, pbPreferences] =
+      await Promise.all([
+        pb.collection("datasets").getFullList({ requestKey: null }),
+        pb.collection("metrics").getFullList({ requestKey: null }),
+        pb.collection("measurements").getFullList({ requestKey: null }),
+        pb.collection("measurement_values").getFullList({ requestKey: null }),
+        pb.collection("units").getFullList({ requestKey: null }),
+        pb.collection("preferences").getFullList({ requestKey: null }),
+      ]);
+
+    const datasetRecords = pbDatasets.map(mapPbDataset);
+    const metricRecords = pbMetrics.map(mapPbMetric);
+    const measurementRecords = pbMeasurements.map(mapPbMeasurement);
+    const valueRecords = pbMeasurementValues.map(mapPbMeasurementValue);
+    const unitRecords = pbUnits.map(mapPbUnit);
+    const preferenceRecords = pbPreferences.map(mapPbPreference);
+
+    const datasets = buildDatasets(
+      datasetRecords,
+      metricRecords,
+      unitRecords,
+      measurementRecords,
+      valueRecords,
+    );
+    set({
+      datasets,
+      units: unitRecords,
+      preferences: preferenceRecords,
+      isLoading: false,
+      isHydrated: true,
+    });
+
+      await Promise.all([
+        db.datasets.clear(),
+        db.metrics.clear(),
+        db.units.clear(),
+        db.measurements.clear(),
+        db.measurement_values.clear(),
+        db.preferences.clear(),
+      ]);
+
+      await Promise.all([
+        db.datasets.bulkPut(datasetRecords),
+        db.metrics.bulkPut(metricRecords),
+        db.units.bulkPut(unitRecords),
+        db.measurements.bulkPut(measurementRecords),
+        db.measurement_values.bulkPut(valueRecords),
+        db.preferences.bulkPut(preferenceRecords),
+      ]);
+
+    syncDexie().catch((err) => console.error("Dexie background sync failed:", err));
+  } catch (err) {
+    console.error("Pocketbase fetch failed:", err);
+    set({ error: (err as Error).message, isLoading: false });
+  }
+};

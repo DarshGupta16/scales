@@ -17,8 +17,7 @@ export function createSubscription<T extends { id: string; updated: number }>(
       const { record } = e;
       const remoteUpdated = new Date(record.updated).getTime();
 
-      // biome-ignore lint/suspicious/noExplicitAny: Expected string lookup
-      const local = await dexieTable.get(record.id as any);
+      const local = await dexieTable.get(record.id as unknown as Parameters<typeof dexieTable.get>[0]);
       if (local && local.updated >= remoteUpdated) return;
 
       await useDatasetStore.getState().pbDeltaSync();

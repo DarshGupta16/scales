@@ -2,19 +2,13 @@ import { Link } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
 import { MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  Area,
-  AreaChart,
-  Bar,
-  BarChart,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-} from "recharts";
-import type { Dataset, Measurement, MeasurementValue } from "../../types/dataset";
+import { ResponsiveContainer } from "recharts";
+import type { Dataset } from "../../types/dataset";
 import { formatDate } from "../../utils/format";
+import { AreaRenderer } from "./charts/AreaRenderer";
+import { BarRenderer } from "./charts/BarRenderer";
+import { LineRenderer } from "./charts/LineRenderer";
+import type { ChartData } from "./charts/types";
 
 interface DatasetCardProps {
   dataset: Dataset;
@@ -22,157 +16,32 @@ interface DatasetCardProps {
   onDelete?: (dataset: Dataset) => void;
 }
 
-interface PreviewData extends Measurement {
-  tooltipId: string;
-  displayDate: string;
-  value: number;
-  [key: string]: string | number | MeasurementValue[] | undefined;
-}
-
-interface CardTooltipPayload {
-  payload: PreviewData;
-  value: number | string;
-}
-
-const CustomTooltip = ({
-  active,
-  payload,
-  dataset,
-}: {
-  active?: boolean;
-  payload?: CardTooltipPayload[];
-  dataset: Dataset;
-}) => {
-  if (active && payload && payload.length > 0) {
-    const data = payload[0].payload;
-    const colors = ["#8b5cf6", "#06b6d4", "#10b981", "#ec4899", "#f59e0b", "#3b82f6"];
-
-    return (
-      <div className="bg-zinc-900 border border-white/20 p-2 rounded-lg shadow-xl pointer-events-none flex flex-col gap-1 min-w-[130px] z-50">
-        <p className="text-[7px] font-bold text-zinc-500 uppercase tracking-wider leading-none mb-0.5 border-b border-white/5 pb-1">
-          {data.displayDate}
-        </p>
-        <div className="flex flex-col gap-0.5">
-          {dataset.metrics.map((metric, i) => {
-            const val = data[metric.id];
-            const displayVal = typeof val === "number" || typeof val === "string" ? val : "—";
-            const color = colors[i % colors.length];
-
-            return (
-              <div key={metric.id} className="flex items-center justify-between gap-3">
-                <span className="text-[7px] font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1 truncate max-w-[80px]">
-                  <div
-                    className="w-1 h-1 rounded-full shrink-0"
-                    style={{ backgroundColor: color }}
-                  />
-                  <span className="truncate">{metric.name}</span>
-                </span>
-                <span className="text-[10px] font-display font-black text-white shrink-0">
-                  {displayVal}{" "}
-                  <span className="text-white/40 text-[7px] font-normal lowercase ml-0.5">
-                    {metric.unit.symbol || metric.unit.name}
-                  </span>
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  }
-  return null;
-};
-
-const PreviewChart = ({ dataset, data }: { dataset: Dataset; data: PreviewData[] }) => {
+const PreviewChart = ({ dataset, data }: { dataset: Dataset; data: ChartData[] }) => {
   const viewType = dataset.views[0] ?? "line";
-  const commonAxis = <XAxis dataKey="tooltipId" hide />;
-  const tooltip = (
-    <Tooltip
-      content={<CustomTooltip dataset={dataset} />}
-      cursor={{ stroke: "rgba(139, 92, 246, 0.1)", strokeWidth: 1.5 }}
-      isAnimationActive={false}
-    />
-  );
-
-  const colors = [
-    "#8b5cf6", // Violet-500 (Brand)
-    "#06b6d4", // Cyan-500
-    "#10b981", // Emerald-500
-    "#ec4899", // Pink-500
-    "#f59e0b", // Amber-500
-    "#3b82f6", // Blue-500
-  ];
+  const visibleMetrics = dataset.metrics || [];
 
   switch (viewType) {
     case "area":
       return (
-        <AreaChart data={data}>
-          <defs>
-            {dataset.metrics.map((metric, i) => {
-              const color = colors[i % colors.length];
-              return (
-                <linearGradient
-                  key={metric.id}
-                  id={`grad-${dataset.id}-${metric.id}`}
-                  x1="0"
-                  y1="0"
-                  x2="0"
-                  y2="1"
-                >
-                  <stop offset="5%" stopColor={color} stopOpacity={0.25} />
-                  <stop offset="95%" stopColor={color} stopOpacity={0} />
-                </linearGradient>
-              );
-            })}
-          </defs>
-          {commonAxis}
-          {tooltip}
-          {dataset.metrics.map((metric, i) => (
-            <Area
-              key={metric.id}
-              type="monotone"
-              dataKey={metric.id}
-              stroke={colors[i % colors.length]}
-              fill={`url(#grad-${dataset.id}-${metric.id})`}
-              strokeWidth={1.5}
-              isAnimationActive={false}
-            />
-          ))}
-        </AreaChart>
+        <AreaRenderer
+          chartData={data}
+          visibleMetrics={visibleMetrics}
+          isFocused={false}
+          isMinimal
+        />
       );
     case "bar":
       return (
-        <BarChart data={data}>
-          {commonAxis}
-          {tooltip}
-          {dataset.metrics.map((metric, i) => (
-            <Bar
-              key={metric.id}
-              dataKey={metric.id}
-              fill={colors[i % colors.length]}
-              radius={[3, 3, 0, 0]}
-              isAnimationActive={false}
-            />
-          ))}
-        </BarChart>
+        <BarRenderer chartData={data} visibleMetrics={visibleMetrics} isFocused={false} isMinimal />
       );
     default:
       return (
-        <LineChart data={data}>
-          {commonAxis}
-          {tooltip}
-          {dataset.metrics.map((metric, i) => (
-            <Line
-              key={metric.id}
-              type="monotone"
-              dataKey={metric.id}
-              stroke={colors[i % colors.length]}
-              strokeWidth={2}
-              dot={false}
-              isAnimationActive={false}
-            />
-          ))}
-        </LineChart>
+        <LineRenderer
+          chartData={data}
+          visibleMetrics={visibleMetrics}
+          isFocused={false}
+          isMinimal
+        />
       );
   }
 };
@@ -197,10 +66,10 @@ export function DatasetCard({ dataset, onEdit, onDelete }: DatasetCardProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isMenuOpen]);
 
-  const previewData = useMemo<PreviewData[]>(() => {
+  const previewData = useMemo<ChartData[]>(() => {
     const sortedData = [...(dataset.measurements || [])].sort((a, b) => a.timestamp - b.timestamp);
     return sortedData.slice(-7).map((m, index) => {
-      const dataPoint: PreviewData = {
+      const dataPoint: ChartData = {
         ...m,
         value: m.values[0]?.value || 0,
         tooltipId: `${m.id || index}-${m.timestamp}`,

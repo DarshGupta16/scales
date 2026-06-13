@@ -6,10 +6,12 @@ import { DatasetDetailNotFound } from "../components/datasets/DatasetDetailNotFo
 import { DatasetSettingsModal } from "../components/datasets/DatasetSettingsModal";
 import { GraphSection } from "../components/datasets/GraphSection";
 import { TableSection } from "../components/datasets/TableSection";
+import { AppLayout } from "../components/layout/AppLayout";
 import { DatasetDetailHeader } from "../components/layout/DatasetDetailHeader";
 import { Modal } from "../components/ui/Modal";
 import { TimelineSelector } from "../components/ui/TimelineSelector";
-import type { CustomRange, Dataset, Measurement, Timeline } from "../types/dataset";
+import { useTemporalFilter } from "../hooks/useTemporalFilter";
+import type { Dataset, Measurement, Timeline } from "../types/dataset";
 
 export const Route = createFileRoute("/datasets/$datasetId")({
   component: DatasetDetail,
@@ -23,33 +25,8 @@ function DatasetDetail() {
     return datasets.find((d) => d.id === datasetId);
   }, [datasets, datasetId]);
 
-  // Timeline state
-  const [timeline, setTimeline] = useState<Timeline>("all");
-  const [customRange, setCustomRange] = useState<CustomRange>({
-    start: Date.now() - 24 * 60 * 60 * 1000,
-    end: Date.now(),
-  });
-
-  const filteredMeasurements = useMemo(() => {
-    if (!dataset) return [];
-    const now = Date.now();
-    let start = 0;
-    let end = Infinity;
-
-    if (timeline === "day") {
-      start = now - 24 * 60 * 60 * 1000;
-    } else if (timeline === "week") {
-      start = now - 7 * 24 * 60 * 60 * 1000;
-    } else if (timeline === "custom") {
-      start = customRange.start;
-      end = customRange.end;
-    }
-
-    const measurements = dataset.measurements || [];
-    return timeline === "all"
-      ? measurements
-      : measurements.filter((m) => m.timestamp >= start && m.timestamp <= end);
-  }, [dataset, timeline, customRange]);
+  const { timeline, setTimeline, customRange, setCustomRange, filteredMeasurements } =
+    useTemporalFilter(dataset?.measurements || []);
 
   const [isTimelineOpen, setIsTimelineOpen] = useState(false);
   const [isAddMeasurementOpen, setIsAddMeasurementOpen] = useState(false);
@@ -82,15 +59,7 @@ function DatasetDetail() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] pb-32 selection:bg-brand selection:text-white relative">
-      {/* Subtle Grain Overlay */}
-      <div
-        className="fixed inset-0 pointer-events-none opacity-[0.03] z-100"
-        style={{
-          backgroundImage: 'url("https://grainy-gradients.vercel.app/noise.svg")',
-        }}
-      ></div>
-
+    <AppLayout className="pb-32">
       <DatasetDetailHeader
         title={dataset.title}
         unit={dataset.unit.symbol || dataset.unit.name}
@@ -196,6 +165,6 @@ function DatasetDetail() {
           onDelete={handleDeleteDataset}
         />
       )}
-    </div>
+    </AppLayout>
   );
 }
