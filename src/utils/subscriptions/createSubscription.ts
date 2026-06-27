@@ -14,7 +14,14 @@ export function createSubscription<T extends { id: string; updated: number }>(
 ) {
   return () =>
     pb.collection(collectionName).subscribe("*", async (e) => {
-      const { record } = e;
+      const { record, action } = e;
+
+      if (action === "delete") {
+        await dexieTable.delete(record.id as unknown as Parameters<typeof dexieTable.delete>[0]);
+        await useDatasetStore.getState().reloadFromDexie();
+        return;
+      }
+
       const remoteUpdated = new Date(record.updated).getTime();
 
       const local = await dexieTable.get(
