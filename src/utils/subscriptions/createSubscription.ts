@@ -17,7 +17,9 @@ export function createSubscription<T extends { id: string; updated: number }>(
       const { record } = e;
       const remoteUpdated = new Date(record.updated).getTime();
 
-      const local = await dexieTable.get(record.id as unknown as Parameters<typeof dexieTable.get>[0]);
+      const local = await dexieTable.get(
+        record.id as unknown as Parameters<typeof dexieTable.get>[0],
+      );
       if (local && local.updated >= remoteUpdated) return;
 
       await useDatasetStore.getState().pbDeltaSync();

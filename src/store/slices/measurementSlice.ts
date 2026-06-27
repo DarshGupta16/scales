@@ -9,6 +9,7 @@ import type { DatasetState } from "../types";
 export interface MeasurementSlice {
   addMeasurement: (datasetId: string, measurement: Measurement) => Promise<void>;
   removeMeasurement: (id: string) => Promise<void>;
+  removeMeasurements: (ids: string[]) => Promise<void>;
 }
 
 export const createMeasurementSlice: StateCreator<DatasetState, [], [], MeasurementSlice> = (
@@ -113,6 +114,47 @@ export const createMeasurementSlice: StateCreator<DatasetState, [], [], Measurem
           recordId: id,
           data: null,
         },
+      );
+    } catch (err) {
+      set({ datasets: previousDatasets });
+      set({ error: (err as Error).message });
+    }
+  },
+
+  removeMeasurements: async (ids) => {
+    const previousDatasets = get().datasets;
+    const idsSet = new Set(ids);
+
+    // 1. ZUSTAND: Optimistic Update
+    set((state) => ({
+      datasets: state.datasets.map((d) => ({
+        ...d,
+        measurements: d.measurements.filter((m) => !idsSet.has(m.id)),
+      })),
+    }));
+
+    try {
+      // 2. DEXIE: Local Persistence
+      await db.transaction("rw", db.measurements, db.measurement_values, async () => {
+        await db.measurements.bulkDelete(ids);
+        await db.measurement_values.where("measurementId").anyOf(ids).delete();
+      });
+
+      // 3. POCKETBASE: Remote Persistence
+      await Promise.all(
+        ids.map((id) =>
+          tryPbOrQueue(
+            async () => {
+              await pb.collection("measurements").delete(id);
+            },
+            {
+              collection: "measurements",
+              action: "delete",
+              recordId: id,
+              data: null,
+            },
+          ),
+        ),
       );
     } catch (err) {
       set({ datasets: previousDatasets });

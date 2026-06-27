@@ -29,10 +29,19 @@ export function TimelineSelector({
   ];
 
   const getLocalDatetimeLocal = (timestamp: number) => {
+    if (typeof timestamp !== "number" || Number.isNaN(timestamp) || !Number.isFinite(timestamp)) {
+      return "";
+    }
     const d = new Date(timestamp);
-    const offset = d.getTimezoneOffset();
-    const local = new Date(d.getTime() - offset * 60000);
-    return local.toISOString().slice(0, 16);
+    if (Number.isNaN(d.getTime())) {
+      return "";
+    }
+    const year = d.getFullYear().toString().padStart(4, "0");
+    const month = (d.getMonth() + 1).toString().padStart(2, "0");
+    const day = d.getDate().toString().padStart(2, "0");
+    const hours = d.getHours().toString().padStart(2, "0");
+    const minutes = d.getMinutes().toString().padStart(2, "0");
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
   return (
@@ -88,12 +97,15 @@ export function TimelineSelector({
                 type="datetime-local"
                 className="brutal-input text-[10px] py-2.5 px-3 scheme-dark w-full"
                 value={getLocalDatetimeLocal(customRange.start)}
-                onChange={(e) =>
-                  onCustomRangeChange({
-                    ...customRange,
-                    start: new Date(e.target.value).getTime(),
-                  })
-                }
+                onChange={(e) => {
+                  const parsed = new Date(e.target.value).getTime();
+                  if (!Number.isNaN(parsed)) {
+                    onCustomRangeChange({
+                      ...customRange,
+                      start: parsed,
+                    });
+                  }
+                }}
               />
             </div>
             <div className="flex flex-col gap-2 flex-1">
@@ -108,12 +120,15 @@ export function TimelineSelector({
                 type="datetime-local"
                 className="brutal-input text-[10px] py-2.5 px-3 scheme-dark w-full"
                 value={getLocalDatetimeLocal(customRange.end)}
-                onChange={(e) =>
-                  onCustomRangeChange({
-                    ...customRange,
-                    end: new Date(e.target.value).getTime(),
-                  })
-                }
+                onChange={(e) => {
+                  const parsed = new Date(e.target.value).getTime();
+                  if (!Number.isNaN(parsed)) {
+                    onCustomRangeChange({
+                      ...customRange,
+                      end: parsed,
+                    });
+                  }
+                }}
               />
             </div>
           </motion.div>

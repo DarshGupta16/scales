@@ -24,16 +24,26 @@ export function formatDate(
   timestamp: number,
   options: "short" | "medium" | "full" = "medium",
 ): string {
+  if (typeof timestamp !== "number" || Number.isNaN(timestamp) || !Number.isFinite(timestamp)) {
+    return "";
+  }
   const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
 
-  switch (options) {
-    case "short":
-      return shortFormatter.format(date);
-    case "medium":
-      return mediumFormatter.format(date).toUpperCase();
-    case "full":
-      return fullFormatter.format(date);
-    default:
-      return date.toLocaleString();
+  try {
+    switch (options) {
+      case "short":
+        return shortFormatter.format(date);
+      case "medium":
+        return mediumFormatter.format(date).toUpperCase();
+      case "full":
+        return fullFormatter.format(date);
+      default:
+        return date.toLocaleString();
+    }
+  } catch {
+    return "";
   }
 }

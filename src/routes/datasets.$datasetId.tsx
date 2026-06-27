@@ -28,6 +28,11 @@ function DatasetDetail() {
   const { timeline, setTimeline, customRange, setCustomRange, filteredMeasurements } =
     useTemporalFilter(dataset?.measurements || []);
 
+  const [syncWithGraph, setSyncWithGraph] = useState(true);
+  const [tableFilteredMeasurements, setTableFilteredMeasurements] = useState<Measurement[] | null>(
+    null,
+  );
+
   const [isTimelineOpen, setIsTimelineOpen] = useState(false);
   const [isAddMeasurementOpen, setIsAddMeasurementOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -57,6 +62,9 @@ function DatasetDetail() {
     day: "Circadian",
     custom: "Arbitrary",
   };
+
+  const graphMeasurements =
+    syncWithGraph && tableFilteredMeasurements ? tableFilteredMeasurements : filteredMeasurements;
 
   return (
     <AppLayout className="pb-32">
@@ -135,7 +143,7 @@ function DatasetDetail() {
 
           <GraphSection
             dataset={dataset}
-            measurements={filteredMeasurements}
+            measurements={graphMeasurements}
             onUpdateDataset={handleUpdateDataset}
           />
 
@@ -143,6 +151,13 @@ function DatasetDetail() {
             dataset={dataset}
             measurements={filteredMeasurements}
             onUpdateDataset={handleUpdateDataset}
+            syncWithGraph={syncWithGraph}
+            onSyncWithGraphChange={setSyncWithGraph}
+            onFilteredMeasurementsChange={setTableFilteredMeasurements}
+            timeline={timeline}
+            onTimelineChange={setTimeline}
+            customRange={customRange}
+            onCustomRangeChange={setCustomRange}
           />
         </div>
       </main>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useDatasetStore } from "@/store";
-import type { Dataset, Measurement } from "../../types/dataset";
+import type { CustomRange, Dataset, Measurement, Timeline } from "../../types/dataset";
 import { ConfirmDialog } from "../ui/ConfirmDialog";
 import { DatasetTable } from "./DatasetTable";
 
@@ -8,15 +8,36 @@ interface TableSectionProps {
   dataset: Dataset;
   measurements?: Measurement[];
   onUpdateDataset: (updatedDataset: Dataset) => void;
+  syncWithGraph: boolean;
+  onSyncWithGraphChange: (sync: boolean) => void;
+  onFilteredMeasurementsChange: (filtered: Measurement[]) => void;
+  timeline: Timeline;
+  onTimelineChange: (timeline: Timeline) => void;
+  customRange: CustomRange;
+  onCustomRangeChange: (customRange: CustomRange) => void;
 }
 
-export function TableSection({ dataset, measurements }: TableSectionProps) {
-  const { removeMeasurement } = useDatasetStore();
-  const [confirmDeleteMeasurement, setConfirmDeleteMeasurement] = useState<string | null>(null);
+export function TableSection({
+  dataset,
+  measurements,
+  syncWithGraph,
+  onSyncWithGraphChange,
+  onFilteredMeasurementsChange,
+  timeline,
+  onTimelineChange,
+  customRange,
+  onCustomRangeChange,
+}: TableSectionProps) {
+  const { removeMeasurement, removeMeasurements } = useDatasetStore();
+  const [confirmDeleteIds, setConfirmDeleteIds] = useState<string[] | null>(null);
 
-  const handleDeleteMeasurement = (id: string) => {
-    removeMeasurement(id);
-    setConfirmDeleteMeasurement(null);
+  const handleDeleteMeasurements = async (ids: string[]) => {
+    if (ids.length === 1) {
+      await removeMeasurement(ids[0]);
+    } else {
+      await removeMeasurements(ids);
+    }
+    setConfirmDeleteIds(null);
   };
 
   const displayMeasurements = measurements || dataset.measurements || [];
@@ -35,18 +56,34 @@ export function TableSection({ dataset, measurements }: TableSectionProps) {
       <DatasetTable
         dataset={dataset}
         measurements={displayMeasurements}
-        onDelete={setConfirmDeleteMeasurement}
+        onDelete={(id) => setConfirmDeleteIds([id])}
+        onDeleteMultiple={(ids) => setConfirmDeleteIds(ids)}
+        syncWithGraph={syncWithGraph}
+        onSyncWithGraphChange={onSyncWithGraphChange}
+        onFilteredMeasurementsChange={onFilteredMeasurementsChange}
+        timeline={timeline}
+        onTimelineChange={onTimelineChange}
+        customRange={customRange}
+        onCustomRangeChange={onCustomRangeChange}
       />
 
       <ConfirmDialog
-        isOpen={!!confirmDeleteMeasurement}
-        onClose={() => setConfirmDeleteMeasurement(null)}
-        onConfirm={() =>
-          confirmDeleteMeasurement && handleDeleteMeasurement(confirmDeleteMeasurement)
+        isOpen={!!confirmDeleteIds}
+        onClose={() => setConfirmDeleteIds(null)}
+        onConfirm={() => confirmDeleteIds && handleDeleteMeasurements(confirmDeleteIds)}
+        title={
+          confirmDeleteIds && confirmDeleteIds.length > 1 ? "Purge Multiple Entries" : "Purge Entry"
         }
-        title="Purge Entry"
-        message="Are you certain you wish to purge this data point? This operation permanently modifies the sequence log."
-        confirmText="Confirm Purge"
+        message={
+          confirmDeleteIds && confirmDeleteIds.length > 1
+            ? `Are you certain you wish to purge these ${confirmDeleteIds.length} selected data points? This operation permanently modifies the sequence log.`
+            : "Are you certain you wish to purge this data point? This operation permanently modifies the sequence log."
+        }
+        confirmText={
+          confirmDeleteIds && confirmDeleteIds.length > 1
+            ? `Confirm Purging ${confirmDeleteIds.length}`
+            : "Confirm Purge"
+        }
         type="danger"
       />
     </section>
