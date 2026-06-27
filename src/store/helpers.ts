@@ -21,6 +21,10 @@ const UNKNOWN_UNIT: UnitRecord = {
 /**
  * Assembles denormalized Dataset objects from normalized records.
  * Uses Map-based lookups for O(n) performance instead of nested .filter()/.find().
+ *
+ * Also handles legacy (pre-composite) data gracefully as a fallback:
+ * - Datasets that still have a `unitId` but no metrics get a synthesized metric.
+ * - Measurements that still have an inline `value` but no measurement_values get a synthesized value.
  */
 // Tested in tests/store/helpers.test.ts
 export const buildDatasets = (
@@ -56,7 +60,23 @@ export const buildDatasets = (
 
   return datasetRecords.map((d) => {
     // 1. Resolve metrics for this dataset
-    const rawMetrics = metricsByDataset.get(d.id) || [];
+    let rawMetrics = metricsByDataset.get(d.id) || [];
+
+    // Legacy fallback: if dataset has a unitId but no metrics exist,
+    // synthesize a virtual metric so data is still displayable.
+    if (rawMetrics.length === 0 && d.unitId) {
+      rawMetrics = [
+        {
+          id: `legacy-metric-${d.id}`,
+          datasetId: d.id,
+          name: "Value",
+          unitId: d.unitId,
+          created: d.created,
+          updated: d.updated,
+        },
+      ];
+    }
+
     const metrics: Metric[] = rawMetrics.map((m) => ({
       id: m.id,
       name: m.name,
@@ -69,7 +89,31 @@ export const buildDatasets = (
     // 2. Resolve measurements for this dataset
     const rawMeasurements = measurementsByDataset.get(d.id) || [];
     const measurements: Measurement[] = rawMeasurements.map((m) => {
-      const rawValues = valuesByMeasurement.get(m.id) || [];
+      let rawValues = valuesByMeasurement.get(m.id) || [];
+
+      // Legacy fallback: if measurement has an inline `value` but no
+      // measurement_values records, synthesize a virtual value using the
+      // first (or legacy) metric so data is still displayable.
+      // biome-ignore lint/suspicious/noExplicitAny: Legacy Dexie records may have dynamic shape
+      const legacyMeasurement = m as any;
+      if (
+        rawValues.length === 0 &&
+        legacyMeasurement.value !== null &&
+        legacyMeasurement.value !== undefined &&
+        rawMetrics.length > 0
+      ) {
+        rawValues = [
+          {
+            id: `legacy-value-${m.id}`,
+            measurementId: m.id,
+            metricId: rawMetrics[0].id,
+            value: legacyMeasurement.value,
+            created: m.created,
+            updated: m.updated,
+          },
+        ];
+      }
+
       const values: MeasurementValue[] = rawValues.map((v) => {
         const metric = metricMap.get(v.metricId);
         return {

@@ -7,6 +7,7 @@ import type {
   PreferenceRecord,
   UnitRecord,
 } from "../types/dataset";
+import { generatePbId } from "../utils/id";
 
 const isBrowser = typeof window !== "undefined";
 
@@ -108,8 +109,83 @@ if (isBrowser) {
     offline_ops: "++id, collection, action, recordId, timestamp",
   };
 
-  // Version bumped to reflect normalized 4-table structure and indexed updated field.
-  db.version(7).stores(schema);
+  // Version 7: normalized 4-table structure.
+  // Upgrade callback migrates v6 flat data (datasets.unitId, measurements.value)
+  // to the new normalized structure (metrics, measurement_values).
+  // This mirrors the PocketBase migration 1775440000_migrate_data.js on the client side.
+  db.version(7)
+    .stores(schema)
+    .upgrade(async (tx) => {
+      console.log("[Dexie Migration] Starting v6 → v7 data migration...");
+
+      const datasets = tx.table("datasets");
+      const metrics = tx.table("metrics");
+      const measurements = tx.table("measurements");
+      const measurementValues = tx.table("measurement_values");
+
+      // Track which datasets have been migrated: datasetId → metricId
+      const metricIdMap = new Map<string, string>();
+
+      // 1. Migrate datasets: set type, create a metric for each dataset with a unitId
+      const allDatasets = await datasets.toArray();
+      for (const ds of allDatasets) {
+        // biome-ignore lint/suspicious/noExplicitAny: Legacy Dexie records have dynamic shape
+        const legacy = ds as any;
+        const needsMigration = legacy.unitId && !legacy.type;
+
+        if (needsMigration) {
+          const now = Date.now();
+          const metricId = generatePbId();
+
+          // Update the dataset record
+          await datasets.update(ds.id, {
+            type: "single",
+            views: legacy.views?.length ? legacy.views : ["line"],
+            updated: now,
+          });
+
+          // Create the default metric linking this dataset to its unit
+          await metrics.put({
+            id: metricId,
+            datasetId: ds.id,
+            name: "Value",
+            unitId: legacy.unitId,
+            created: legacy.created || now,
+            updated: now,
+          });
+
+          metricIdMap.set(ds.id, metricId);
+          console.log(`[Dexie Migration] Migrated dataset "${legacy.title}" (${ds.id})`);
+        }
+      }
+
+      // 2. Migrate measurements: move inline value to measurement_values table
+      if (metricIdMap.size > 0) {
+        const allMeasurements = await measurements.toArray();
+        for (const m of allMeasurements) {
+          // biome-ignore lint/suspicious/noExplicitAny: Legacy Dexie records have dynamic shape
+          const legacy = m as any;
+          const metricId = metricIdMap.get(legacy.datasetId);
+
+          if (metricId && legacy.value !== null && legacy.value !== undefined) {
+            const now = Date.now();
+            await measurementValues.put({
+              id: generatePbId(),
+              measurementId: m.id,
+              metricId,
+              value: legacy.value,
+              created: legacy.created || now,
+              updated: now,
+            });
+          }
+        }
+        console.log(
+          `[Dexie Migration] Migrated measurement values for ${metricIdMap.size} dataset(s)`,
+        );
+      }
+
+      console.log("[Dexie Migration] v6 → v7 migration complete.");
+    });
 
   // CASCADE DELETE HOOKS
   // 1. Dataset Cascade: metrics + measurements

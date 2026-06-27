@@ -56,7 +56,7 @@ export const Route = createRootRoute({
 
 function RootComponent() {
   const [isLoading, setIsLoading] = useState(true);
-  const hydrate = useDatasetStore((state) => state.hydrate);
+  const { hydrate, error } = useDatasetStore();
 
   useEffect(() => {
     // Start hydrating data from Dexie immediately on mount
@@ -72,7 +72,35 @@ function RootComponent() {
     <>
       <LoadingScreen isVisible={isLoading} />
       <div style={{ visibility: isLoading ? "hidden" : "visible" }}>
-        <Outlet />
+        {error && (
+          <div className="bg-red-500/10 border-b border-red-500/20 text-red-500 p-3 px-6 flex items-start sm:items-center gap-3 fixed top-0 left-0 right-0 z-50 shadow-xl backdrop-blur-md">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="lucide lucide-alert-triangle shrink-0 mt-0.5 sm:mt-0"
+              role="img"
+              aria-label="Error"
+            >
+              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+              <path d="M12 9v4" />
+              <path d="M12 17h.01" />
+            </svg>
+            <div className="flex-1">
+              <p className="font-bold text-sm tracking-wide uppercase">System Error</p>
+              <p className="text-xs text-red-400/90 font-mono mt-0.5">{error}</p>
+            </div>
+          </div>
+        )}
+        <div className={error ? "pt-16" : ""}>
+          <Outlet />
+        </div>
         <Modals />
       </div>
     </>

@@ -18,10 +18,13 @@ export const mapPbDataset = (d: Record<string, any>): DatasetRecord => ({
   id: d.id,
   title: d.title,
   description: d.description,
-  type: d.type as "single" | "composite",
-  views: d.views,
+  type: (d.type as "single" | "composite") || "single",
+  views: d.views?.length ? d.views : ["line"],
   created: new Date(d.created).getTime(),
   updated: new Date(d.updated).getTime(),
+  // Preserve unitId for legacy backward compatibility fallback in buildDatasets.
+  // This field is optional on DatasetRecord and only present on pre-migration records.
+  ...(d.unit_id ? { unitId: d.unit_id } : {}),
 });
 
 // Tested in tests/store/mappers.test.ts

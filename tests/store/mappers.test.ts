@@ -51,7 +51,7 @@ describe("mapPbDataset", () => {
     expect(result.type).toBe("composite");
   });
 
-  test("preserves empty views array", () => {
+  test("defaults to ['line'] for empty views array", () => {
     const result = mapPbDataset({
       id: "ds1",
       title: "T",
@@ -61,7 +61,7 @@ describe("mapPbDataset", () => {
       created: ISO_CREATED,
       updated: ISO_UPDATED,
     });
-    expect(result.views).toEqual([]);
+    expect(result.views).toEqual(["line"]);
   });
 });
 

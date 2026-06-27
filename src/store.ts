@@ -82,8 +82,23 @@ export const useDatasetStore = create<DatasetState>((set, get, ...args) => ({
 
       set({ isLoading: false });
     } catch (err) {
+      console.error("Hydration failed:", err);
+      let errorMessage = (err as Error).message || "Unknown error occurred";
+
+      // Specifically handle Dexie open/upgrade errors
+      if (err && typeof err === "object" && "name" in err) {
+        const errorName = (err as { name: string }).name;
+        if (
+          errorName === "UpgradeError" ||
+          errorName === "OpenFailedError" ||
+          errorName === "DatabaseClosedError"
+        ) {
+          errorMessage = `Local database initialization failed (${errorName}). Your local data may be corrupt or fail to migrate: ${errorMessage}`;
+        }
+      }
+
       set({
-        error: (err as Error).message,
+        error: errorMessage,
         isLoading: false,
       });
     }
