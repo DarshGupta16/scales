@@ -82,31 +82,53 @@ describe("createMeasurementSlice", () => {
       title: "Test Dataset",
       description: "A dataset for testing",
       type: "single",
-      unit: { id: "unit1", name: "Gram", symbol: "g" },
+      unit: { id: "unit1", name: "Gram", symbol: "g", created: 0, updated: 0 },
       views: ["line"],
       created: Date.now(),
       updated: Date.now(),
+      metrics: [],
       measurements: [
         {
           id: "m1",
           timestamp: 1000,
           created: Date.now(),
           updated: Date.now(),
-          values: [{ metricId: "metric1", value: 10 }],
+          values: [
+            {
+              metricId: "metric1",
+              name: "Gram",
+              value: 10,
+              unit: { id: "unit1", name: "Gram", symbol: "g", created: 0, updated: 0 },
+            },
+          ],
         },
         {
           id: "m2",
           timestamp: 2000,
           created: Date.now(),
           updated: Date.now(),
-          values: [{ metricId: "metric1", value: 20 }],
+          values: [
+            {
+              metricId: "metric1",
+              name: "Gram",
+              value: 20,
+              unit: { id: "unit1", name: "Gram", symbol: "g", created: 0, updated: 0 },
+            },
+          ],
         },
         {
           id: "m3",
           timestamp: 3000,
           created: Date.now(),
           updated: Date.now(),
-          values: [{ metricId: "metric1", value: 30 }],
+          values: [
+            {
+              metricId: "metric1",
+              name: "Gram",
+              value: 30,
+              unit: { id: "unit1", name: "Gram", symbol: "g", created: 0, updated: 0 },
+            },
+          ],
         },
       ],
     },
@@ -117,7 +139,7 @@ describe("createMeasurementSlice", () => {
 
     await store.getState().removeMeasurement("m2");
 
-    const datasets = store.getState().datasets;
+    const datasets: Dataset[] = store.getState().datasets;
     expect(datasets[0].measurements).toHaveLength(2);
     expect(datasets[0].measurements.map((m) => m.id)).toEqual(["m1", "m3"]);
 
@@ -130,7 +152,7 @@ describe("createMeasurementSlice", () => {
 
     await store.getState().removeMeasurements(["m1", "m3"]);
 
-    const datasets = store.getState().datasets;
+    const datasets: Dataset[] = store.getState().datasets;
     expect(datasets[0].measurements).toHaveLength(1);
     expect(datasets[0].measurements[0].id).toBe("m2");
 

@@ -3,12 +3,12 @@ import { beforeEach, describe, expect, mock, test } from "bun:test";
 // ─── Mocks ───────────────────────────────────────────────────────
 
 let capturedCallback:
-  | ((e: { record: { id: string; updated: number | string } }) => Promise<void>)
+  | ((e: { record: { id: string; updated: number | string }; action?: string }) => Promise<void>)
   | null = null;
 const mockSubscribe = mock(
   (
     _pattern: string,
-    cb: (e: { record: { id: string; updated: number | string } }) => Promise<void>,
+    cb: (e: { record: { id: string; updated: number | string }; action?: string }) => Promise<void>,
   ) => {
     capturedCallback = cb;
     return Promise.resolve();
@@ -24,10 +24,12 @@ mock.module("@/lib/pocketbase", () => ({
 }));
 
 const mockDeltaSync = mock(() => Promise.resolve());
+const mockReloadFromDexie = mock(() => Promise.resolve());
 mock.module("@/store", () => ({
   useDatasetStore: {
     getState: () => ({
       pbDeltaSync: mockDeltaSync,
+      reloadFromDexie: mockReloadFromDexie,
     }),
   },
 }));
@@ -41,6 +43,7 @@ describe("createSubscription", () => {
     capturedCallback = null;
     mockSubscribe.mockClear();
     mockDeltaSync.mockClear();
+    mockReloadFromDexie.mockClear();
   });
 
   test("subscribes to the collection with '*' pattern", () => {
@@ -125,5 +128,22 @@ describe("createSubscription", () => {
     });
 
     expect(mockTable.get).toHaveBeenCalledWith("met_abc_123");
+  });
+
+  test("deletes record from dexie and reloads when action is 'delete'", async () => {
+    const mockTable = {
+      get: mock(() => Promise.resolve(null)),
+      delete: mock(() => Promise.resolve()),
+    } as unknown as Parameters<typeof createSubscription>[1];
+    createSubscription("datasets", mockTable)();
+
+    await capturedCallback?.({
+      record: { id: "ds1", updated: "2024-06-15T14:30:00.000Z" },
+      action: "delete",
+    });
+
+    expect(mockTable.delete).toHaveBeenCalledWith("ds1");
+    expect(mockReloadFromDexie).toHaveBeenCalledTimes(1);
+    expect(mockDeltaSync).not.toHaveBeenCalled();
   });
 });
