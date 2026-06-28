@@ -8,7 +8,11 @@ import { tryPbOrQueue } from "../pbSync";
 import type { DatasetState } from "../types";
 
 export interface MeasurementSlice {
-  addMeasurement: (datasetId: string, measurement: Measurement) => Promise<void>;
+  addMeasurement: (
+    datasetId: string,
+    measurement: Measurement,
+    values?: MeasurementValueRecord[],
+  ) => Promise<void>;
   removeMeasurement: (id: string) => Promise<void>;
   removeMeasurements: (ids: string[]) => Promise<void>;
 }
@@ -17,9 +21,11 @@ export const createMeasurementSlice: StateCreator<DatasetState, [], [], Measurem
   set,
   get,
 ) => ({
-  addMeasurement: async (datasetId, measurement) => {
+  addMeasurement: async (datasetId, measurement, values = []) => {
     const previousDatasetsById = get().datasetsById;
     const previousMeasurementToDatasetMap = get().measurementToDatasetMap;
+    const previousMeasurementsById = get().measurementsById;
+    const previousValuesById = get().valuesById;
 
     if (backgroundState.isPopulating) backgroundState.dirtyDatasetIds.add(datasetId);
 
@@ -27,11 +33,15 @@ export const createMeasurementSlice: StateCreator<DatasetState, [], [], Measurem
     set((state) => {
       const dataset = state.datasetsById[datasetId];
       if (!dataset) return state;
+      const newValuesById = { ...state.valuesById };
+      for (const v of values) newValuesById[v.id] = v;
       return {
         datasetsById: {
           ...state.datasetsById,
-          [datasetId]: { ...dataset, measurements: [measurement, ...dataset.measurements] },
+          [datasetId]: { ...dataset, measurementIds: [measurement.id, ...dataset.measurementIds] },
         },
+        measurementsById: { ...state.measurementsById, [measurement.id]: measurement },
+        valuesById: newValuesById,
         measurementToDatasetMap: {
           ...state.measurementToDatasetMap,
           [measurement.id]: datasetId,
@@ -48,8 +58,8 @@ export const createMeasurementSlice: StateCreator<DatasetState, [], [], Measurem
         updated: Date.now(),
       };
 
-      const valueRecords: MeasurementValueRecord[] = measurement.values.map((v) => ({
-        id: generatePbId(),
+      const valueRecords: MeasurementValueRecord[] = values.map((v) => ({
+        id: v.id || generatePbId(),
         measurementId: measurement.id,
         metricId: v.metricId,
         value: v.value,
@@ -94,6 +104,8 @@ export const createMeasurementSlice: StateCreator<DatasetState, [], [], Measurem
     } catch (err) {
       set({
         datasetsById: previousDatasetsById,
+        measurementsById: previousMeasurementsById,
+        valuesById: previousValuesById,
         measurementToDatasetMap: previousMeasurementToDatasetMap,
         error: (err as Error).message,
       });
@@ -110,6 +122,9 @@ export const createMeasurementSlice: StateCreator<DatasetState, [], [], Measurem
     const previousMeasurementToDatasetMap = get().measurementToDatasetMap;
     const datasetId = previousMeasurementToDatasetMap[id];
 
+    const previousMeasurementsById = get().measurementsById;
+    const previousValuesById = get().valuesById;
+
     if (datasetId && backgroundState.isPopulating) backgroundState.dirtyDatasetIds.add(datasetId);
 
     // 1. ZUSTAND: Optimistic Update
@@ -119,14 +134,27 @@ export const createMeasurementSlice: StateCreator<DatasetState, [], [], Measurem
       const dataset = state.datasetsById[dId];
       if (!dataset) return state;
       const { [id]: _, ...restMap } = state.measurementToDatasetMap;
+
+      const newMeasurementsById = { ...state.measurementsById };
+      const newValuesById = { ...state.valuesById };
+      const meas = newMeasurementsById[id];
+      if (meas?.valueIds) {
+        for (const vId of meas.valueIds) {
+          delete newValuesById[vId];
+        }
+      }
+      delete newMeasurementsById[id];
+
       return {
         datasetsById: {
           ...state.datasetsById,
           [dId]: {
             ...dataset,
-            measurements: dataset.measurements.filter((m) => m.id !== id),
+            measurementIds: dataset.measurementIds.filter((mId) => mId !== id),
           },
         },
+        measurementsById: newMeasurementsById,
+        valuesById: newValuesById,
         measurementToDatasetMap: restMap,
       };
     });
@@ -159,6 +187,8 @@ export const createMeasurementSlice: StateCreator<DatasetState, [], [], Measurem
     } catch (err) {
       set({
         datasetsById: previousDatasetsById,
+        measurementsById: previousMeasurementsById,
+        valuesById: previousValuesById,
         measurementToDatasetMap: previousMeasurementToDatasetMap,
         error: (err as Error).message,
       });
@@ -172,6 +202,8 @@ export const createMeasurementSlice: StateCreator<DatasetState, [], [], Measurem
   removeMeasurements: async (ids) => {
     const previousDatasetsById = get().datasetsById;
     const previousMeasurementToDatasetMap = get().measurementToDatasetMap;
+    const previousMeasurementsById = get().measurementsById;
+    const previousValuesById = get().valuesById;
     const idsSet = new Set(ids);
 
     const affectedDatasetIds = new Set<string>();
@@ -188,20 +220,32 @@ export const createMeasurementSlice: StateCreator<DatasetState, [], [], Measurem
     set((state) => {
       const newDatasetsById = { ...state.datasetsById };
       const newMap = { ...state.measurementToDatasetMap };
+      const newMeasurementsById = { ...state.measurementsById };
+      const newValuesById = { ...state.valuesById };
 
       for (const id of ids) {
         const dId = newMap[id];
         if (dId && newDatasetsById[dId]) {
           newDatasetsById[dId] = {
             ...newDatasetsById[dId],
-            measurements: newDatasetsById[dId].measurements.filter((m) => !idsSet.has(m.id)),
+            measurementIds: newDatasetsById[dId].measurementIds.filter((mId) => !idsSet.has(mId)),
           };
         }
         delete newMap[id];
+
+        const meas = newMeasurementsById[id];
+        if (meas?.valueIds) {
+          for (const vId of meas.valueIds) {
+            delete newValuesById[vId];
+          }
+        }
+        delete newMeasurementsById[id];
       }
 
       return {
         datasetsById: newDatasetsById,
+        measurementsById: newMeasurementsById,
+        valuesById: newValuesById,
         measurementToDatasetMap: newMap,
       };
     });
@@ -238,6 +282,8 @@ export const createMeasurementSlice: StateCreator<DatasetState, [], [], Measurem
     } catch (err) {
       set({
         datasetsById: previousDatasetsById,
+        measurementsById: previousMeasurementsById,
+        valuesById: previousValuesById,
         measurementToDatasetMap: previousMeasurementToDatasetMap,
         error: (err as Error).message,
       });

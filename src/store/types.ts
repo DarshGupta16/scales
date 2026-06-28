@@ -1,4 +1,11 @@
-import type { Dataset, PreferenceRecord, Unit } from "../types/dataset";
+import type {
+  Dataset,
+  Measurement,
+  MeasurementValueRecord,
+  Metric,
+  PreferenceRecord,
+  Unit,
+} from "../types/dataset";
 import type { MeasurementSlice } from "./slices/measurementSlice";
 import type { SyncSlice } from "./slices/syncSlice";
 
@@ -11,6 +18,9 @@ export interface DatasetState extends SyncSlice, MeasurementSlice {
   datasetIds: string[];
   unitsById: Record<string, Unit>;
   unitIds: string[];
+  metricsById: Record<string, Metric>;
+  measurementsById: Record<string, Measurement>;
+  valuesById: Record<string, MeasurementValueRecord>;
   measurementToDatasetMap: Record<string, string>;
   preferences: Preference[];
   selectedDatasetId: string | null;
@@ -23,7 +33,7 @@ export interface DatasetState extends SyncSlice, MeasurementSlice {
   hydrate: () => Promise<void>;
 
   // Dataset Actions
-  addDataset: (dataset: Dataset) => Promise<void>;
+  addDataset: (dataset: Dataset, metrics?: Metric[]) => Promise<void>;
   updateDataset: (dataset: Dataset) => Promise<void>;
   removeDataset: (id: string) => Promise<void>;
   setSelectedDatasetId: (id: string | null) => void;

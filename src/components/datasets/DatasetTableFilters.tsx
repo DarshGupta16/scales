@@ -1,3 +1,4 @@
+import { useDatasetStore } from "@/store";
 import type { Dataset } from "../../types/dataset";
 import { Select } from "../ui/Select";
 import { isValidDateStr } from "./tableUtils";
@@ -31,6 +32,8 @@ export function DatasetTableFilters({ dataset, state, actions }: DatasetTableFil
     clearFilters,
     onSyncWithGraphChange,
   } = actions;
+
+  const metricsById = useDatasetStore((state) => state.metricsById);
 
   const handleStartTimeChange = (val: string) => {
     setFilterStartTime(val);
@@ -109,10 +112,13 @@ export function DatasetTableFilters({ dataset, state, actions }: DatasetTableFil
                 onChange={setFilterMetricId}
                 options={[
                   { value: "any", label: "ANY METRIC" },
-                  ...dataset.metrics.map((metric) => ({
-                    value: metric.id,
-                    label: metric.name.toUpperCase(),
-                  })),
+                  ...dataset.metricIds
+                    .map((id) => metricsById[id])
+                    .filter(Boolean)
+                    .map((metric) => ({
+                      value: metric.id,
+                      label: metric.name.toUpperCase(),
+                    })),
                 ]}
                 className="w-full"
               />

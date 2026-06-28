@@ -9,8 +9,11 @@ export function Modals() {
 
   const addDataset = useDatasetStore((state) => state.addDataset);
 
-  const handleAddDataset = (newDataset: Dataset) => {
-    addDataset(newDataset);
+  const handleAddDataset = (
+    newDataset: Dataset,
+    metrics: import("../../types/dataset").Metric[],
+  ) => {
+    addDataset(newDataset, metrics);
     setAddDatasetModalOpen(false);
   };
 

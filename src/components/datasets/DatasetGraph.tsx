@@ -3,7 +3,7 @@ import { Info } from "lucide-react";
 import { useState } from "react";
 import { ResponsiveContainer } from "recharts";
 import { useChartData } from "../../hooks/useChartData";
-import type { Dataset, Measurement, ViewType } from "../../types/dataset";
+import type { Dataset, ViewType } from "../../types/dataset";
 import { AreaRenderer } from "./charts/AreaRenderer";
 import { BarRenderer } from "./charts/BarRenderer";
 import { LineRenderer } from "./charts/LineRenderer";
@@ -13,7 +13,7 @@ import { COLORS } from "./charts/types";
 
 interface DatasetGraphProps {
   dataset: Dataset;
-  data: Measurement[];
+  data: string[];
   viewType: ViewType;
 }
 
@@ -21,8 +21,15 @@ export function DatasetGraph({ dataset, data, viewType }: DatasetGraphProps) {
   const [isFocused, setIsFocused] = useState(true);
   const [showTooltip, setShowTooltip] = useState(false);
 
-  const { isClient, visibleMetricIds, visibleMetrics, chartData, pieData, toggleMetricVisibility } =
-    useChartData(dataset, data);
+  const {
+    isClient,
+    metrics,
+    visibleMetricIds,
+    visibleMetrics,
+    chartData,
+    pieData,
+    toggleMetricVisibility,
+  } = useChartData(dataset, data);
 
   const renderContent = () => {
     if (!isClient) return null;
@@ -141,9 +148,9 @@ export function DatasetGraph({ dataset, data, viewType }: DatasetGraphProps) {
       </div>
 
       {/* Interactive Legend (Composite Only) */}
-      {dataset.type === "composite" && dataset.metrics && dataset.metrics.length > 0 && (
+      {dataset.type === "composite" && metrics && metrics.length > 0 && (
         <div className="flex flex-wrap gap-1.5 px-1 border-t border-white/5 pt-3 sm:gap-2 sm:px-2 sm:pt-4">
-          {dataset.metrics.map((metric, i) => {
+          {metrics.map((metric, i) => {
             const isVisible = visibleMetricIds.has(metric.id);
             const color = COLORS[i % COLORS.length];
             return (

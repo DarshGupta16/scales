@@ -6,6 +6,7 @@ import type {
   DatasetRecord,
   MeasurementRecord,
   MeasurementValueRecord,
+  Metric,
   MetricRecord,
 } from "../../types/dataset";
 import { backgroundState } from "../dirtyTracking";
@@ -13,7 +14,7 @@ import { tryPbOrQueue } from "../pbSync";
 import type { DatasetState } from "../types";
 
 export interface DatasetSlice {
-  addDataset: (dataset: Dataset) => Promise<void>;
+  addDataset: (dataset: Dataset, metrics?: Metric[]) => Promise<void>;
   updateDataset: (dataset: Dataset) => Promise<void>;
   removeDataset: (id: string) => Promise<void>;
   setSelectedDatasetId: (id: string | null) => void;
@@ -25,17 +26,23 @@ export const createDatasetSlice: StateCreator<
   [],
   Pick<DatasetState, "addDataset" | "updateDataset" | "removeDataset" | "setSelectedDatasetId">
 > = (set, get) => ({
-  addDataset: async (dataset) => {
+  addDataset: async (dataset, metrics: Metric[] = []) => {
     const previousDatasetsById = get().datasetsById;
     const previousDatasetIds = get().datasetIds;
+    const previousMetricsById = get().metricsById;
 
     if (backgroundState.isPopulating) backgroundState.dirtyDatasetIds.add(dataset.id);
 
     // 1. ZUSTAND: Optimistic Update
-    set((state) => ({
-      datasetsById: { ...state.datasetsById, [dataset.id]: dataset },
-      datasetIds: [dataset.id, ...state.datasetIds],
-    }));
+    set((state) => {
+      const newMetricsById = { ...state.metricsById };
+      for (const m of metrics) newMetricsById[m.id] = m;
+      return {
+        datasetsById: { ...state.datasetsById, [dataset.id]: dataset },
+        datasetIds: [dataset.id, ...state.datasetIds],
+        metricsById: newMetricsById,
+      };
+    });
 
     try {
       const datasetRecord: DatasetRecord = {
@@ -48,7 +55,7 @@ export const createDatasetSlice: StateCreator<
         updated: Date.now(),
       };
 
-      const metricRecords: MetricRecord[] = dataset.metrics.map((m) => ({
+      const metricRecords: MetricRecord[] = metrics.map((m) => ({
         id: m.id,
         datasetId: dataset.id,
         name: m.name,
@@ -101,11 +108,12 @@ export const createDatasetSlice: StateCreator<
       set({
         datasetsById: previousDatasetsById,
         datasetIds: previousDatasetIds,
+        metricsById: previousMetricsById,
         error: (err as Error).message,
       });
       await db.transaction("rw", db.datasets, db.metrics, async () => {
         await db.datasets.delete(dataset.id);
-        const metricIds = dataset.metrics.map((m) => m.id);
+        const metricIds = metrics.map((m) => m.id);
         await db.metrics.bulkDelete(metricIds);
       });
       console.error("Failed to persist dataset (PB/Dexie):", err);
@@ -167,10 +175,37 @@ export const createDatasetSlice: StateCreator<
     if (backgroundState.isPopulating) backgroundState.dirtyDatasetIds.add(id);
 
     set((state) => {
-      const { [id]: _, ...rest } = state.datasetsById;
+      const { [id]: datasetToDelete, ...restDatasets } = state.datasetsById;
+
+      // Also remove its metrics from metricsById
+      const newMetricsById = { ...state.metricsById };
+      if (datasetToDelete?.metricIds) {
+        for (const mId of datasetToDelete.metricIds) {
+          delete newMetricsById[mId];
+        }
+      }
+
+      // Also remove its measurements and values
+      const newMeasurementsById = { ...state.measurementsById };
+      const newValuesById = { ...state.valuesById };
+      if (datasetToDelete?.measurementIds) {
+        for (const mId of datasetToDelete.measurementIds) {
+          const meas = newMeasurementsById[mId];
+          if (meas?.valueIds) {
+            for (const vId of meas.valueIds) {
+              delete newValuesById[vId];
+            }
+          }
+          delete newMeasurementsById[mId];
+        }
+      }
+
       return {
-        datasetsById: rest,
+        datasetsById: restDatasets,
         datasetIds: state.datasetIds.filter((dId) => dId !== id),
+        metricsById: newMetricsById,
+        measurementsById: newMeasurementsById,
+        valuesById: newValuesById,
       };
     });
 

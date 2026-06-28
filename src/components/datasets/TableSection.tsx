@@ -1,16 +1,16 @@
 import { useState } from "react";
 import { useDatasetStore } from "@/store";
-import type { CustomRange, Dataset, Measurement, Timeline } from "../../types/dataset";
+import type { CustomRange, Dataset, Timeline } from "../../types/dataset";
 import { ConfirmDialog } from "../ui/ConfirmDialog";
 import { DatasetTable } from "./DatasetTable";
 
 interface TableSectionProps {
   dataset: Dataset;
-  measurements?: Measurement[];
+  measurements?: string[];
   onUpdateDataset: (updatedDataset: Dataset) => void;
   syncWithGraph: boolean;
   onSyncWithGraphChange: (sync: boolean) => void;
-  onFilteredMeasurementsChange: (filtered: Measurement[]) => void;
+  onFilteredMeasurementsChange: (filtered: string[]) => void;
   timeline: Timeline;
   onTimelineChange: (timeline: Timeline) => void;
   customRange: CustomRange;
@@ -40,7 +40,7 @@ export function TableSection({
     setConfirmDeleteIds(null);
   };
 
-  const displayMeasurements = measurements || dataset.measurements || [];
+  const displayMeasurements = measurements || dataset.measurementIds || [];
 
   return (
     <section className="flex flex-col gap-10">

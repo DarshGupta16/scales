@@ -71,40 +71,51 @@ const makeValue = (overrides: Partial<MeasurementValueRecord> = {}): Measurement
 
 const buildDatasets = (...args: Parameters<typeof buildDatasetsMap>) => {
   const result = buildDatasetsMap(...args);
-  return result.datasetIds.map((id) => result.datasetsById[id]);
+  return {
+    datasets: result.datasetIds.map((id) => result.datasetsById[id]),
+    metricsById: result.metricsById,
+    measurementsById: result.measurementsById,
+    valuesById: result.valuesById,
+  };
 };
 
 describe("buildDatasets", () => {
   // --- Empty / minimal inputs ---
 
   test("returns empty array for empty inputs", () => {
-    const result = buildDatasets([], [], [], [], []);
-    expect(result).toEqual([]);
+    const { datasets } = buildDatasets([], [], [], [], []);
+    expect(datasets).toEqual([]);
   });
 
   test("builds a dataset with no metrics or measurements", () => {
     const ds = makeDataset();
-    const result = buildDatasets([ds], [], [], [], []);
+    const { datasets } = buildDatasets([ds], [], [], [], []);
 
-    expect(result).toHaveLength(1);
-    expect(result[0].id).toBe("ds1");
-    expect(result[0].title).toBe("Weight");
-    expect(result[0].description).toBe("Body weight");
-    expect(result[0].type).toBe("single");
-    expect(result[0].views).toEqual(["line"]);
-    expect(result[0].metrics).toEqual([]);
-    expect(result[0].measurements).toEqual([]);
-    expect(result[0].unit).toEqual(UNKNOWN_UNIT);
-    expect(result[0].latestMeasurement).toBeUndefined();
+    expect(datasets).toHaveLength(1);
+    expect(datasets[0].id).toBe("ds1");
+    expect(datasets[0].title).toBe("Weight");
+    expect(datasets[0].description).toBe("Body weight");
+    expect(datasets[0].type).toBe("single");
+    expect(datasets[0].views).toEqual(["line"]);
+    expect(datasets[0].metricIds).toEqual([]);
+    expect(datasets[0].measurementIds).toEqual([]);
+    expect(datasets[0].unit).toEqual(UNKNOWN_UNIT);
+    expect(datasets[0].latestMeasurement).toBeUndefined();
   });
 
   // --- Metric resolution ---
 
   test("resolves metrics with their correct units", () => {
-    const result = buildDatasets([makeDataset()], [makeMetric()], [makeUnit()], [], []);
+    const { datasets, metricsById } = buildDatasets(
+      [makeDataset()],
+      [makeMetric()],
+      [makeUnit()],
+      [],
+      [],
+    );
 
-    expect(result[0].metrics).toHaveLength(1);
-    expect(result[0].metrics[0]).toEqual({
+    expect(datasets[0].metricIds).toHaveLength(1);
+    expect(metricsById["m1"]).toEqual({
       id: "m1",
       name: "Weight",
       unit: { id: "u1", name: "Kilogram", symbol: "kg", created: 0, updated: 0 },
@@ -113,9 +124,9 @@ describe("buildDatasets", () => {
 
   test("falls back to UNKNOWN_UNIT when unit is not found", () => {
     const metric = makeMetric({ unitId: "non_existent" });
-    const result = buildDatasets([makeDataset()], [metric], [], [], []);
+    const { metricsById } = buildDatasets([makeDataset()], [metric], [], [], []);
 
-    expect(result[0].metrics[0].unit).toEqual(UNKNOWN_UNIT);
+    expect(metricsById["m1"].unit).toEqual(UNKNOWN_UNIT);
   });
 
   test("assigns multiple metrics to the correct dataset", () => {
@@ -124,11 +135,11 @@ describe("buildDatasets", () => {
     const u1 = makeUnit({ id: "u1", name: "Kilogram", symbol: "kg" });
     const u2 = makeUnit({ id: "u2", name: "Meter", symbol: "m" });
 
-    const result = buildDatasets([makeDataset()], [m1, m2], [u1, u2], [], []);
+    const { datasets, metricsById } = buildDatasets([makeDataset()], [m1, m2], [u1, u2], [], []);
 
-    expect(result[0].metrics).toHaveLength(2);
-    expect(result[0].metrics[0].name).toBe("Weight");
-    expect(result[0].metrics[1].name).toBe("Height");
+    expect(datasets[0].metricIds).toHaveLength(2);
+    expect(metricsById["m1"].name).toBe("Weight");
+    expect(metricsById["m2"].name).toBe("Height");
   });
 
   test("does not assign metrics from another dataset", () => {
@@ -136,10 +147,10 @@ describe("buildDatasets", () => {
     const ds2 = makeDataset({ id: "ds2", title: "Other" });
     const m = makeMetric({ datasetId: "ds2" });
 
-    const result = buildDatasets([ds1, ds2], [m], [makeUnit()], [], []);
+    const { datasets } = buildDatasets([ds1, ds2], [m], [makeUnit()], [], []);
 
-    expect(result[0].metrics).toHaveLength(0);
-    expect(result[1].metrics).toHaveLength(1);
+    expect(datasets[0].metricIds).toHaveLength(0);
+    expect(datasets[1].metricIds).toHaveLength(1);
   });
 
   // --- Primary unit ---
@@ -147,14 +158,14 @@ describe("buildDatasets", () => {
   test("sets primaryUnit from first metric's unit", () => {
     const u = makeUnit({ id: "u1", name: "Kilogram", symbol: "kg" });
     const m = makeMetric({ unitId: "u1" });
-    const result = buildDatasets([makeDataset()], [m], [u], [], []);
+    const { datasets } = buildDatasets([makeDataset()], [m], [u], [], []);
 
-    expect(result[0].unit).toEqual(u);
+    expect(datasets[0].unit).toEqual(u);
   });
 
   test("primaryUnit is UNKNOWN_UNIT when there are no metrics", () => {
-    const result = buildDatasets([makeDataset()], [], [], [], []);
-    expect(result[0].unit).toEqual(UNKNOWN_UNIT);
+    const { datasets } = buildDatasets([makeDataset()], [], [], [], []);
+    expect(datasets[0].unit).toEqual(UNKNOWN_UNIT);
   });
 
   // --- Measurement assembly ---
@@ -163,36 +174,34 @@ describe("buildDatasets", () => {
     const meas = makeMeasurement({ id: "meas1", timestamp: 5000 });
     const val = makeValue({ measurementId: "meas1", metricId: "m1", value: 75.5 });
 
-    const result = buildDatasets([makeDataset()], [makeMetric()], [makeUnit()], [meas], [val]);
+    const { datasets, measurementsById, valuesById } = buildDatasets(
+      [makeDataset()],
+      [makeMetric()],
+      [makeUnit()],
+      [meas],
+      [val],
+    );
 
-    expect(result[0].measurements).toHaveLength(1);
-    const m = result[0].measurements[0];
+    expect(datasets[0].measurementIds).toHaveLength(1);
+    const m = measurementsById["meas1"];
     expect(m.id).toBe("meas1");
     expect(m.timestamp).toBe(5000);
-    expect(m.values).toHaveLength(1);
-    expect(m.values[0]).toEqual({
+    expect(m.valueIds).toHaveLength(1);
+    expect(valuesById["v1"]).toEqual({
+      id: "v1",
+      measurementId: "meas1",
       metricId: "m1",
-      name: "Weight",
       value: 75.5,
-      unit: { id: "u1", name: "Kilogram", symbol: "kg", created: 0, updated: 0 },
+      created: 5000,
+      updated: 5000,
     });
-  });
-
-  test("measurement value falls back to 'Unknown' name when metric not found", () => {
-    const meas = makeMeasurement();
-    const val = makeValue({ metricId: "non_existent" });
-
-    const result = buildDatasets([makeDataset()], [makeMetric()], [makeUnit()], [meas], [val]);
-
-    expect(result[0].measurements[0].values[0].name).toBe("Unknown");
-    expect(result[0].measurements[0].values[0].unit).toEqual(UNKNOWN_UNIT);
   });
 
   test("measurement with no values has empty values array", () => {
     const meas = makeMeasurement();
-    const result = buildDatasets([makeDataset()], [], [], [meas], []);
+    const { measurementsById } = buildDatasets([makeDataset()], [], [], [meas], []);
 
-    expect(result[0].measurements[0].values).toEqual([]);
+    expect(measurementsById["meas1"].valueIds).toEqual([]);
   });
 
   // --- Sorting ---
@@ -202,11 +211,11 @@ describe("buildDatasets", () => {
     const m2 = makeMeasurement({ id: "meas2", timestamp: 3000 });
     const m3 = makeMeasurement({ id: "meas3", timestamp: 2000 });
 
-    const result = buildDatasets([makeDataset()], [], [], [m1, m2, m3], []);
+    const { datasets } = buildDatasets([makeDataset()], [], [], [m1, m2, m3], []);
 
-    expect(result[0].measurements[0].id).toBe("meas2");
-    expect(result[0].measurements[1].id).toBe("meas3");
-    expect(result[0].measurements[2].id).toBe("meas1");
+    expect(datasets[0].measurementIds[0]).toBe("meas2");
+    expect(datasets[0].measurementIds[1]).toBe("meas3");
+    expect(datasets[0].measurementIds[2]).toBe("meas1");
   });
 
   // --- latestMeasurement ---
@@ -215,14 +224,14 @@ describe("buildDatasets", () => {
     const m1 = makeMeasurement({ id: "old", timestamp: 1000 });
     const m2 = makeMeasurement({ id: "new", timestamp: 9999 });
 
-    const result = buildDatasets([makeDataset()], [], [], [m1, m2], []);
+    const { datasets } = buildDatasets([makeDataset()], [], [], [m1, m2], []);
 
-    expect(result[0].latestMeasurement?.id).toBe("new");
+    expect(datasets[0].latestMeasurement?.id).toBe("new");
   });
 
   test("latestMeasurement is undefined when there are no measurements", () => {
-    const result = buildDatasets([makeDataset()], [], [], [], []);
-    expect(result[0].latestMeasurement).toBeUndefined();
+    const { datasets } = buildDatasets([makeDataset()], [], [], [], []);
+    expect(datasets[0].latestMeasurement).toBeUndefined();
   });
 
   // --- Multiple datasets ---
@@ -243,36 +252,42 @@ describe("buildDatasets", () => {
     const v1 = makeValue({ id: "v1", measurementId: "meas1", metricId: "m1", value: 80 });
     const v2 = makeValue({ id: "v2", measurementId: "meas2", metricId: "m2", value: 7.5 });
 
-    const result = buildDatasets([ds1, ds2], [met1, met2], [u1, u2], [meas1, meas2], [v1, v2]);
+    const { datasets, valuesById } = buildDatasets(
+      [ds1, ds2],
+      [met1, met2],
+      [u1, u2],
+      [meas1, meas2],
+      [v1, v2],
+    );
 
-    expect(result).toHaveLength(2);
-    expect(result[0].metrics).toHaveLength(1);
-    expect(result[0].measurements).toHaveLength(1);
-    expect(result[0].measurements[0].values[0].value).toBe(80);
-    expect(result[1].metrics).toHaveLength(1);
-    expect(result[1].measurements).toHaveLength(1);
-    expect(result[1].measurements[0].values[0].value).toBe(7.5);
+    expect(datasets).toHaveLength(2);
+    expect(datasets[0].metricIds).toHaveLength(1);
+    expect(datasets[0].measurementIds).toHaveLength(1);
+    expect(valuesById["v1"].value).toBe(80);
+    expect(datasets[1].metricIds).toHaveLength(1);
+    expect(datasets[1].measurementIds).toHaveLength(1);
+    expect(valuesById["v2"].value).toBe(7.5);
   });
 
   // --- Type preservation ---
 
   test("handles composite dataset type", () => {
     const ds = makeDataset({ type: "composite" });
-    const result = buildDatasets([ds], [], [], [], []);
-    expect(result[0].type).toBe("composite");
+    const { datasets } = buildDatasets([ds], [], [], [], []);
+    expect(datasets[0].type).toBe("composite");
   });
 
   test("preserves created and updated timestamps on dataset", () => {
     const ds = makeDataset({ created: 111, updated: 222 });
-    const result = buildDatasets([ds], [], [], [], []);
-    expect(result[0].created).toBe(111);
-    expect(result[0].updated).toBe(222);
+    const { datasets } = buildDatasets([ds], [], [], [], []);
+    expect(datasets[0].created).toBe(111);
+    expect(datasets[0].updated).toBe(222);
   });
 
   test("preserves created and updated timestamps on measurements", () => {
     const meas = makeMeasurement({ created: 333, updated: 444 });
-    const result = buildDatasets([makeDataset()], [], [], [meas], []);
-    expect(result[0].measurements[0].created).toBe(333);
-    expect(result[0].measurements[0].updated).toBe(444);
+    const { measurementsById } = buildDatasets([makeDataset()], [], [], [meas], []);
+    expect(measurementsById["meas1"].created).toBe(333);
+    expect(measurementsById["meas1"].updated).toBe(444);
   });
 });

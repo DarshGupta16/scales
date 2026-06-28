@@ -54,7 +54,7 @@ export function DatasetList({ datasets, onEdit, onDelete }: DatasetListProps) {
                         </h4>
                         <div className="flex items-center gap-4 mt-1">
                           <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">
-                            {dataset.measurements.length} Records
+                            {dataset.measurementIds.length} Records
                           </p>
                           <div className="w-1 h-1 rounded-full bg-zinc-800" />
                           <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">

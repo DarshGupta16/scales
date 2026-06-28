@@ -60,6 +60,65 @@ export async function runIntegrityCheck(): Promise<void> {
       });
       console.log("Integrity Check: Cleanup complete.");
     }
+
+    // 4. Validate Store state (flat maps referential integrity)
+    const { useDatasetStore } = await import("../../store");
+    const store = useDatasetStore.getState();
+    const {
+      datasetsById,
+      datasetIds: storeDatasetIds,
+      metricsById,
+      measurementsById,
+      valuesById,
+    } = store;
+
+    let storeChanged = false;
+    const newDatasetsById = { ...(datasetsById || {}) };
+    const safeMetricsById = metricsById || {};
+    const safeMeasurementsById = measurementsById || {};
+    const safeValuesById = valuesById || {};
+
+    for (const dId of storeDatasetIds || []) {
+      const dataset = newDatasetsById[dId];
+      if (!dataset) continue;
+
+      const validMeasurementIds = (dataset.measurementIds || []).filter(
+        (id) => !!safeMeasurementsById[id],
+      );
+      const validMetricIds = (dataset.metricIds || []).filter((id) => !!safeMetricsById[id]);
+
+      if (
+        validMeasurementIds.length !== (dataset.measurementIds || []).length ||
+        validMetricIds.length !== (dataset.metricIds || []).length
+      ) {
+        newDatasetsById[dId] = {
+          ...dataset,
+          measurementIds: validMeasurementIds,
+          metricIds: validMetricIds,
+        };
+        storeChanged = true;
+      }
+    }
+
+    const newMeasurementsById = { ...safeMeasurementsById };
+    for (const mId of Object.keys(newMeasurementsById)) {
+      const meas = newMeasurementsById[mId];
+      if (!meas) continue;
+
+      const validValueIds = (meas.valueIds || []).filter((id) => !!safeValuesById[id]);
+      if (validValueIds.length !== (meas.valueIds || []).length) {
+        newMeasurementsById[mId] = { ...meas, valueIds: validValueIds };
+        storeChanged = true;
+      }
+    }
+
+    if (storeChanged) {
+      console.warn("Integrity Check: Store anomalies found. Cleaning up arrays...");
+      useDatasetStore.setState({
+        datasetsById: newDatasetsById,
+        measurementsById: newMeasurementsById,
+      });
+    }
   } catch (err) {
     console.error("Integrity Check failed:", err);
   }

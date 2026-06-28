@@ -57,6 +57,7 @@ export interface Metric {
 }
 
 export interface MeasurementValue {
+  id: string;
   metricId: string;
   name: string;
   value: number;
@@ -66,7 +67,7 @@ export interface MeasurementValue {
 export interface Measurement {
   id: string;
   timestamp: number;
-  values: MeasurementValue[];
+  valueIds: string[];
   created: number;
   updated: number;
 }
@@ -76,9 +77,9 @@ export interface Dataset {
   title: string;
   description?: string;
   type: "single" | "composite";
-  metrics: Metric[];
+  metricIds: string[];
   views: ViewType[];
-  measurements: Measurement[];
+  measurementIds: string[];
   created: number;
   updated: number;
   // Convenience properties for UI

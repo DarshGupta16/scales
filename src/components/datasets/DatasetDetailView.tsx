@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useTemporalFilter } from "../../hooks/useTemporalFilter";
-import type { Dataset, Measurement, Timeline } from "../../types/dataset";
+import type { Dataset, Measurement, MeasurementValueRecord, Timeline } from "../../types/dataset";
 import { AppLayout } from "../layout/AppLayout";
 import { DatasetDetailHeader } from "../layout/DatasetDetailHeader";
 import { Modal } from "../ui/Modal";
@@ -14,7 +14,7 @@ interface DatasetDetailViewProps {
   dataset: Dataset;
   onUpdateDataset: (dataset: Dataset) => void;
   onDeleteDataset: (id: string) => void;
-  onAddMeasurement: (measurement: Measurement) => void;
+  onAddMeasurement: (measurement: Measurement, values: MeasurementValueRecord[]) => void;
 }
 
 export function DatasetDetailView({
@@ -24,19 +24,17 @@ export function DatasetDetailView({
   onAddMeasurement,
 }: DatasetDetailViewProps) {
   const { timeline, setTimeline, customRange, setCustomRange, filteredMeasurements } =
-    useTemporalFilter(dataset?.measurements || []);
+    useTemporalFilter(dataset?.measurementIds || []);
 
   const [syncWithGraph, setSyncWithGraph] = useState(true);
-  const [tableFilteredMeasurements, setTableFilteredMeasurements] = useState<Measurement[] | null>(
-    null,
-  );
+  const [tableFilteredMeasurements, setTableFilteredMeasurements] = useState<string[] | null>(null);
 
   const [isTimelineOpen, setIsTimelineOpen] = useState(false);
   const [isAddMeasurementOpen, setIsAddMeasurementOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  const handleAddMeasurement = (newMeasurement: Measurement) => {
-    onAddMeasurement(newMeasurement);
+  const handleAddMeasurement = (newMeasurement: Measurement, values: MeasurementValueRecord[]) => {
+    onAddMeasurement(newMeasurement, values);
     setIsAddMeasurementOpen(false);
   };
 

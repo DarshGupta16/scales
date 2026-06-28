@@ -3,7 +3,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ResponsiveContainer } from "recharts";
-import type { Dataset } from "../../types/dataset";
+import { useDatasetStore } from "@/store";
+import type { Dataset, Metric } from "../../types/dataset";
 import { formatDate } from "../../utils/format";
 import { AreaRenderer } from "./charts/AreaRenderer";
 import { BarRenderer } from "./charts/BarRenderer";
@@ -16,33 +17,24 @@ interface DatasetCardProps {
   onDelete?: (dataset: Dataset) => void;
 }
 
-const PreviewChart = ({ dataset, data }: { dataset: Dataset; data: ChartData[] }) => {
+const PreviewChart = ({
+  dataset,
+  data,
+  metrics,
+}: {
+  dataset: Dataset;
+  data: ChartData[];
+  metrics: Metric[];
+}) => {
   const viewType = dataset.views[0] ?? "line";
-  const visibleMetrics = dataset.metrics || [];
 
   switch (viewType) {
     case "area":
-      return (
-        <AreaRenderer
-          chartData={data}
-          visibleMetrics={visibleMetrics}
-          isFocused={false}
-          isMinimal
-        />
-      );
+      return <AreaRenderer chartData={data} visibleMetrics={metrics} isFocused={false} isMinimal />;
     case "bar":
-      return (
-        <BarRenderer chartData={data} visibleMetrics={visibleMetrics} isFocused={false} isMinimal />
-      );
+      return <BarRenderer chartData={data} visibleMetrics={metrics} isFocused={false} isMinimal />;
     default:
-      return (
-        <LineRenderer
-          chartData={data}
-          visibleMetrics={visibleMetrics}
-          isFocused={false}
-          isMinimal
-        />
-      );
+      return <LineRenderer chartData={data} visibleMetrics={metrics} isFocused={false} isMinimal />;
   }
 };
 
@@ -50,6 +42,10 @@ export function DatasetCard({ dataset, onEdit, onDelete }: DatasetCardProps) {
   const [isClient, setIsClient] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  const metricsById = useDatasetStore((state) => state.metricsById);
+  const measurementsById = useDatasetStore((state) => state.measurementsById);
+  const valuesById = useDatasetStore((state) => state.valuesById);
 
   useEffect(() => {
     setIsClient(true);
@@ -66,21 +62,33 @@ export function DatasetCard({ dataset, onEdit, onDelete }: DatasetCardProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isMenuOpen]);
 
+  const metrics = useMemo(() => {
+    return dataset.metricIds.map((id) => metricsById[id]).filter(Boolean);
+  }, [dataset.metricIds, metricsById]);
+
   const previewData = useMemo<ChartData[]>(() => {
-    const sortedData = [...(dataset.measurements || [])].sort((a, b) => a.timestamp - b.timestamp);
+    const sortedData = [...(dataset.measurementIds || [])]
+      .map((id) => measurementsById[id])
+      .filter(Boolean)
+      .sort((a, b) => a.timestamp - b.timestamp);
+
     return sortedData.slice(-7).map((m, index) => {
+      const firstValId = m.valueIds[0];
       const dataPoint: ChartData = {
         ...m,
-        value: m.values[0]?.value || 0,
+        value: firstValId ? valuesById[firstValId]?.value || 0 : 0,
         tooltipId: `${m.id || index}-${m.timestamp}`,
         displayDate: isClient ? formatDate(m.timestamp, "short") : "",
       };
-      for (const val of m.values) {
-        dataPoint[val.metricId] = val.value;
+      for (const valId of m.valueIds) {
+        const valRecord = valuesById[valId];
+        if (valRecord) {
+          dataPoint[valRecord.metricId] = valRecord.value;
+        }
       }
       return dataPoint;
     });
-  }, [dataset.measurements, isClient]);
+  }, [dataset.measurementIds, measurementsById, valuesById, isClient]);
 
   return (
     <motion.div
@@ -103,7 +111,7 @@ export function DatasetCard({ dataset, onEdit, onDelete }: DatasetCardProps) {
                   Composite
                 </span>
                 <span className="text-[9px] font-sans font-medium text-zinc-500 uppercase tracking-[0.1em] truncate max-w-[180px]">
-                  {dataset.metrics.map((m) => m.name).join(" • ")}
+                  {metrics.map((m) => m.name).join(" • ")}
                 </span>
               </div>
             ) : (
@@ -168,7 +176,11 @@ export function DatasetCard({ dataset, onEdit, onDelete }: DatasetCardProps) {
 
         <div className="h-28 w-full mb-6 bg-white/2 border border-white/5 rounded-2xl p-2 min-h-0 relative overflow-hidden group-hover:border-brand/20 transition-colors">
           <ResponsiveContainer width="100%" height="100%">
-            {isClient ? <PreviewChart dataset={dataset} data={previewData} /> : <div />}
+            {isClient ? (
+              <PreviewChart dataset={dataset} data={previewData} metrics={metrics} />
+            ) : (
+              <div />
+            )}
           </ResponsiveContainer>
         </div>
 

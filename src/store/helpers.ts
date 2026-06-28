@@ -3,10 +3,10 @@ import type {
   DatasetRecord,
   Measurement,
   MeasurementRecord,
-  MeasurementValue,
   MeasurementValueRecord,
   Metric,
   MetricRecord,
+  PreferenceRecord,
   UnitRecord,
 } from "../types/dataset";
 
@@ -30,6 +30,9 @@ const UNKNOWN_UNIT: UnitRecord = {
 export interface BuildResult {
   datasetsById: Record<string, Dataset>;
   datasetIds: string[];
+  metricsById: Record<string, Metric>;
+  measurementsById: Record<string, Measurement>;
+  valuesById: Record<string, MeasurementValueRecord>;
   measurementToDatasetMap: Record<string, string>;
 }
 
@@ -68,6 +71,9 @@ export const buildDatasetsMap = (
 
   const datasetsById: Record<string, Dataset> = {};
   const datasetIds: string[] = [];
+  const metricsById: Record<string, Metric> = {};
+  const measurementsById: Record<string, Measurement> = {};
+  const valuesById: Record<string, MeasurementValueRecord> = {};
 
   for (const d of datasetRecords) {
     // 1. Resolve metrics for this dataset
@@ -88,14 +94,15 @@ export const buildDatasetsMap = (
       ];
     }
 
-    const metrics: Metric[] = rawMetrics.map((m) => ({
-      id: m.id,
-      name: m.name,
-      unit: unitMap.get(m.unitId) || UNKNOWN_UNIT,
-    }));
-
-    // Build a quick metric lookup for value resolution
-    const metricMap = new Map(metrics.map((m) => [m.id, m]));
+    const metrics: Metric[] = rawMetrics.map((m) => {
+      const metric = {
+        id: m.id,
+        name: m.name,
+        unit: unitMap.get(m.unitId) || UNKNOWN_UNIT,
+      };
+      metricsById[metric.id] = metric;
+      return metric;
+    });
 
     // 2. Resolve measurements for this dataset
     const rawMeasurements = measurementsByDataset.get(d.id) || [];
@@ -125,23 +132,28 @@ export const buildDatasetsMap = (
         ];
       }
 
-      const values: MeasurementValue[] = rawValues.map((v) => {
-        const metric = metricMap.get(v.metricId);
-        return {
+      const values: MeasurementValueRecord[] = rawValues.map((v) => {
+        const valueObj: MeasurementValueRecord = {
+          id: v.id,
+          measurementId: m.id,
           metricId: v.metricId,
-          name: metric?.name || "Unknown",
           value: v.value,
-          unit: metric?.unit || UNKNOWN_UNIT,
+          created: v.created || m.created,
+          updated: v.updated || m.updated,
         };
+        valuesById[valueObj.id] = valueObj;
+        return valueObj;
       });
 
-      return {
+      const measObj: Measurement = {
         id: m.id,
         timestamp: m.timestamp,
-        values,
+        valueIds: values.map((v) => v.id),
         created: m.created,
         updated: m.updated,
       };
+      measurementsById[measObj.id] = measObj;
+      return measObj;
     });
 
     // 3. Sort measurements descending by timestamp
@@ -158,8 +170,8 @@ export const buildDatasetsMap = (
       views: d.views,
       created: d.created,
       updated: d.updated,
-      metrics,
-      measurements: sortedMeasurements,
+      metricIds: metrics.map((m) => m.id),
+      measurementIds: sortedMeasurements.map((m) => m.id),
       unit: primaryUnit,
       latestMeasurement: sortedMeasurements[0],
     };
@@ -168,7 +180,14 @@ export const buildDatasetsMap = (
     datasetIds.push(d.id);
   }
 
-  return { datasetsById, datasetIds, measurementToDatasetMap };
+  return {
+    datasetsById,
+    datasetIds,
+    metricsById,
+    measurementsById,
+    valuesById,
+    measurementToDatasetMap,
+  };
 };
 
 export const buildHydrationPayload = (
@@ -177,7 +196,7 @@ export const buildHydrationPayload = (
   unitRecords: UnitRecord[],
   measurementRecords: MeasurementRecord[],
   valueRecords: MeasurementValueRecord[],
-  preferenceRecords: any[],
+  preferenceRecords: PreferenceRecord[],
 ) => {
   const result = buildDatasetsMap(
     datasetRecords,
@@ -197,6 +216,9 @@ export const buildHydrationPayload = (
   return {
     datasetsById: result.datasetsById,
     datasetIds: result.datasetIds,
+    metricsById: result.metricsById,
+    measurementsById: result.measurementsById,
+    valuesById: result.valuesById,
     measurementToDatasetMap: result.measurementToDatasetMap,
     unitsById,
     unitIds,

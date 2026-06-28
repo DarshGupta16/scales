@@ -4,7 +4,7 @@ export interface ChartData extends Measurement {
   tooltipId: string;
   displayDate: string;
   value: number; // Fallback for single metric charts
-  [key: string]: string | number | MeasurementValue[] | undefined;
+  [key: string]: string | number | string[] | MeasurementValue[] | undefined;
 }
 
 export const COLORS = [

@@ -9,7 +9,7 @@ import { SingleDatasetForm } from "./forms/SingleDatasetForm";
 interface AddDatasetModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAdd: (dataset: Dataset) => void;
+  onAdd: (dataset: Dataset, metrics: Metric[]) => void;
 }
 
 export function AddDatasetModal({ isOpen, onClose, onAdd }: AddDatasetModalProps) {
@@ -69,14 +69,14 @@ export function AddDatasetModal({ isOpen, onClose, onAdd }: AddDatasetModalProps
         title,
         description,
         type: "single",
-        metrics: [metric],
+        metricIds: [metric.id],
         unit: metric.unit,
-        measurements: [],
+        measurementIds: [],
         views: ["line"],
         created: now,
         updated: now,
       };
-      onAdd(newDataset);
+      onAdd(newDataset, [metric]);
     } else {
       const validMetrics: Metric[] = metrics
         .filter((m) => m.name.trim() && (m.unit || units[0]))
@@ -93,14 +93,14 @@ export function AddDatasetModal({ isOpen, onClose, onAdd }: AddDatasetModalProps
         title,
         description,
         type: "composite",
-        metrics: validMetrics,
+        metricIds: validMetrics.map((m) => m.id),
         unit: validMetrics[0].unit,
-        measurements: [],
+        measurementIds: [],
         views: ["line"],
         created: now,
         updated: now,
       };
-      onAdd(newDataset);
+      onAdd(newDataset, validMetrics);
     }
 
     onClose();

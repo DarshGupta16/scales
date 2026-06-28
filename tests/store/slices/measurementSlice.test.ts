@@ -78,15 +78,22 @@ function createTestStore(initialDatasets: Dataset[] = []) {
     );
     const datasetIds = initialDatasets.map((ds) => ds.id);
     const measurementToDatasetMap: Record<string, string> = {};
+    const measurementsById: Record<string, any> = {};
+    const valuesById: Record<string, any> = {};
+
     initialDatasets.forEach((ds) => {
-      ds.measurements?.forEach((m) => {
-        measurementToDatasetMap[m.id] = ds.id;
+      ds.measurementIds?.forEach((mId) => {
+        measurementToDatasetMap[mId] = ds.id;
+        measurementsById[mId] = { id: mId, timestamp: Date.now(), valueIds: [] };
       });
     });
 
     return {
       datasetsById,
       datasetIds,
+      metricsById: {},
+      measurementsById,
+      valuesById,
       measurementToDatasetMap,
       error: null,
       ...createMeasurementSlice(set, get, api),
@@ -116,51 +123,8 @@ describe("createMeasurementSlice", () => {
       views: ["line"],
       created: Date.now(),
       updated: Date.now(),
-      metrics: [],
-      measurements: [
-        {
-          id: "m1",
-          timestamp: 1000,
-          created: Date.now(),
-          updated: Date.now(),
-          values: [
-            {
-              metricId: "metric1",
-              name: "Gram",
-              value: 10,
-              unit: { id: "unit1", name: "Gram", symbol: "g", created: 0, updated: 0 },
-            },
-          ],
-        },
-        {
-          id: "m2",
-          timestamp: 2000,
-          created: Date.now(),
-          updated: Date.now(),
-          values: [
-            {
-              metricId: "metric1",
-              name: "Gram",
-              value: 20,
-              unit: { id: "unit1", name: "Gram", symbol: "g", created: 0, updated: 0 },
-            },
-          ],
-        },
-        {
-          id: "m3",
-          timestamp: 3000,
-          created: Date.now(),
-          updated: Date.now(),
-          values: [
-            {
-              metricId: "metric1",
-              name: "Gram",
-              value: 30,
-              unit: { id: "unit1", name: "Gram", symbol: "g", created: 0, updated: 0 },
-            },
-          ],
-        },
-      ],
+      metricIds: [],
+      measurementIds: ["m1", "m2", "m3"],
     },
   ];
 
@@ -170,8 +134,8 @@ describe("createMeasurementSlice", () => {
     await store.getState().removeMeasurement("m2");
 
     const datasetsById: Record<string, Dataset> = store.getState().datasetsById;
-    expect(datasetsById[datasetId].measurements).toHaveLength(2);
-    expect(datasetsById[datasetId].measurements!.map((m) => m.id)).toEqual(["m1", "m3"]);
+    expect(datasetsById[datasetId].measurementIds).toHaveLength(2);
+    expect(datasetsById[datasetId].measurementIds).toEqual(["m1", "m3"]);
 
     expect(mockDbMeasurementsDelete).toHaveBeenCalledWith("m2");
     expect(mockTryPbOrQueue).toHaveBeenCalled();
@@ -183,8 +147,8 @@ describe("createMeasurementSlice", () => {
     await store.getState().removeMeasurements(["m1", "m3"]);
 
     const datasetsById: Record<string, Dataset> = store.getState().datasetsById;
-    expect(datasetsById[datasetId].measurements).toHaveLength(1);
-    expect(datasetsById[datasetId].measurements![0].id).toBe("m2");
+    expect(datasetsById[datasetId].measurementIds).toHaveLength(1);
+    expect(datasetsById[datasetId].measurementIds[0]).toBe("m2");
 
     expect(mockDbMeasurementsBulkDelete).toHaveBeenCalledWith(["m1", "m3"]);
     expect(mockTryPbOrQueue).toHaveBeenCalledTimes(2);

@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useDatasetStore } from "@/store";
+import type { Measurement, MeasurementValueRecord } from "@/types/dataset";
 import { DatasetDetailNotFound } from "../components/datasets/DatasetDetailNotFound";
 import { DatasetDetailView } from "../components/datasets/DatasetDetailView";
 
@@ -25,8 +26,8 @@ function DatasetDetail() {
     navigate({ to: "/" });
   };
 
-  const handleAddMeasurement = (newMeasurement: any) => {
-    addMeasurement(datasetId, newMeasurement);
+  const handleAddMeasurement = (newMeasurement: Measurement, values: MeasurementValueRecord[]) => {
+    addMeasurement(datasetId, newMeasurement, values);
   };
 
   return (

@@ -1,13 +1,14 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
-import type { CustomRange, Dataset, Measurement, Timeline } from "../../types/dataset";
+import { useDatasetStore } from "@/store";
+import type { CustomRange, Dataset, Timeline } from "../../types/dataset";
 import { formatTimestampToDatetimeLocal, isValidDateStr, parseLocalDatetime } from "./tableUtils";
 
 export interface UseDatasetTableFiltersProps {
   dataset: Dataset;
-  measurements: Measurement[];
+  measurements: string[];
   syncWithGraph: boolean;
   onSyncWithGraphChange: (sync: boolean) => void;
-  onFilteredMeasurementsChange: (filtered: Measurement[]) => void;
+  onFilteredMeasurementsChange: (filtered: string[]) => void;
   timeline: Timeline;
   onTimelineChange: (timeline: Timeline) => void;
   customRange: CustomRange;
@@ -41,6 +42,9 @@ export function useDatasetTableFilters({
   const deferredMinValue = useDeferredValue(minValue);
   const deferredMaxValue = useDeferredValue(maxValue);
   const deferredFilterMetricId = useDeferredValue(filterMetricId);
+
+  const measurementsById = useDatasetStore((state) => state.measurementsById);
+  const valuesById = useDatasetStore((state) => state.valuesById);
 
   const temporalRange = useMemo(() => {
     const now = Date.now();
@@ -128,10 +132,13 @@ export function useDatasetTableFilters({
     setFilterMetricId("any");
   }, [syncWithGraph, onTimelineChange]);
 
-  const baseMeasurements = syncWithGraph ? measurements : dataset.measurements || [];
+  const baseMeasurements = syncWithGraph ? measurements : dataset.measurementIds || [];
 
   const filteredMeasurements = useMemo(() => {
-    return baseMeasurements.filter((m) => {
+    return baseMeasurements.filter((id) => {
+      const m = measurementsById[id];
+      if (!m) return false;
+
       if (!syncWithGraph) {
         if (deferredFilterStartTime) {
           const startMs = parseLocalDatetime(deferredFilterStartTime);
@@ -152,19 +159,29 @@ export function useDatasetTableFilters({
 
       if (dataset.type === "composite") {
         if (deferredFilterMetricId === "any") {
-          return m.values.some((v) => v.value >= min && v.value <= max);
+          return m.valueIds.some((vId) => {
+            const val = valuesById[vId]?.value ?? 0;
+            return val >= min && val <= max;
+          });
         } else {
-          const valRecord = m.values.find((v) => v.metricId === deferredFilterMetricId);
+          const valRecordId = m.valueIds.find(
+            (vId) => valuesById[vId]?.metricId === deferredFilterMetricId,
+          );
+          if (!valRecordId) return false;
+          const valRecord = valuesById[valRecordId];
           if (!valRecord) return false;
           return valRecord.value >= min && valRecord.value <= max;
         }
       } else {
-        const val = m.values[0]?.value ?? 0;
+        const firstValId = m.valueIds[0];
+        const val = firstValId ? (valuesById[firstValId]?.value ?? 0) : 0;
         return val >= min && val <= max;
       }
     });
   }, [
     baseMeasurements,
+    measurementsById,
+    valuesById,
     syncWithGraph,
     deferredFilterStartTime,
     deferredFilterEndTime,
@@ -182,7 +199,11 @@ export function useDatasetTableFilters({
     const list = [...filteredMeasurements];
     if (!sortColumn) return list;
 
-    list.sort((a, b) => {
+    list.sort((idA, idB) => {
+      const a = measurementsById[idA];
+      const b = measurementsById[idB];
+      if (!a || !b) return 0;
+
       let va = 0;
       let vb = 0;
 
@@ -190,11 +211,15 @@ export function useDatasetTableFilters({
         va = a.timestamp;
         vb = b.timestamp;
       } else if (dataset.type === "composite") {
-        va = a.values.find((v) => v.metricId === sortColumn)?.value ?? 0;
-        vb = b.values.find((v) => v.metricId === sortColumn)?.value ?? 0;
+        const vA_id = a.valueIds.find((vId) => valuesById[vId]?.metricId === sortColumn);
+        const vB_id = b.valueIds.find((vId) => valuesById[vId]?.metricId === sortColumn);
+        va = vA_id ? (valuesById[vA_id]?.value ?? 0) : 0;
+        vb = vB_id ? (valuesById[vB_id]?.value ?? 0) : 0;
       } else {
-        va = a.values[0]?.value ?? 0;
-        vb = b.values[0]?.value ?? 0;
+        const vA_id = a.valueIds[0];
+        const vB_id = b.valueIds[0];
+        va = vA_id ? (valuesById[vA_id]?.value ?? 0) : 0;
+        vb = vB_id ? (valuesById[vB_id]?.value ?? 0) : 0;
       }
 
       if (va === vb) return 0;
@@ -202,7 +227,7 @@ export function useDatasetTableFilters({
     });
 
     return list;
-  }, [filteredMeasurements, sortColumn, sortDirection, dataset.type]);
+  }, [filteredMeasurements, measurementsById, valuesById, sortColumn, sortDirection, dataset.type]);
 
   const handleSort = useCallback((column: string) => {
     setSortColumn((prevCol) => {
@@ -220,20 +245,19 @@ export function useDatasetTableFilters({
   }, []);
 
   const isAllSelected =
-    filteredMeasurements.length > 0 &&
-    filteredMeasurements.every((m) => selectedIds.includes(m.id));
+    filteredMeasurements.length > 0 && filteredMeasurements.every((id) => selectedIds.includes(id));
 
   const toggleSelectAll = useCallback(() => {
     setSelectedIds((prev) => {
       const isAllSelectedNow =
-        filteredMeasurements.length > 0 && filteredMeasurements.every((m) => prev.includes(m.id));
+        filteredMeasurements.length > 0 && filteredMeasurements.every((id) => prev.includes(id));
       if (isAllSelectedNow) {
-        const filteredIds = new Set(filteredMeasurements.map((m) => m.id));
+        const filteredIds = new Set(filteredMeasurements);
         return prev.filter((id) => !filteredIds.has(id));
       } else {
         const next = new Set(prev);
-        for (const m of filteredMeasurements) {
-          next.add(m.id);
+        for (const id of filteredMeasurements) {
+          next.add(id);
         }
         return Array.from(next);
       }

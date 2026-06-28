@@ -16,6 +16,9 @@ let subscriptionsSetup = false;
 export const useDatasetStore = create<DatasetState>((set, get, ...args) => ({
   datasetsById: {},
   datasetIds: [],
+  metricsById: {},
+  measurementsById: {},
+  valuesById: {},
   unitsById: {},
   unitIds: [],
   measurementToDatasetMap: {},
@@ -93,6 +96,9 @@ export const useDatasetStore = create<DatasetState>((set, get, ...args) => ({
       set({
         datasetsById: fastResult.datasetsById,
         datasetIds: fastResult.datasetIds,
+        metricsById: fastResult.metricsById,
+        measurementsById: fastResult.measurementsById,
+        valuesById: fastResult.valuesById,
         measurementToDatasetMap: fastResult.measurementToDatasetMap,
         unitsById,
         unitIds,
@@ -169,6 +175,9 @@ export const useDatasetStore = create<DatasetState>((set, get, ...args) => ({
           useDatasetStore.setState({
             datasetsById: fullResult.datasetsById,
             datasetIds: fullResult.datasetIds,
+            metricsById: fullResult.metricsById,
+            measurementsById: fullResult.measurementsById,
+            valuesById: fullResult.valuesById,
             measurementToDatasetMap: fullResult.measurementToDatasetMap,
             isFullyPopulated: true,
           });

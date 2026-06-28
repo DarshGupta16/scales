@@ -1,16 +1,20 @@
 import { useState } from "react";
-import type { Dataset, Measurement, MeasurementValue } from "../../types/dataset";
+import { useDatasetStore } from "@/store";
+import type { Dataset, Measurement, MeasurementValueRecord } from "../../types/dataset";
 import { generatePbId } from "../../utils/id";
 import { Modal } from "../ui/Modal";
 
 interface AddMeasurementModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAdd: (measurement: Measurement) => void;
+  onAdd: (measurement: Measurement, values: MeasurementValueRecord[]) => void;
   dataset: Dataset;
 }
 
 export function AddMeasurementModal({ isOpen, onClose, onAdd, dataset }: AddMeasurementModalProps) {
+  const metricsById = useDatasetStore((state) => state.metricsById);
+  const metrics = dataset.metricIds.map((id) => metricsById[id]).filter(Boolean);
+
   const getLocalDatetimeLocal = () => {
     const now = new Date();
     const offset = now.getTimezoneOffset(); // in minutes
@@ -28,28 +32,38 @@ export function AddMeasurementModal({ isOpen, onClose, onAdd, dataset }: AddMeas
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const measurementValues: MeasurementValue[] = dataset.metrics
+    // Wait, AddMeasurementModal calls onAdd(newMeasurement). The slice method `addMeasurement(datasetId, measurementData)` should be used, but let's see how `onAdd` handles it.
+
+    const measurementValues = metrics
       .filter((m) => values[m.id] && !Number.isNaN(Number(values[m.id])))
       .map((m) => ({
+        id: generatePbId(),
         metricId: m.id,
-        name: m.name,
         value: Number(values[m.id]),
-        unit: m.unit,
+        created: Date.now(),
+        updated: Date.now(),
+        measurementId: "", // Will be filled
       }));
 
     if (measurementValues.length === 0) return;
 
     const now = Date.now();
+    const newMeasurementId = generatePbId();
+    measurementValues.forEach((v) => {
+      v.measurementId = newMeasurementId;
+    });
+
     const newMeasurement: Measurement = {
-      id: generatePbId(),
+      id: newMeasurementId,
       // Use full-precision Date.now() unless user explicitly picked a custom time
       timestamp: timestampManuallySet ? new Date(timestamp).getTime() : now,
-      values: measurementValues,
+      valueIds: measurementValues.map((v) => v.id),
       created: now,
       updated: now,
     };
 
-    onAdd(newMeasurement);
+    // Note: We need to modify onAdd in parent to accept measurement and its values
+    onAdd(newMeasurement, measurementValues);
     onClose();
   };
 
@@ -61,7 +75,7 @@ export function AddMeasurementModal({ isOpen, onClose, onAdd, dataset }: AddMeas
     <Modal isOpen={isOpen} onClose={onClose} title={`Record ${dataset.title}`}>
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <div className="flex flex-col gap-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-          {dataset.metrics.map((metric) => (
+          {metrics.map((metric) => (
             <div
               key={metric.id}
               className="flex flex-col gap-2 p-4 bg-zinc-900/30 rounded-2xl border border-white/5"

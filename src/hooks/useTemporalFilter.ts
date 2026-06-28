@@ -1,12 +1,15 @@
 import { useMemo, useState } from "react";
-import type { CustomRange, Measurement, Timeline } from "../types/dataset";
+import { useDatasetStore } from "@/store";
+import type { CustomRange, Timeline } from "../types/dataset";
 
-export function useTemporalFilter(measurements: Measurement[] = []) {
+export function useTemporalFilter(measurementIds: string[] = []) {
   const [timeline, setTimeline] = useState<Timeline>("all");
   const [customRange, setCustomRange] = useState<CustomRange>({
     start: Date.now() - 24 * 60 * 60 * 1000,
     end: Date.now(),
   });
+
+  const measurementsById = useDatasetStore((state) => state.measurementsById);
 
   const filteredMeasurements = useMemo(() => {
     const now = Date.now();
@@ -23,9 +26,13 @@ export function useTemporalFilter(measurements: Measurement[] = []) {
     }
 
     return timeline === "all"
-      ? measurements
-      : measurements.filter((m) => m.timestamp >= start && m.timestamp <= end);
-  }, [measurements, timeline, customRange]);
+      ? measurementIds
+      : measurementIds.filter((id) => {
+          const m = measurementsById[id];
+          if (!m) return false;
+          return m.timestamp >= start && m.timestamp <= end;
+        });
+  }, [measurementIds, timeline, customRange, measurementsById]);
 
   return {
     timeline,

@@ -1,4 +1,4 @@
-import type { CustomRange, Dataset, Measurement, Timeline } from "../../types/dataset";
+import type { CustomRange, Dataset, Timeline } from "../../types/dataset";
 import { DatasetTableFilters } from "./DatasetTableFilters";
 import { DatasetTableMain } from "./DatasetTableMain";
 import { DatasetTableSelectionPanel } from "./DatasetTableSelectionPanel";
@@ -6,12 +6,12 @@ import { useDatasetTableFilters } from "./useDatasetTableFilters";
 
 export interface DatasetTableProps {
   dataset: Dataset;
-  measurements: Measurement[];
+  measurements: string[];
   onDelete: (id: string) => void;
   onDeleteMultiple: (ids: string[]) => void;
   syncWithGraph: boolean;
   onSyncWithGraphChange: (sync: boolean) => void;
-  onFilteredMeasurementsChange: (filtered: Measurement[]) => void;
+  onFilteredMeasurementsChange: (filtered: string[]) => void;
   timeline: Timeline;
   onTimelineChange: (timeline: Timeline) => void;
   customRange: CustomRange;
