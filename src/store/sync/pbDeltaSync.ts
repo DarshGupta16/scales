@@ -11,6 +11,8 @@ import {
 } from "../mappers";
 import type { DatasetState } from "../types";
 
+import { runIntegrityCheck } from "./integrityCheck";
+
 export const pbDeltaSyncStrategy = async (
   set: (state: Partial<DatasetState>) => void,
 ): Promise<void> => {
@@ -93,6 +95,9 @@ export const pbDeltaSyncStrategy = async (
       unitIds,
       preferences: allPref,
     });
+    
+    // Run integrity check
+    runIntegrityCheck();
   } catch (err) {
     console.error("Delta sync failed:", err);
   }

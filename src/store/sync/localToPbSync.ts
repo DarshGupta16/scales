@@ -13,77 +13,93 @@ export const localToPbSyncStrategy = async (): Promise<void> => {
       const collection = pb.collection(op.collection);
 
       if (op.action === "create") {
-        if (op.collection === "datasets") {
-          const data = op.data as {
-            datasetRecord: DatasetRecord;
-            metricRecords: MetricRecord[];
-          };
-          const { datasetRecord, metricRecords } = data;
+        try {
+          if (op.collection === "datasets") {
+            const data = op.data as {
+              datasetRecord: DatasetRecord;
+              metricRecords: MetricRecord[];
+            };
+            const { datasetRecord, metricRecords } = data;
 
-          await pb.collection("datasets").create({
-            id: datasetRecord.id,
-            title: datasetRecord.title,
-            description: datasetRecord.description,
-            type: datasetRecord.type,
-            views: datasetRecord.views,
-            created: new Date(datasetRecord.created).toISOString(),
-          });
-
-          for (const metric of metricRecords) {
-            await pb.collection("metrics").create({
-              id: metric.id,
-              dataset_id: metric.datasetId,
-              name: metric.name,
-              unit_id: metric.unitId,
-              created: new Date(metric.created).toISOString(),
+            await pb.collection("datasets").create({
+              id: datasetRecord.id,
+              title: datasetRecord.title,
+              description: datasetRecord.description,
+              type: datasetRecord.type,
+              views: datasetRecord.views,
+              created: new Date(datasetRecord.created).toISOString(),
             });
-          }
-        } else if (op.collection === "measurements") {
-          // biome-ignore lint/suspicious/noExplicitAny: Sync payload
-          const data = op.data as any;
 
-          const measurementRecord = data.measurementRecord || data;
-          const valueRecords = data.valueRecords || [];
+            for (const metric of metricRecords) {
+              await pb.collection("metrics").create({
+                id: metric.id,
+                dataset_id: metric.datasetId,
+                name: metric.name,
+                unit_id: metric.unitId,
+                created: new Date(metric.created).toISOString(),
+              });
+            }
+          } else if (op.collection === "measurements") {
+            // biome-ignore lint/suspicious/noExplicitAny: Sync payload
+            const data = op.data as any;
 
-          await pb.collection("measurements").create({
-            id: measurementRecord.id,
-            dataset_id: measurementRecord.datasetId,
-            timestamp: measurementRecord.timestamp,
-            created: new Date(measurementRecord.created).toISOString(),
-          });
+            const measurementRecord = data.measurementRecord || data;
+            const valueRecords = data.valueRecords || [];
 
-          for (const v of valueRecords) {
+            await pb.collection("measurements").create({
+              id: measurementRecord.id,
+              dataset_id: measurementRecord.datasetId,
+              timestamp: measurementRecord.timestamp,
+              created: new Date(measurementRecord.created).toISOString(),
+            });
+
+            for (const v of valueRecords) {
+              await pb.collection("measurement_values").create({
+                id: v.id,
+                measurement_id: v.measurementId,
+                metric_id: v.metricId,
+                value: v.value,
+                created: new Date(v.created).toISOString(),
+              });
+            }
+          } else if (op.collection === "measurement_values") {
+            const data = op.data as MeasurementValueRecord;
             await pb.collection("measurement_values").create({
-              id: v.id,
-              measurement_id: v.measurementId,
-              metric_id: v.metricId,
-              value: v.value,
-              created: new Date(v.created).toISOString(),
+              id: data.id,
+              measurement_id: data.measurementId,
+              metric_id: data.metricId,
+              value: data.value,
+              created: new Date(data.created).toISOString(),
             });
+          } else {
+            if (op.data) await collection.create(op.data);
           }
-        } else if (op.collection === "measurement_values") {
-          const data = op.data as MeasurementValueRecord;
-          await pb.collection("measurement_values").create({
-            id: data.id,
-            measurement_id: data.measurementId,
-            metric_id: data.metricId,
-            value: data.value,
-            created: new Date(data.created).toISOString(),
-          });
-        } else {
-          if (op.data) await collection.create(op.data);
+        } catch (err: unknown) {
+          if (err && typeof err === "object" && "status" in err && err.status === 400) {
+            console.warn(`Idempotency: Ignored 400 Bad Request for create ${op.recordId} in ${op.collection}`);
+          } else {
+            throw err;
+          }
         }
       } else if (op.action === "update") {
-        if (op.collection === "datasets") {
-          const data = op.data as { datasetRecord: DatasetRecord };
-          const { datasetRecord } = data;
-          await collection.update(op.recordId, {
-            title: datasetRecord.title,
-            description: datasetRecord.description,
-            views: datasetRecord.views,
-          });
-        } else {
-          if (op.data) await collection.update(op.recordId, op.data);
+        try {
+          if (op.collection === "datasets") {
+            const data = op.data as { datasetRecord: DatasetRecord };
+            const { datasetRecord } = data;
+            await collection.update(op.recordId, {
+              title: datasetRecord.title,
+              description: datasetRecord.description,
+              views: datasetRecord.views,
+            });
+          } else {
+            if (op.data) await collection.update(op.recordId, op.data);
+          }
+        } catch (err: unknown) {
+          if (err && typeof err === "object" && "status" in err && err.status === 404) {
+            console.warn(`Idempotency: Ignored 404 Not Found for update ${op.recordId} in ${op.collection}`);
+          } else {
+            throw err;
+          }
         }
       } else if (op.action === "delete") {
         try {

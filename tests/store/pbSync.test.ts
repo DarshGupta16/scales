@@ -81,25 +81,26 @@ describe("tryPbOrQueue", () => {
   test("does not queue when error has non-zero status", async () => {
     const pbFn = mock(() => Promise.reject({ status: 500 }));
 
-    await tryPbOrQueue(pbFn, {
+    await expect(tryPbOrQueue(pbFn, {
       collection: "datasets" as const,
       action: "create" as const,
       recordId: "ds1",
       data: null,
-    });
+    })).rejects.toEqual({ status: 500 });
 
     expect(mockAdd).not.toHaveBeenCalled();
   });
 
   test("does not queue when error is a plain Error (no status)", async () => {
-    const pbFn = mock(() => Promise.reject(new Error("network issue")));
+    const err = new Error("network issue");
+    const pbFn = mock(() => Promise.reject(err));
 
-    await tryPbOrQueue(pbFn, {
+    await expect(tryPbOrQueue(pbFn, {
       collection: "datasets" as const,
       action: "create" as const,
       recordId: "ds1",
       data: null,
-    });
+    })).rejects.toThrow("network issue");
 
     expect(mockAdd).not.toHaveBeenCalled();
   });
@@ -107,12 +108,12 @@ describe("tryPbOrQueue", () => {
   test("does not queue when error is a string", async () => {
     const pbFn = mock(() => Promise.reject("some error"));
 
-    await tryPbOrQueue(pbFn, {
+    await expect(tryPbOrQueue(pbFn, {
       collection: "datasets" as const,
       action: "create" as const,
       recordId: "ds1",
       data: null,
-    });
+    })).rejects.toEqual("some error");
 
     expect(mockAdd).not.toHaveBeenCalled();
   });
@@ -120,17 +121,17 @@ describe("tryPbOrQueue", () => {
   test("does not queue when error is null", async () => {
     const pbFn = mock(() => Promise.reject(null));
 
-    await tryPbOrQueue(pbFn, {
+    await expect(tryPbOrQueue(pbFn, {
       collection: "datasets" as const,
       action: "create" as const,
       recordId: "ds1",
       data: null,
-    });
+    })).rejects.toBeNull();
 
     expect(mockAdd).not.toHaveBeenCalled();
   });
 
-  test("does not re-throw any errors (silently swallows)", async () => {
+  test("silently swallows offline error but re-throws non-offline errors", async () => {
     await expect(
       tryPbOrQueue(
         mock(() => Promise.reject({ status: 0 })),
@@ -153,6 +154,6 @@ describe("tryPbOrQueue", () => {
           data: null,
         },
       ),
-    ).resolves.toBeUndefined();
+    ).rejects.toEqual({ status: 500 });
   });
 });

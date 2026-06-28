@@ -7,6 +7,7 @@ import { createMeasurementSlice } from "./store/slices/measurementSlice";
 import { createPreferencesSlice } from "./store/slices/preferencesSlice";
 import { createSyncSlice } from "./store/slices/syncSlice";
 import { createUnitSlice } from "./store/slices/unitSlice";
+import { runIntegrityCheck } from "./store/sync/integrityCheck";
 import type { DatasetState } from "./store/types";
 import { setupSubscriptions } from "./utils/subscriptions";
 
@@ -163,6 +164,9 @@ export const useDatasetStore = create<DatasetState>((set, get, ...args) => ({
           
           backgroundState.dirtyDatasetIds.clear();
           backgroundState.isPopulating = false;
+
+          // Run background integrity check and self-healing
+          runIntegrityCheck();
         } catch (bgErr) {
           console.error("Background population failed:", bgErr);
           backgroundState.isPopulating = false;

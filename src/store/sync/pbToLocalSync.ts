@@ -11,6 +11,8 @@ import {
 } from "../mappers";
 import type { DatasetState } from "../types";
 
+import { runIntegrityCheck } from "./integrityCheck";
+
 export const pbToLocalSyncStrategy = async (
   set: (state: Partial<DatasetState>) => void,
 ): Promise<void> => {
@@ -83,6 +85,9 @@ export const pbToLocalSyncStrategy = async (
           ]);
         },
       );
+      
+      // Run integrity check
+      runIntegrityCheck();
     };
 
     syncDexie().catch((err) => console.error("Dexie background sync failed:", err));

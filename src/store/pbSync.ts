@@ -18,8 +18,8 @@ export async function tryPbOrQueue(
         timestamp: Date.now(),
       });
       console.warn(`Offline: Recorded ${offlineOp.action} for ${offlineOp.collection} in op logs.`);
+    } else {
+      throw err;
     }
-    // Non-offline errors are silently swallowed to match existing behaviour
-    // (slices never re-throw PB errors — they only queue offline ops).
   }
 }
