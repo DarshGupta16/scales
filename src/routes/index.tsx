@@ -14,7 +14,9 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const { datasets, updateDataset, removeDataset } = useDatasetStore();
+  const datasets = useDatasetStore((state) => state.datasetIds.map(id => state.datasetsById[id]));
+  const updateDataset = useDatasetStore((state) => state.updateDataset);
+  const removeDataset = useDatasetStore((state) => state.removeDataset);
 
   const { searchQuery, setSearchQuery, filteredDatasets } = useDatasetSearch(datasets);
   const [editingDataset, setEditingDataset] = useState<Dataset | null>(null);

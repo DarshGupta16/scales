@@ -57,11 +57,24 @@ import type { Dataset } from "@/types/dataset";
 
 function createTestStore(initialDatasets: Dataset[] = []) {
   // biome-ignore lint/suspicious/noExplicitAny: Mocking partial store state for isolated slice testing
-  return createStore<any>((set, get, api) => ({
-    datasets: initialDatasets,
-    error: null,
-    ...createMeasurementSlice(set, get, api),
-  }));
+  return createStore<any>((set, get, api) => {
+    const datasetsById = initialDatasets.reduce((acc, ds) => ({ ...acc, [ds.id]: ds }), {} as Record<string, Dataset>);
+    const datasetIds = initialDatasets.map(ds => ds.id);
+    const measurementToDatasetMap: Record<string, string> = {};
+    initialDatasets.forEach(ds => {
+      ds.measurements?.forEach(m => {
+        measurementToDatasetMap[m.id] = ds.id;
+      });
+    });
+
+    return {
+      datasetsById,
+      datasetIds,
+      measurementToDatasetMap,
+      error: null,
+      ...createMeasurementSlice(set, get, api),
+    };
+  });
 }
 
 // ─── Tests ───────────────────────────────────────────────────────
@@ -139,9 +152,9 @@ describe("createMeasurementSlice", () => {
 
     await store.getState().removeMeasurement("m2");
 
-    const datasets: Dataset[] = store.getState().datasets;
-    expect(datasets[0].measurements).toHaveLength(2);
-    expect(datasets[0].measurements.map((m) => m.id)).toEqual(["m1", "m3"]);
+    const datasetsById: Record<string, Dataset> = store.getState().datasetsById;
+    expect(datasetsById[datasetId].measurements).toHaveLength(2);
+    expect(datasetsById[datasetId].measurements!.map((m) => m.id)).toEqual(["m1", "m3"]);
 
     expect(mockDbMeasurementsDelete).toHaveBeenCalledWith("m2");
     expect(mockTryPbOrQueue).toHaveBeenCalled();
@@ -152,9 +165,9 @@ describe("createMeasurementSlice", () => {
 
     await store.getState().removeMeasurements(["m1", "m3"]);
 
-    const datasets: Dataset[] = store.getState().datasets;
-    expect(datasets[0].measurements).toHaveLength(1);
-    expect(datasets[0].measurements[0].id).toBe("m2");
+    const datasetsById: Record<string, Dataset> = store.getState().datasetsById;
+    expect(datasetsById[datasetId].measurements).toHaveLength(1);
+    expect(datasetsById[datasetId].measurements![0].id).toBe("m2");
 
     expect(mockDbMeasurementsBulkDelete).toHaveBeenCalledWith(["m1", "m3"]);
     expect(mockTryPbOrQueue).toHaveBeenCalledTimes(2);

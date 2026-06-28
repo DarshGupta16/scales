@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { buildDatasets } from "@/store/helpers";
+import { buildDatasetsMap } from "@/store/helpers";
 import type {
   DatasetRecord,
   MeasurementRecord,
@@ -68,6 +68,11 @@ const makeValue = (overrides: Partial<MeasurementValueRecord> = {}): Measurement
 });
 
 // ─── Tests ───────────────────────────────────────────────────────
+
+const buildDatasets = (...args: Parameters<typeof buildDatasetsMap>) => {
+  const result = buildDatasetsMap(...args);
+  return result.datasetIds.map(id => result.datasetsById[id]);
+};
 
 describe("buildDatasets", () => {
   // --- Empty / minimal inputs ---

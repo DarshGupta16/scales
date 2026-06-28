@@ -12,7 +12,10 @@ interface UnitsModalProps {
 }
 
 export function UnitsModal({ isOpen, onClose, zIndex }: UnitsModalProps) {
-  const { units, addUnit, updateUnit, removeUnit } = useDatasetStore();
+  const units = useDatasetStore((state) => state.unitIds.map((id) => state.unitsById[id]));
+  const addUnit = useDatasetStore((state) => state.addUnit);
+  const updateUnit = useDatasetStore((state) => state.updateUnit);
+  const removeUnit = useDatasetStore((state) => state.removeUnit);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editSymbol, setEditSymbol] = useState("");

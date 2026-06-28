@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { db } from "./lib/dexieDb";
-import { buildDatasets } from "./store/helpers";
+import { buildDatasetsMap } from "./store/helpers";
+import { backgroundState } from "./store/dirtyTracking";
 import { createDatasetSlice } from "./store/slices/datasetSlice";
 import { createMeasurementSlice } from "./store/slices/measurementSlice";
 import { createPreferencesSlice } from "./store/slices/preferencesSlice";
@@ -12,13 +13,17 @@ import { setupSubscriptions } from "./utils/subscriptions";
 let subscriptionsSetup = false;
 
 export const useDatasetStore = create<DatasetState>((set, get, ...args) => ({
-  datasets: [],
-  units: [],
+  datasetsById: {},
+  datasetIds: [],
+  unitsById: {},
+  unitIds: [],
+  measurementToDatasetMap: {},
   preferences: [],
   selectedDatasetId: null,
   isLoading: false,
   error: null,
   isHydrated: false,
+  isFullyPopulated: false,
 
   hydrate: async () => {
     if (get().isHydrated) return;
@@ -39,34 +44,62 @@ export const useDatasetStore = create<DatasetState>((set, get, ...args) => ({
     }
 
     try {
-      // 3. Load initial state from DEXIE (Fast local-first start)
+      // 3. Stage A - Fast Hydration (blocking)
       const [
         datasetRecords,
         metricRecords,
         unitRecords,
         measurementRecords,
-        valueRecords,
         preferenceRecords,
       ] = await Promise.all([
         db.datasets.toArray(),
         db.metrics.toArray(),
         db.units.toArray(),
         db.measurements.toArray(),
-        db.measurement_values.toArray(),
         db.preferences.toArray(),
       ]);
 
-      const datasets = buildDatasets(
+      // Collect IDs for the latest 7 measurements of each dataset
+      const mByDataset = new Map<string, typeof measurementRecords>();
+      for (const m of measurementRecords) {
+        const list = mByDataset.get(m.datasetId);
+        if (list) list.push(m);
+        else mByDataset.set(m.datasetId, [m]);
+      }
+
+      const recentMeasurementIds = new Set<string>();
+      for (const [_, list] of mByDataset.entries()) {
+        const sorted = list.sort((a, b) => b.timestamp - a.timestamp);
+        const top7 = sorted.slice(0, 7);
+        for (const m of top7) recentMeasurementIds.add(m.id);
+      }
+
+      const valueRecordsFast = await db.measurement_values
+        .where("measurementId")
+        .anyOf([...recentMeasurementIds])
+        .toArray();
+
+      const fastResult = buildDatasetsMap(
         datasetRecords,
         metricRecords,
         unitRecords,
         measurementRecords,
-        valueRecords,
+        valueRecordsFast,
       );
 
+      const unitsById: Record<string, typeof unitRecords[0]> = {};
+      const unitIds: string[] = [];
+      for (const u of unitRecords) {
+        unitsById[u.id] = u;
+        unitIds.push(u.id);
+      }
+
       set({
-        datasets,
-        units: unitRecords,
+        datasetsById: fastResult.datasetsById,
+        datasetIds: fastResult.datasetIds,
+        measurementToDatasetMap: fastResult.measurementToDatasetMap,
+        unitsById,
+        unitIds,
         preferences: preferenceRecords,
         isHydrated: true,
       });
@@ -75,6 +108,66 @@ export const useDatasetStore = create<DatasetState>((set, get, ...args) => ({
       if (unitRecords.length === 0) {
         await get().populateDefaultUnits();
       }
+
+      // Stage B - Background Population (non-blocking)
+      (async () => {
+        try {
+          backgroundState.isPopulating = true;
+          const allValueRecords = await db.measurement_values.toArray();
+          const fullResult = buildDatasetsMap(
+            datasetRecords,
+            metricRecords,
+            unitRecords,
+            measurementRecords,
+            allValueRecords,
+          );
+
+          // Re-fetch any datasets that were dirtied during background load
+          if (backgroundState.dirtyDatasetIds.size > 0) {
+            const dirtyDatasetIds = [...backgroundState.dirtyDatasetIds];
+            
+            const dirtyDatasets = await db.datasets.where("id").anyOf(dirtyDatasetIds).toArray();
+            const dirtyMetrics = await db.metrics.where("datasetId").anyOf(dirtyDatasetIds).toArray();
+            const dirtyMeasurements = await db.measurements.where("datasetId").anyOf(dirtyDatasetIds).toArray();
+            
+            const dirtyMeasurementIds = dirtyMeasurements.map(m => m.id);
+            const dirtyValues = dirtyMeasurementIds.length > 0 
+              ? await db.measurement_values.where("measurementId").anyOf(dirtyMeasurementIds).toArray()
+              : [];
+              
+            const dirtyUnits = await db.units.toArray(); // Keep simple
+            
+            const dirtyResult = buildDatasetsMap(dirtyDatasets, dirtyMetrics, dirtyUnits, dirtyMeasurements, dirtyValues);
+            
+            // Merge dirty result over full result
+            for (const id of dirtyDatasetIds) {
+               if (dirtyResult.datasetsById[id]) {
+                 fullResult.datasetsById[id] = dirtyResult.datasetsById[id];
+               } else {
+                 delete fullResult.datasetsById[id];
+                 fullResult.datasetIds = fullResult.datasetIds.filter(did => did !== id);
+               }
+            }
+            
+            for (const m of dirtyMeasurements) {
+               fullResult.measurementToDatasetMap[m.id] = m.datasetId;
+            }
+          }
+
+          useDatasetStore.setState({
+            datasetsById: fullResult.datasetsById,
+            datasetIds: fullResult.datasetIds,
+            measurementToDatasetMap: fullResult.measurementToDatasetMap,
+            isFullyPopulated: true,
+          });
+          
+          backgroundState.dirtyDatasetIds.clear();
+          backgroundState.isPopulating = false;
+        } catch (bgErr) {
+          console.error("Background population failed:", bgErr);
+          backgroundState.isPopulating = false;
+        }
+      })();
 
       // 5. Perform Full Sync (Two-way)
       await get().localToPbSync();

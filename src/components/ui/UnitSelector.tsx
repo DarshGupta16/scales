@@ -11,7 +11,7 @@ interface UnitSelectorProps {
 }
 
 export function UnitSelector({ value, onChange }: UnitSelectorProps) {
-  const { units } = useDatasetStore();
+  const units = useDatasetStore((state) => state.unitIds.map((id) => state.unitsById[id]));
   const [isOpen, setIsOpen] = useState(false);
   const [isUnitsModalOpen, setIsUnitsModalOpen] = useState(false);
   const [search, setSearch] = useState("");

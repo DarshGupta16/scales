@@ -4,6 +4,7 @@ import { pb } from "../../lib/pocketbase";
 import type { Dataset, DatasetRecord, MetricRecord } from "../../types/dataset";
 import { tryPbOrQueue } from "../pbSync";
 import type { DatasetState } from "../types";
+import { backgroundState } from "../dirtyTracking";
 
 export interface DatasetSlice {
   addDataset: (dataset: Dataset) => Promise<void>;
@@ -19,10 +20,16 @@ export const createDatasetSlice: StateCreator<
   Pick<DatasetState, "addDataset" | "updateDataset" | "removeDataset" | "setSelectedDatasetId">
 > = (set, get) => ({
   addDataset: async (dataset) => {
-    const previousDatasets = get().datasets;
+    const previousDatasetsById = get().datasetsById;
+    const previousDatasetIds = get().datasetIds;
+
+    if (backgroundState.isPopulating) backgroundState.dirtyDatasetIds.add(dataset.id);
 
     // 1. ZUSTAND: Optimistic Update
-    set((state) => ({ datasets: [dataset, ...state.datasets] }));
+    set((state) => ({
+      datasetsById: { ...state.datasetsById, [dataset.id]: dataset },
+      datasetIds: [dataset.id, ...state.datasetIds],
+    }));
 
     try {
       const datasetRecord: DatasetRecord = {
@@ -85,18 +92,19 @@ export const createDatasetSlice: StateCreator<
         },
       );
     } catch (err) {
-      set({ datasets: previousDatasets });
-      set({ error: (err as Error).message });
+      set({ datasetsById: previousDatasetsById, datasetIds: previousDatasetIds, error: (err as Error).message });
       console.error("Failed to persist dataset (PB/Dexie):", err);
     }
   },
 
   updateDataset: async (updatedDataset) => {
-    const previousDatasets = get().datasets;
+    const previousDatasetsById = get().datasetsById;
+
+    if (backgroundState.isPopulating) backgroundState.dirtyDatasetIds.add(updatedDataset.id);
 
     // 1. ZUSTAND: Optimistic Update
     set((state) => ({
-      datasets: state.datasets.map((d) => (d.id === updatedDataset.id ? updatedDataset : d)),
+      datasetsById: { ...state.datasetsById, [updatedDataset.id]: updatedDataset },
     }));
 
     try {
@@ -130,17 +138,23 @@ export const createDatasetSlice: StateCreator<
         },
       );
     } catch (err) {
-      set({ datasets: previousDatasets });
-      set({ error: (err as Error).message });
+      set({ datasetsById: previousDatasetsById, error: (err as Error).message });
     }
   },
 
   removeDataset: async (id) => {
-    const previousDatasets = get().datasets;
+    const previousDatasetsById = get().datasetsById;
+    const previousDatasetIds = get().datasetIds;
 
-    set((state) => ({
-      datasets: state.datasets.filter((d) => d.id !== id),
-    }));
+    if (backgroundState.isPopulating) backgroundState.dirtyDatasetIds.add(id);
+
+    set((state) => {
+      const { [id]: _, ...rest } = state.datasetsById;
+      return {
+        datasetsById: rest,
+        datasetIds: state.datasetIds.filter((dId) => dId !== id),
+      };
+    });
 
     try {
       // 2. DEXIE: Local Persistence
@@ -170,8 +184,7 @@ export const createDatasetSlice: StateCreator<
         },
       );
     } catch (err) {
-      set({ datasets: previousDatasets });
-      set({ error: (err as Error).message });
+      set({ datasetsById: previousDatasetsById, datasetIds: previousDatasetIds, error: (err as Error).message });
     }
   },
 

@@ -1,5 +1,5 @@
 import { db } from "../../lib/dexieDb";
-import { buildDatasets } from "../helpers";
+import { buildDatasetsMap } from "../helpers";
 import type { DatasetState } from "../types";
 
 export const reloadFromDexieStrategy = async (
@@ -15,9 +15,20 @@ export const reloadFromDexieStrategy = async (
       db.preferences.toArray(),
     ]);
 
+    const result = buildDatasetsMap(allDs, allMet, allUnits, allM, allVal);
+    const unitsById: Record<string, typeof allUnits[0]> = {};
+    const unitIds: string[] = [];
+    for (const u of allUnits) {
+      unitsById[u.id] = u;
+      unitIds.push(u.id);
+    }
+
     set({
-      datasets: buildDatasets(allDs, allMet, allUnits, allM, allVal),
-      units: allUnits,
+      datasetsById: result.datasetsById,
+      datasetIds: result.datasetIds,
+      measurementToDatasetMap: result.measurementToDatasetMap,
+      unitsById,
+      unitIds,
       preferences: allPref,
     });
   } catch (err) {

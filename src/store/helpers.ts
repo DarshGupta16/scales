@@ -27,13 +27,19 @@ const UNKNOWN_UNIT: UnitRecord = {
  * - Measurements that still have an inline `value` but no measurement_values get a synthesized value.
  */
 // Tested in tests/store/helpers.test.ts
-export const buildDatasets = (
+export interface BuildResult {
+  datasetsById: Record<string, Dataset>;
+  datasetIds: string[];
+  measurementToDatasetMap: Record<string, string>;
+}
+
+export const buildDatasetsMap = (
   datasetRecords: DatasetRecord[],
   metricRecords: MetricRecord[],
   unitRecords: UnitRecord[],
   measurementRecords: MeasurementRecord[],
   valueRecords: MeasurementValueRecord[],
-): Dataset[] => {
+): BuildResult => {
   // Pre-build lookup indices
   const unitMap = new Map(unitRecords.map((u) => [u.id, u]));
 
@@ -44,8 +50,10 @@ export const buildDatasets = (
     else metricsByDataset.set(m.datasetId, [m]);
   }
 
+  const measurementToDatasetMap: Record<string, string> = {};
   const measurementsByDataset = new Map<string, MeasurementRecord[]>();
   for (const m of measurementRecords) {
+    measurementToDatasetMap[m.id] = m.datasetId;
     const list = measurementsByDataset.get(m.datasetId);
     if (list) list.push(m);
     else measurementsByDataset.set(m.datasetId, [m]);
@@ -58,7 +66,10 @@ export const buildDatasets = (
     else valuesByMeasurement.set(v.measurementId, [v]);
   }
 
-  return datasetRecords.map((d) => {
+  const datasetsById: Record<string, Dataset> = {};
+  const datasetIds: string[] = [];
+
+  for (const d of datasetRecords) {
     // 1. Resolve metrics for this dataset
     let rawMetrics = metricsByDataset.get(d.id) || [];
 
@@ -139,7 +150,7 @@ export const buildDatasets = (
     // 4. Determine primary unit (first metric)
     const primaryUnit = metrics[0]?.unit || UNKNOWN_UNIT;
 
-    return {
+    const dataset: Dataset = {
       id: d.id,
       title: d.title,
       description: d.description,
@@ -152,5 +163,10 @@ export const buildDatasets = (
       unit: primaryUnit,
       latestMeasurement: sortedMeasurements[0],
     };
-  });
+
+    datasetsById[d.id] = dataset;
+    datasetIds.push(d.id);
+  }
+
+  return { datasetsById, datasetIds, measurementToDatasetMap };
 };

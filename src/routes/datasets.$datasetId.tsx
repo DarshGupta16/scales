@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useDatasetStore } from "@/store";
 import { AddMeasurementModal } from "../components/datasets/AddMeasurementModal";
 import { DatasetDetailNotFound } from "../components/datasets/DatasetDetailNotFound";
@@ -19,11 +19,10 @@ export const Route = createFileRoute("/datasets/$datasetId")({
 
 function DatasetDetail() {
   const { datasetId } = Route.useParams();
-  const { datasets, updateDataset, removeDataset, addMeasurement } = useDatasetStore();
-
-  const dataset = useMemo(() => {
-    return datasets.find((d) => d.id === datasetId);
-  }, [datasets, datasetId]);
+  const dataset = useDatasetStore((state) => state.datasetsById[datasetId]);
+  const updateDataset = useDatasetStore((state) => state.updateDataset);
+  const removeDataset = useDatasetStore((state) => state.removeDataset);
+  const addMeasurement = useDatasetStore((state) => state.addMeasurement);
 
   const { timeline, setTimeline, customRange, setCustomRange, filteredMeasurements } =
     useTemporalFilter(dataset?.measurements || []);

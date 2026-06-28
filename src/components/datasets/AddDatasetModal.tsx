@@ -13,7 +13,7 @@ interface AddDatasetModalProps {
 }
 
 export function AddDatasetModal({ isOpen, onClose, onAdd }: AddDatasetModalProps) {
-  const { units } = useDatasetStore();
+  const units = useDatasetStore((state) => state.unitIds.map(id => state.unitsById[id]));
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [type, setType] = useState<"single" | "composite">("single");

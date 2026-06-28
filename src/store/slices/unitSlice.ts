@@ -2,6 +2,7 @@ import type { StateCreator } from "zustand";
 import { db } from "../../lib/dexieDb";
 import { pb } from "../../lib/pocketbase";
 import { tryPbOrQueue } from "../pbSync";
+import type { Unit } from "../../types/dataset";
 import type { DatasetState } from "../types";
 
 export const createUnitSlice: StateCreator<
@@ -57,7 +58,13 @@ export const createUnitSlice: StateCreator<
     ];
 
     // 1. ZUSTAND
-    set({ units: defaultUnits });
+    const unitsById: Record<string, Unit> = {};
+    const unitIds: string[] = [];
+    for (const u of defaultUnits) {
+      unitsById[u.id] = u;
+      unitIds.push(u.id);
+    }
+    set({ unitsById, unitIds });
 
     try {
       // 2. DEXIE
@@ -89,11 +96,15 @@ export const createUnitSlice: StateCreator<
   },
 
   addUnit: async (unit) => {
-    const previousUnits = get().units;
+    const previousUnitsById = get().unitsById;
+    const previousUnitIds = get().unitIds;
     const unitWithTime = { ...unit, created: Date.now(), updated: Date.now() };
 
     // 1. ZUSTAND: Optimistic Update
-    set((state) => ({ units: [...state.units, unitWithTime] }));
+    set((state) => ({ 
+      unitsById: { ...state.unitsById, [unit.id]: unitWithTime },
+      unitIds: [...state.unitIds, unit.id],
+    }));
 
     try {
       // 2. DEXIE: Local Persistence
@@ -107,24 +118,28 @@ export const createUnitSlice: StateCreator<
         { collection: "units", action: "create", recordId: unit.id, data: unit },
       );
     } catch (err) {
-      set({ units: previousUnits });
-      set({ error: (err as Error).message });
+      set({ unitsById: previousUnitsById, unitIds: previousUnitIds, error: (err as Error).message });
       console.error("Failed to persist unit (PB/Dexie):", err);
     }
   },
 
   updateUnit: async (unit) => {
-    const previousUnits = get().units;
-    const previousDatasets = get().datasets;
+    const previousUnitsById = get().unitsById;
+    const previousDatasetsById = get().datasetsById;
     const unitWithTime = { ...unit, updated: Date.now() };
 
     // 1. ZUSTAND: Optimistic Update
-    set((state) => ({
-      units: state.units.map((u) => (u.id === unit.id ? unitWithTime : u)),
-      datasets: state.datasets.map((d) =>
-        d.unit.id === unit.id ? { ...d, unit: unitWithTime } : d,
-      ),
-    }));
+    set((state) => {
+      const newUnitsById = { ...state.unitsById, [unit.id]: unitWithTime };
+      const newDatasetsById = { ...state.datasetsById };
+      for (const did of state.datasetIds) {
+        const d = newDatasetsById[did];
+        if (d.unit.id === unit.id) {
+          newDatasetsById[did] = { ...d, unit: unitWithTime };
+        }
+      }
+      return { unitsById: newUnitsById, datasetsById: newDatasetsById };
+    });
 
     try {
       // 2. DEXIE: Local Persistence
@@ -138,19 +153,29 @@ export const createUnitSlice: StateCreator<
         { collection: "units", action: "update", recordId: unit.id, data: unit },
       );
     } catch (err) {
-      set({ units: previousUnits, datasets: previousDatasets });
-      set({ error: (err as Error).message });
+      set({ unitsById: previousUnitsById, datasetsById: previousDatasetsById, error: (err as Error).message });
       console.error("Failed to update unit (PB/Dexie):", err);
     }
   },
 
   removeUnit: async (id) => {
-    const previousUnits = get().units;
+    const dependents = await db.metrics.where("unitId").equals(id).count();
+    if (dependents > 0) {
+      set({ error: "Cannot delete unit: it is still used by one or more metrics." });
+      return;
+    }
+
+    const previousUnitsById = get().unitsById;
+    const previousUnitIds = get().unitIds;
 
     // 1. ZUSTAND: Optimistic Update
-    set((state) => ({
-      units: state.units.filter((u) => u.id !== id),
-    }));
+    set((state) => {
+      const { [id]: _, ...rest } = state.unitsById;
+      return {
+        unitsById: rest,
+        unitIds: state.unitIds.filter((u) => u !== id),
+      };
+    });
 
     try {
       // 2. DEXIE: Local Persistence
@@ -164,8 +189,7 @@ export const createUnitSlice: StateCreator<
         { collection: "units", action: "delete", recordId: id, data: null },
       );
     } catch (err) {
-      set({ units: previousUnits });
-      set({ error: (err as Error).message });
+      set({ unitsById: previousUnitsById, unitIds: previousUnitIds, error: (err as Error).message });
       console.error("Failed to remove unit (PB/Dexie):", err);
     }
   },

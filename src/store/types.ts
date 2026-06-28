@@ -7,13 +7,17 @@ export type Preference = PreferenceRecord;
 export type PreferenceOp = "upsert" | "delete";
 
 export interface DatasetState extends SyncSlice, MeasurementSlice {
-  datasets: Dataset[];
-  units: Unit[];
+  datasetsById: Record<string, Dataset>;
+  datasetIds: string[];
+  unitsById: Record<string, Unit>;
+  unitIds: string[];
+  measurementToDatasetMap: Record<string, string>;
   preferences: Preference[];
   selectedDatasetId: string | null;
   isLoading: boolean;
   error: string | null;
   isHydrated: boolean;
+  isFullyPopulated: boolean;
 
   // Actions
   hydrate: () => Promise<void>;

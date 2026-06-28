@@ -1,6 +1,6 @@
 import { db } from "../../lib/dexieDb";
 import { pb } from "../../lib/pocketbase";
-import { buildDatasets } from "../helpers";
+import { buildDatasetsMap } from "../helpers";
 import {
   mapPbDataset,
   mapPbMeasurement,
@@ -32,16 +32,27 @@ export const pbToLocalSyncStrategy = async (
     const unitRecords = pbUnits.map(mapPbUnit);
     const preferenceRecords = pbPreferences.map(mapPbPreference);
 
-    const datasets = buildDatasets(
+    const result = buildDatasetsMap(
       datasetRecords,
       metricRecords,
       unitRecords,
       measurementRecords,
       valueRecords,
     );
+    
+    const unitsById: Record<string, typeof unitRecords[0]> = {};
+    const unitIds: string[] = [];
+    for (const u of unitRecords) {
+      unitsById[u.id] = u;
+      unitIds.push(u.id);
+    }
+    
     set({
-      datasets,
-      units: unitRecords,
+      datasetsById: result.datasetsById,
+      datasetIds: result.datasetIds,
+      measurementToDatasetMap: result.measurementToDatasetMap,
+      unitsById,
+      unitIds,
       preferences: preferenceRecords,
       isLoading: false,
       isHydrated: true,

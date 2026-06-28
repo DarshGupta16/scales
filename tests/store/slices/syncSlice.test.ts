@@ -459,10 +459,10 @@ describe("pbToLocalSync", () => {
     const state = store.getState();
     expect(state.isLoading).toBe(false);
     expect(state.isHydrated).toBe(true);
-    expect(state.datasets).toHaveLength(1);
-    expect(state.datasets[0].title).toBe("W");
-    expect(state.units).toHaveLength(1);
-    expect(state.units[0].name).toBe("Kg");
+    expect(state.datasetIds).toHaveLength(1);
+    expect(state.datasetsById["ds1"].title).toBe("W");
+    expect(state.unitIds).toHaveLength(1);
+    expect(state.unitsById["u1"].name).toBe("Kg");
   });
 
   test("clears and repopulates all Dexie tables", async () => {
@@ -641,8 +641,8 @@ describe("pbDeltaSync", () => {
     await store.getState().pbDeltaSync();
 
     const state = store.getState();
-    expect(state.units).toHaveLength(1);
-    expect(state.units[0].name).toBe("Kg");
+    expect(state.unitIds).toHaveLength(1);
+    expect(state.unitsById["u1"].name).toBe("Kg");
   });
 
   test("updates last_sync_time preference on success", async () => {

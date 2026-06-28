@@ -5,6 +5,7 @@ import type { Measurement, MeasurementRecord, MeasurementValueRecord } from "../
 import { generatePbId } from "../../utils/id";
 import { tryPbOrQueue } from "../pbSync";
 import type { DatasetState } from "../types";
+import { backgroundState } from "../dirtyTracking";
 
 export interface MeasurementSlice {
   addMeasurement: (datasetId: string, measurement: Measurement) => Promise<void>;
@@ -17,14 +18,26 @@ export const createMeasurementSlice: StateCreator<DatasetState, [], [], Measurem
   get,
 ) => ({
   addMeasurement: async (datasetId, measurement) => {
-    const previousDatasets = get().datasets;
+    const previousDatasetsById = get().datasetsById;
+    const previousMeasurementToDatasetMap = get().measurementToDatasetMap;
+
+    if (backgroundState.isPopulating) backgroundState.dirtyDatasetIds.add(datasetId);
 
     // 1. ZUSTAND: Optimistic Update
-    set((state) => ({
-      datasets: state.datasets.map((d) =>
-        d.id === datasetId ? { ...d, measurements: [measurement, ...d.measurements] } : d,
-      ),
-    }));
+    set((state) => {
+      const dataset = state.datasetsById[datasetId];
+      if (!dataset) return state;
+      return {
+        datasetsById: {
+          ...state.datasetsById,
+          [datasetId]: { ...dataset, measurements: [measurement, ...dataset.measurements] },
+        },
+        measurementToDatasetMap: {
+          ...state.measurementToDatasetMap,
+          [measurement.id]: datasetId,
+        },
+      };
+    });
 
     try {
       const measurementRecord: MeasurementRecord = {
@@ -79,22 +92,36 @@ export const createMeasurementSlice: StateCreator<DatasetState, [], [], Measurem
         },
       );
     } catch (err) {
-      set({ datasets: previousDatasets });
-      set({ error: (err as Error).message });
+      set({ datasetsById: previousDatasetsById, measurementToDatasetMap: previousMeasurementToDatasetMap, error: (err as Error).message });
       console.error("Failed to add measurement:", err);
     }
   },
 
   removeMeasurement: async (id) => {
-    const previousDatasets = get().datasets;
+    const previousDatasetsById = get().datasetsById;
+    const previousMeasurementToDatasetMap = get().measurementToDatasetMap;
+    const datasetId = previousMeasurementToDatasetMap[id];
+
+    if (datasetId && backgroundState.isPopulating) backgroundState.dirtyDatasetIds.add(datasetId);
 
     // 1. ZUSTAND: Optimistic Update
-    set((state) => ({
-      datasets: state.datasets.map((d) => ({
-        ...d,
-        measurements: d.measurements.filter((m) => m.id !== id),
-      })),
-    }));
+    set((state) => {
+      const dId = state.measurementToDatasetMap[id];
+      if (!dId) return state;
+      const dataset = state.datasetsById[dId];
+      if (!dataset) return state;
+      const { [id]: _, ...restMap } = state.measurementToDatasetMap;
+      return {
+        datasetsById: {
+          ...state.datasetsById,
+          [dId]: {
+            ...dataset,
+            measurements: dataset.measurements.filter((m) => m.id !== id),
+          },
+        },
+        measurementToDatasetMap: restMap,
+      };
+    });
 
     try {
       // 2. DEXIE: Local Persistence
@@ -116,22 +143,45 @@ export const createMeasurementSlice: StateCreator<DatasetState, [], [], Measurem
         },
       );
     } catch (err) {
-      set({ datasets: previousDatasets });
-      set({ error: (err as Error).message });
+      set({ datasetsById: previousDatasetsById, measurementToDatasetMap: previousMeasurementToDatasetMap, error: (err as Error).message });
     }
   },
 
   removeMeasurements: async (ids) => {
-    const previousDatasets = get().datasets;
+    const previousDatasetsById = get().datasetsById;
+    const previousMeasurementToDatasetMap = get().measurementToDatasetMap;
     const idsSet = new Set(ids);
 
+    const affectedDatasetIds = new Set<string>();
+    for (const id of ids) {
+      if (previousMeasurementToDatasetMap[id]) affectedDatasetIds.add(previousMeasurementToDatasetMap[id]);
+    }
+    
+    if (backgroundState.isPopulating) {
+      for (const dId of affectedDatasetIds) backgroundState.dirtyDatasetIds.add(dId);
+    }
+
     // 1. ZUSTAND: Optimistic Update
-    set((state) => ({
-      datasets: state.datasets.map((d) => ({
-        ...d,
-        measurements: d.measurements.filter((m) => !idsSet.has(m.id)),
-      })),
-    }));
+    set((state) => {
+      const newDatasetsById = { ...state.datasetsById };
+      const newMap = { ...state.measurementToDatasetMap };
+
+      for (const id of ids) {
+        const dId = newMap[id];
+        if (dId && newDatasetsById[dId]) {
+          newDatasetsById[dId] = {
+            ...newDatasetsById[dId],
+            measurements: newDatasetsById[dId].measurements.filter((m) => !idsSet.has(m.id)),
+          };
+        }
+        delete newMap[id];
+      }
+
+      return {
+        datasetsById: newDatasetsById,
+        measurementToDatasetMap: newMap,
+      };
+    });
 
     try {
       // 2. DEXIE: Local Persistence
@@ -157,8 +207,7 @@ export const createMeasurementSlice: StateCreator<DatasetState, [], [], Measurem
         ),
       );
     } catch (err) {
-      set({ datasets: previousDatasets });
-      set({ error: (err as Error).message });
+      set({ datasetsById: previousDatasetsById, measurementToDatasetMap: previousMeasurementToDatasetMap, error: (err as Error).message });
     }
   },
 });
