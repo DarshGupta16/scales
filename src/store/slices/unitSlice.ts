@@ -1,8 +1,8 @@
 import type { StateCreator } from "zustand";
 import { db } from "../../lib/dexieDb";
 import { pb } from "../../lib/pocketbase";
-import { tryPbOrQueue } from "../pbSync";
 import type { Unit } from "../../types/dataset";
+import { tryPbOrQueue } from "../pbSync";
 import type { DatasetState } from "../types";
 
 export const createUnitSlice: StateCreator<
@@ -101,7 +101,7 @@ export const createUnitSlice: StateCreator<
     const unitWithTime = { ...unit, created: Date.now(), updated: Date.now() };
 
     // 1. ZUSTAND: Optimistic Update
-    set((state) => ({ 
+    set((state) => ({
       unitsById: { ...state.unitsById, [unit.id]: unitWithTime },
       unitIds: [...state.unitIds, unit.id],
     }));
@@ -118,7 +118,12 @@ export const createUnitSlice: StateCreator<
         { collection: "units", action: "create", recordId: unit.id, data: unit },
       );
     } catch (err) {
-      set({ unitsById: previousUnitsById, unitIds: previousUnitIds, error: (err as Error).message });
+      set({
+        unitsById: previousUnitsById,
+        unitIds: previousUnitIds,
+        error: (err as Error).message,
+      });
+      await db.units.delete(unit.id);
       console.error("Failed to persist unit (PB/Dexie):", err);
     }
   },
@@ -141,7 +146,9 @@ export const createUnitSlice: StateCreator<
       return { unitsById: newUnitsById, datasetsById: newDatasetsById };
     });
 
+    let prevUnit: Unit | undefined;
     try {
+      prevUnit = await db.units.get(unit.id);
       // 2. DEXIE: Local Persistence
       await db.units.put(unitWithTime);
 
@@ -153,7 +160,12 @@ export const createUnitSlice: StateCreator<
         { collection: "units", action: "update", recordId: unit.id, data: unit },
       );
     } catch (err) {
-      set({ unitsById: previousUnitsById, datasetsById: previousDatasetsById, error: (err as Error).message });
+      set({
+        unitsById: previousUnitsById,
+        datasetsById: previousDatasetsById,
+        error: (err as Error).message,
+      });
+      if (prevUnit) await db.units.put(prevUnit);
       console.error("Failed to update unit (PB/Dexie):", err);
     }
   },
@@ -177,7 +189,9 @@ export const createUnitSlice: StateCreator<
       };
     });
 
+    let prevUnit: Unit | undefined;
     try {
+      prevUnit = await db.units.get(id);
       // 2. DEXIE: Local Persistence
       await db.units.delete(id);
 
@@ -189,7 +203,12 @@ export const createUnitSlice: StateCreator<
         { collection: "units", action: "delete", recordId: id, data: null },
       );
     } catch (err) {
-      set({ unitsById: previousUnitsById, unitIds: previousUnitIds, error: (err as Error).message });
+      set({
+        unitsById: previousUnitsById,
+        unitIds: previousUnitIds,
+        error: (err as Error).message,
+      });
+      if (prevUnit) await db.units.put(prevUnit);
       console.error("Failed to remove unit (PB/Dexie):", err);
     }
   },

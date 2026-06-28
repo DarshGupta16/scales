@@ -12,12 +12,20 @@ export async function tryPbOrQueue(
   try {
     await pbFn();
   } catch (err: unknown) {
-    if (err && typeof err === "object" && "status" in err && err.status === 0) {
+    if (
+      err &&
+      typeof err === "object" &&
+      "status" in err &&
+      (err.status === 0 ||
+        (typeof err.status === "number" && err.status >= 500 && err.status < 600))
+    ) {
       await db.offline_ops.add({
         ...offlineOp,
         timestamp: Date.now(),
       });
-      console.warn(`Offline: Recorded ${offlineOp.action} for ${offlineOp.collection} in op logs.`);
+      console.warn(
+        `Offline/Server Error: Recorded ${offlineOp.action} for ${offlineOp.collection} in op logs.`,
+      );
     } else {
       throw err;
     }

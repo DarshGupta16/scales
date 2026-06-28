@@ -76,7 +76,9 @@ export const localToPbSyncStrategy = async (): Promise<void> => {
           }
         } catch (err: unknown) {
           if (err && typeof err === "object" && "status" in err && err.status === 400) {
-            console.warn(`Idempotency: Ignored 400 Bad Request for create ${op.recordId} in ${op.collection}`);
+            console.warn(
+              `Idempotency: Ignored 400 Bad Request for create ${op.recordId} in ${op.collection}`,
+            );
           } else {
             throw err;
           }
@@ -96,7 +98,9 @@ export const localToPbSyncStrategy = async (): Promise<void> => {
           }
         } catch (err: unknown) {
           if (err && typeof err === "object" && "status" in err && err.status === 404) {
-            console.warn(`Idempotency: Ignored 404 Not Found for update ${op.recordId} in ${op.collection}`);
+            console.warn(
+              `Idempotency: Ignored 404 Not Found for update ${op.recordId} in ${op.collection}`,
+            );
           } else {
             throw err;
           }

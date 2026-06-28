@@ -170,3 +170,36 @@ export const buildDatasetsMap = (
 
   return { datasetsById, datasetIds, measurementToDatasetMap };
 };
+
+export const buildHydrationPayload = (
+  datasetRecords: DatasetRecord[],
+  metricRecords: MetricRecord[],
+  unitRecords: UnitRecord[],
+  measurementRecords: MeasurementRecord[],
+  valueRecords: MeasurementValueRecord[],
+  preferenceRecords: any[],
+) => {
+  const result = buildDatasetsMap(
+    datasetRecords,
+    metricRecords,
+    unitRecords,
+    measurementRecords,
+    valueRecords,
+  );
+
+  const unitsById: Record<string, (typeof unitRecords)[0]> = {};
+  const unitIds: string[] = [];
+  for (const u of unitRecords) {
+    unitsById[u.id] = u;
+    unitIds.push(u.id);
+  }
+
+  return {
+    datasetsById: result.datasetsById,
+    datasetIds: result.datasetIds,
+    measurementToDatasetMap: result.measurementToDatasetMap,
+    unitsById,
+    unitIds,
+    preferences: preferenceRecords,
+  };
+};

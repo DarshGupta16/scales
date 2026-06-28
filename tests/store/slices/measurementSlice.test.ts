@@ -17,16 +17,30 @@ mock.module("@/lib/dexieDb", () => ({
   db: {
     transaction: mockTransaction,
     measurements: {
+      get: mock(() => Promise.resolve(null)),
+      put: mock(() => Promise.resolve()),
+      bulkPut: mock(() => Promise.resolve()),
       delete: mockDbMeasurementsDelete,
       bulkDelete: mockDbMeasurementsBulkDelete,
+      where: mock(() => ({
+        anyOf: mock(() => ({
+          toArray: mock(() => Promise.resolve([])),
+        })),
+        equals: mock(() => ({
+          toArray: mock(() => Promise.resolve([])),
+        })),
+      })),
     },
     measurement_values: {
+      bulkPut: mock(() => Promise.resolve()),
       where: mock(() => ({
         equals: mock(() => ({
           delete: mockDbValuesDelete,
+          toArray: mock(() => Promise.resolve([])),
         })),
         anyOf: mock(() => ({
           delete: mockDbValuesDelete,
+          toArray: mock(() => Promise.resolve([])),
         })),
       })),
     },
@@ -58,11 +72,14 @@ import type { Dataset } from "@/types/dataset";
 function createTestStore(initialDatasets: Dataset[] = []) {
   // biome-ignore lint/suspicious/noExplicitAny: Mocking partial store state for isolated slice testing
   return createStore<any>((set, get, api) => {
-    const datasetsById = initialDatasets.reduce((acc, ds) => ({ ...acc, [ds.id]: ds }), {} as Record<string, Dataset>);
-    const datasetIds = initialDatasets.map(ds => ds.id);
+    const datasetsById = initialDatasets.reduce(
+      (acc, ds) => ({ ...acc, [ds.id]: ds }),
+      {} as Record<string, Dataset>,
+    );
+    const datasetIds = initialDatasets.map((ds) => ds.id);
     const measurementToDatasetMap: Record<string, string> = {};
-    initialDatasets.forEach(ds => {
-      ds.measurements?.forEach(m => {
+    initialDatasets.forEach((ds) => {
+      ds.measurements?.forEach((m) => {
         measurementToDatasetMap[m.id] = ds.id;
       });
     });

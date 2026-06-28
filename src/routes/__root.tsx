@@ -4,8 +4,8 @@ import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { useEffect, useState } from "react";
 import { LoadingScreen } from "../components/LoadingScreen";
 import { Modals } from "../components/ui/Modals";
+import { db } from "../lib/dexieDb";
 import { useDatasetStore } from "../store";
-
 import appCss from "../styles.css?url";
 
 export const Route = createRootRoute({
@@ -62,10 +62,25 @@ function RootComponent() {
     // Start hydrating data from Dexie immediately on mount
     hydrate();
 
-    // Artificial delay to ensure hydration and rendering can happen
-    // behind the scenes before we reveal the UI on first load.
-    const timer = setTimeout(() => setIsLoading(false), 275);
-    return () => clearTimeout(timer);
+    let timer: ReturnType<typeof setTimeout>;
+    db.datasets
+      .count()
+      .then((count) => {
+        if (count === 0) {
+          // Artificial delay to ensure hydration and rendering can happen
+          // behind the scenes before we reveal the UI on first load when DB is empty.
+          timer = setTimeout(() => setIsLoading(false), 275);
+        } else {
+          setIsLoading(false);
+        }
+      })
+      .catch(() => {
+        setIsLoading(false);
+      });
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, [hydrate]);
 
   return (

@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { useDatasetStore } from "@/store";
 import { DatasetSettingsModal } from "../components/datasets/DatasetSettingsModal";
 import { DatasetView } from "../components/datasets/DatasetView";
@@ -14,7 +15,9 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const datasets = useDatasetStore((state) => state.datasetIds.map(id => state.datasetsById[id]));
+  const datasets = useDatasetStore(
+    useShallow((state) => state.datasetIds.map((id) => state.datasetsById[id])),
+  );
   const updateDataset = useDatasetStore((state) => state.updateDataset);
   const removeDataset = useDatasetStore((state) => state.removeDataset);
 

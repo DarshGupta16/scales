@@ -47,21 +47,17 @@ export async function runIntegrityCheck(): Promise<void> {
         danglingValueIds,
       });
 
-      await db.transaction(
-        "rw",
-        [db.metrics, db.measurements, db.measurement_values],
-        async () => {
-          if (danglingMetricIds.length > 0) {
-            await db.metrics.bulkDelete(danglingMetricIds);
-          }
-          if (danglingMeasurementIds.length > 0) {
-            await db.measurements.bulkDelete(danglingMeasurementIds);
-          }
-          if (danglingValueIds.length > 0) {
-            await db.measurement_values.bulkDelete(danglingValueIds);
-          }
-        },
-      );
+      await db.transaction("rw", [db.metrics, db.measurements, db.measurement_values], async () => {
+        if (danglingMetricIds.length > 0) {
+          await db.metrics.bulkDelete(danglingMetricIds);
+        }
+        if (danglingMeasurementIds.length > 0) {
+          await db.measurements.bulkDelete(danglingMeasurementIds);
+        }
+        if (danglingValueIds.length > 0) {
+          await db.measurement_values.bulkDelete(danglingValueIds);
+        }
+      });
       console.log("Integrity Check: Cleanup complete.");
     }
   } catch (err) {

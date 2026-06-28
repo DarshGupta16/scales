@@ -78,29 +78,59 @@ describe("tryPbOrQueue", () => {
     expect(ts).toBeLessThanOrEqual(after);
   });
 
-  test("does not queue when error has non-zero status", async () => {
-    const pbFn = mock(() => Promise.reject({ status: 500 }));
+  test("does not queue when error has 4xx status", async () => {
+    const pbFn = mock(() => Promise.reject({ status: 400 }));
 
-    await expect(tryPbOrQueue(pbFn, {
+    await expect(
+      tryPbOrQueue(pbFn, {
+        collection: "datasets" as const,
+        action: "create" as const,
+        recordId: "ds1",
+        data: null,
+      }),
+    ).rejects.toEqual({ status: 400 });
+
+    expect(mockAdd).not.toHaveBeenCalled();
+  });
+
+  test("queues offline op when error has 5xx status", async () => {
+    const pbFn = mock(() => Promise.reject({ status: 503 }));
+
+    const offlineOp = {
       collection: "datasets" as const,
       action: "create" as const,
       recordId: "ds1",
       data: null,
-    })).rejects.toEqual({ status: 500 });
+    };
 
-    expect(mockAdd).not.toHaveBeenCalled();
+    await tryPbOrQueue(pbFn, offlineOp);
+
+    expect(mockAdd).toHaveBeenCalledTimes(1);
+    const addedOp = mockAdd.mock.calls[0][0] as {
+      collection: string;
+      action: string;
+      recordId: string;
+      data: Record<string, unknown>;
+      timestamp: number;
+    };
+    expect(addedOp.collection).toBe("datasets");
+    expect(addedOp.action).toBe("create");
+    expect(addedOp.recordId).toBe("ds1");
+    expect(addedOp.data).toBeNull();
   });
 
   test("does not queue when error is a plain Error (no status)", async () => {
     const err = new Error("network issue");
     const pbFn = mock(() => Promise.reject(err));
 
-    await expect(tryPbOrQueue(pbFn, {
-      collection: "datasets" as const,
-      action: "create" as const,
-      recordId: "ds1",
-      data: null,
-    })).rejects.toThrow("network issue");
+    await expect(
+      tryPbOrQueue(pbFn, {
+        collection: "datasets" as const,
+        action: "create" as const,
+        recordId: "ds1",
+        data: null,
+      }),
+    ).rejects.toThrow("network issue");
 
     expect(mockAdd).not.toHaveBeenCalled();
   });
@@ -108,12 +138,14 @@ describe("tryPbOrQueue", () => {
   test("does not queue when error is a string", async () => {
     const pbFn = mock(() => Promise.reject("some error"));
 
-    await expect(tryPbOrQueue(pbFn, {
-      collection: "datasets" as const,
-      action: "create" as const,
-      recordId: "ds1",
-      data: null,
-    })).rejects.toEqual("some error");
+    await expect(
+      tryPbOrQueue(pbFn, {
+        collection: "datasets" as const,
+        action: "create" as const,
+        recordId: "ds1",
+        data: null,
+      }),
+    ).rejects.toEqual("some error");
 
     expect(mockAdd).not.toHaveBeenCalled();
   });
@@ -121,12 +153,14 @@ describe("tryPbOrQueue", () => {
   test("does not queue when error is null", async () => {
     const pbFn = mock(() => Promise.reject(null));
 
-    await expect(tryPbOrQueue(pbFn, {
-      collection: "datasets" as const,
-      action: "create" as const,
-      recordId: "ds1",
-      data: null,
-    })).rejects.toBeNull();
+    await expect(
+      tryPbOrQueue(pbFn, {
+        collection: "datasets" as const,
+        action: "create" as const,
+        recordId: "ds1",
+        data: null,
+      }),
+    ).rejects.toBeNull();
 
     expect(mockAdd).not.toHaveBeenCalled();
   });
@@ -146,7 +180,7 @@ describe("tryPbOrQueue", () => {
 
     await expect(
       tryPbOrQueue(
-        mock(() => Promise.reject({ status: 500 })),
+        mock(() => Promise.reject({ status: 503 })),
         {
           collection: "datasets" as const,
           action: "create" as const,
@@ -154,6 +188,18 @@ describe("tryPbOrQueue", () => {
           data: null,
         },
       ),
-    ).rejects.toEqual({ status: 500 });
+    ).resolves.toBeUndefined();
+
+    await expect(
+      tryPbOrQueue(
+        mock(() => Promise.reject({ status: 404 })),
+        {
+          collection: "datasets" as const,
+          action: "create" as const,
+          recordId: "x",
+          data: null,
+        },
+      ),
+    ).rejects.toEqual({ status: 404 });
   });
 });

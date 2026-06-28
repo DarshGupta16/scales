@@ -45,6 +45,7 @@ export const createPreferencesSlice: StateCreator<
       }));
     }
 
+    const prevPref = previousPreferences.find((p) => p.id === finalId);
     try {
       const currentPref = get().preferences.find((p) => p.id === finalId);
 
@@ -78,6 +79,11 @@ export const createPreferencesSlice: StateCreator<
     } catch (err) {
       set({ preferences: previousPreferences });
       set({ error: (err as Error).message });
+      if (finalOp === "create") {
+        await db.preferences.delete(finalId);
+      } else if (prevPref) {
+        await db.preferences.put(prevPref);
+      }
       console.error(`Failed to ${finalOp} preference (PB/Dexie):`, err);
     }
   },

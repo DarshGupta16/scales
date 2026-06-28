@@ -3,9 +3,9 @@ import { db } from "../../lib/dexieDb";
 import { pb } from "../../lib/pocketbase";
 import type { Measurement, MeasurementRecord, MeasurementValueRecord } from "../../types/dataset";
 import { generatePbId } from "../../utils/id";
+import { backgroundState } from "../dirtyTracking";
 import { tryPbOrQueue } from "../pbSync";
 import type { DatasetState } from "../types";
-import { backgroundState } from "../dirtyTracking";
 
 export interface MeasurementSlice {
   addMeasurement: (datasetId: string, measurement: Measurement) => Promise<void>;
@@ -92,7 +92,15 @@ export const createMeasurementSlice: StateCreator<DatasetState, [], [], Measurem
         },
       );
     } catch (err) {
-      set({ datasetsById: previousDatasetsById, measurementToDatasetMap: previousMeasurementToDatasetMap, error: (err as Error).message });
+      set({
+        datasetsById: previousDatasetsById,
+        measurementToDatasetMap: previousMeasurementToDatasetMap,
+        error: (err as Error).message,
+      });
+      await db.transaction("rw", db.measurements, db.measurement_values, async () => {
+        await db.measurements.delete(measurement.id);
+        await db.measurement_values.where("measurementId").equals(measurement.id).delete();
+      });
       console.error("Failed to add measurement:", err);
     }
   },
@@ -123,7 +131,13 @@ export const createMeasurementSlice: StateCreator<DatasetState, [], [], Measurem
       };
     });
 
+    let prevMeasurement: MeasurementRecord | undefined;
+    let prevValues: MeasurementValueRecord[] | undefined;
+
     try {
+      prevMeasurement = await db.measurements.get(id);
+      prevValues = await db.measurement_values.where("measurementId").equals(id).toArray();
+
       // 2. DEXIE: Local Persistence
       await db.transaction("rw", db.measurements, db.measurement_values, async () => {
         await db.measurements.delete(id);
@@ -143,7 +157,15 @@ export const createMeasurementSlice: StateCreator<DatasetState, [], [], Measurem
         },
       );
     } catch (err) {
-      set({ datasetsById: previousDatasetsById, measurementToDatasetMap: previousMeasurementToDatasetMap, error: (err as Error).message });
+      set({
+        datasetsById: previousDatasetsById,
+        measurementToDatasetMap: previousMeasurementToDatasetMap,
+        error: (err as Error).message,
+      });
+      await db.transaction("rw", db.measurements, db.measurement_values, async () => {
+        if (prevMeasurement) await db.measurements.put(prevMeasurement);
+        if (prevValues && prevValues.length > 0) await db.measurement_values.bulkPut(prevValues);
+      });
     }
   },
 
@@ -154,9 +176,10 @@ export const createMeasurementSlice: StateCreator<DatasetState, [], [], Measurem
 
     const affectedDatasetIds = new Set<string>();
     for (const id of ids) {
-      if (previousMeasurementToDatasetMap[id]) affectedDatasetIds.add(previousMeasurementToDatasetMap[id]);
+      if (previousMeasurementToDatasetMap[id])
+        affectedDatasetIds.add(previousMeasurementToDatasetMap[id]);
     }
-    
+
     if (backgroundState.isPopulating) {
       for (const dId of affectedDatasetIds) backgroundState.dirtyDatasetIds.add(dId);
     }
@@ -183,7 +206,13 @@ export const createMeasurementSlice: StateCreator<DatasetState, [], [], Measurem
       };
     });
 
+    let prevMeasurements: MeasurementRecord[] | undefined;
+    let prevValues: MeasurementValueRecord[] | undefined;
+
     try {
+      prevMeasurements = await db.measurements.where("id").anyOf(ids).toArray();
+      prevValues = await db.measurement_values.where("measurementId").anyOf(ids).toArray();
+
       // 2. DEXIE: Local Persistence
       await db.transaction("rw", db.measurements, db.measurement_values, async () => {
         await db.measurements.bulkDelete(ids);
@@ -207,7 +236,16 @@ export const createMeasurementSlice: StateCreator<DatasetState, [], [], Measurem
         ),
       );
     } catch (err) {
-      set({ datasetsById: previousDatasetsById, measurementToDatasetMap: previousMeasurementToDatasetMap, error: (err as Error).message });
+      set({
+        datasetsById: previousDatasetsById,
+        measurementToDatasetMap: previousMeasurementToDatasetMap,
+        error: (err as Error).message,
+      });
+      await db.transaction("rw", db.measurements, db.measurement_values, async () => {
+        if (prevMeasurements && prevMeasurements.length > 0)
+          await db.measurements.bulkPut(prevMeasurements);
+        if (prevValues && prevValues.length > 0) await db.measurement_values.bulkPut(prevValues);
+      });
     }
   },
 });

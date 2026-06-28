@@ -1,10 +1,16 @@
 import type { StateCreator } from "zustand";
 import { db } from "../../lib/dexieDb";
 import { pb } from "../../lib/pocketbase";
-import type { Dataset, DatasetRecord, MetricRecord } from "../../types/dataset";
+import type {
+  Dataset,
+  DatasetRecord,
+  MeasurementRecord,
+  MeasurementValueRecord,
+  MetricRecord,
+} from "../../types/dataset";
+import { backgroundState } from "../dirtyTracking";
 import { tryPbOrQueue } from "../pbSync";
 import type { DatasetState } from "../types";
-import { backgroundState } from "../dirtyTracking";
 
 export interface DatasetSlice {
   addDataset: (dataset: Dataset) => Promise<void>;
@@ -92,7 +98,16 @@ export const createDatasetSlice: StateCreator<
         },
       );
     } catch (err) {
-      set({ datasetsById: previousDatasetsById, datasetIds: previousDatasetIds, error: (err as Error).message });
+      set({
+        datasetsById: previousDatasetsById,
+        datasetIds: previousDatasetIds,
+        error: (err as Error).message,
+      });
+      await db.transaction("rw", db.datasets, db.metrics, async () => {
+        await db.datasets.delete(dataset.id);
+        const metricIds = dataset.metrics.map((m) => m.id);
+        await db.metrics.bulkDelete(metricIds);
+      });
       console.error("Failed to persist dataset (PB/Dexie):", err);
     }
   },
@@ -107,7 +122,9 @@ export const createDatasetSlice: StateCreator<
       datasetsById: { ...state.datasetsById, [updatedDataset.id]: updatedDataset },
     }));
 
+    let prevDataset: DatasetRecord | undefined;
     try {
+      prevDataset = await db.datasets.get(updatedDataset.id);
       const datasetRecord: DatasetRecord = {
         id: updatedDataset.id,
         title: updatedDataset.title,
@@ -139,6 +156,7 @@ export const createDatasetSlice: StateCreator<
       );
     } catch (err) {
       set({ datasetsById: previousDatasetsById, error: (err as Error).message });
+      if (prevDataset) await db.datasets.put(prevDataset);
     }
   },
 
@@ -156,7 +174,21 @@ export const createDatasetSlice: StateCreator<
       };
     });
 
+    let prevDataset: DatasetRecord | undefined;
+    let prevMetrics: MetricRecord[] | undefined;
+    let prevMeasurements: MeasurementRecord[] | undefined;
+    let prevValues: MeasurementValueRecord[] | undefined;
+
     try {
+      prevDataset = await db.datasets.get(id);
+      prevMetrics = await db.metrics.where("datasetId").equals(id).toArray();
+      prevMeasurements = await db.measurements.where("datasetId").equals(id).toArray();
+      const mIds = prevMeasurements.map((m) => m.id);
+      prevValues =
+        mIds.length > 0
+          ? await db.measurement_values.where("measurementId").anyOf(mIds).toArray()
+          : [];
+
       // 2. DEXIE: Local Persistence
       // Note: Dexie cascade hooks (dexieDb.ts) automatically handle
       // deleting related metrics, measurements, and measurement_values.
@@ -184,7 +216,25 @@ export const createDatasetSlice: StateCreator<
         },
       );
     } catch (err) {
-      set({ datasetsById: previousDatasetsById, datasetIds: previousDatasetIds, error: (err as Error).message });
+      set({
+        datasetsById: previousDatasetsById,
+        datasetIds: previousDatasetIds,
+        error: (err as Error).message,
+      });
+      await db.transaction(
+        "rw",
+        db.datasets,
+        db.metrics,
+        db.measurements,
+        db.measurement_values,
+        async () => {
+          if (prevDataset) await db.datasets.put(prevDataset);
+          if (prevMetrics && prevMetrics.length > 0) await db.metrics.bulkPut(prevMetrics);
+          if (prevMeasurements && prevMeasurements.length > 0)
+            await db.measurements.bulkPut(prevMeasurements);
+          if (prevValues && prevValues.length > 0) await db.measurement_values.bulkPut(prevValues);
+        },
+      );
     }
   },
 

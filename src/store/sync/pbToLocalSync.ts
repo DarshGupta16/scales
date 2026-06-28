@@ -1,6 +1,6 @@
 import { db } from "../../lib/dexieDb";
 import { pb } from "../../lib/pocketbase";
-import { buildDatasetsMap } from "../helpers";
+import { buildHydrationPayload } from "../helpers";
 import {
   mapPbDataset,
   mapPbMeasurement,
@@ -34,28 +34,17 @@ export const pbToLocalSyncStrategy = async (
     const unitRecords = pbUnits.map(mapPbUnit);
     const preferenceRecords = pbPreferences.map(mapPbPreference);
 
-    const result = buildDatasetsMap(
+    const payload = buildHydrationPayload(
       datasetRecords,
       metricRecords,
       unitRecords,
       measurementRecords,
       valueRecords,
+      preferenceRecords,
     );
-    
-    const unitsById: Record<string, typeof unitRecords[0]> = {};
-    const unitIds: string[] = [];
-    for (const u of unitRecords) {
-      unitsById[u.id] = u;
-      unitIds.push(u.id);
-    }
-    
+
     set({
-      datasetsById: result.datasetsById,
-      datasetIds: result.datasetIds,
-      measurementToDatasetMap: result.measurementToDatasetMap,
-      unitsById,
-      unitIds,
-      preferences: preferenceRecords,
+      ...payload,
       isLoading: false,
       isHydrated: true,
     });
@@ -85,7 +74,7 @@ export const pbToLocalSyncStrategy = async (
           ]);
         },
       );
-      
+
       // Run integrity check
       runIntegrityCheck();
     };

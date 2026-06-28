@@ -25,14 +25,6 @@ mock.module("@/lib/pocketbase", () => ({
 
 const mockDeltaSync = mock(() => Promise.resolve());
 const mockReloadFromDexie = mock(() => Promise.resolve());
-mock.module("@/store", () => ({
-  useDatasetStore: {
-    getState: () => ({
-      pbDeltaSync: mockDeltaSync,
-      reloadFromDexie: mockReloadFromDexie,
-    }),
-  },
-}));
 
 import { createSubscription } from "@/utils/subscriptions/createSubscription";
 
@@ -50,7 +42,7 @@ describe("createSubscription", () => {
     const mockTable = { get: mock(() => Promise.resolve(null)) } as unknown as Parameters<
       typeof createSubscription
     >[1];
-    const subscribe = createSubscription("datasets", mockTable);
+    const subscribe = createSubscription("datasets", mockTable, mockReloadFromDexie, mockDeltaSync);
     subscribe();
 
     expect(mockSubscribe).toHaveBeenCalledTimes(1);
@@ -61,7 +53,7 @@ describe("createSubscription", () => {
     const mockTable = { get: mock(() => Promise.resolve(null)) } as unknown as Parameters<
       typeof createSubscription
     >[1];
-    createSubscription("datasets", mockTable)();
+    createSubscription("datasets", mockTable, mockReloadFromDexie, mockDeltaSync)();
 
     expect(capturedCallback).not.toBeNull();
     await capturedCallback?.({
@@ -77,7 +69,7 @@ describe("createSubscription", () => {
     const mockTable = { get: mock(() => Promise.resolve(localRecord)) } as unknown as Parameters<
       typeof createSubscription
     >[1];
-    createSubscription("datasets", mockTable)();
+    createSubscription("datasets", mockTable, mockReloadFromDexie, mockDeltaSync)();
 
     await capturedCallback?.({
       record: { id: "ds1", updated: "2024-06-15T14:30:00.000Z" },
@@ -92,7 +84,7 @@ describe("createSubscription", () => {
     const mockTable = { get: mock(() => Promise.resolve(localRecord)) } as unknown as Parameters<
       typeof createSubscription
     >[1];
-    createSubscription("datasets", mockTable)();
+    createSubscription("datasets", mockTable, mockReloadFromDexie, mockDeltaSync)();
 
     await capturedCallback?.({
       record: { id: "ds1", updated: "2024-06-15T14:30:00.000Z" },
@@ -108,7 +100,7 @@ describe("createSubscription", () => {
     const mockTable = { get: mock(() => Promise.resolve(localRecord)) } as unknown as Parameters<
       typeof createSubscription
     >[1];
-    createSubscription("datasets", mockTable)();
+    createSubscription("datasets", mockTable, mockReloadFromDexie, mockDeltaSync)();
 
     await capturedCallback?.({
       record: { id: "ds1", updated: iso },
@@ -121,7 +113,7 @@ describe("createSubscription", () => {
     const mockTable = { get: mock(() => Promise.resolve(null)) } as unknown as Parameters<
       typeof createSubscription
     >[1];
-    createSubscription("metrics", mockTable)();
+    createSubscription("metrics", mockTable, mockReloadFromDexie, mockDeltaSync)();
 
     await capturedCallback?.({
       record: { id: "met_abc_123", updated: "2024-01-01T00:00:00.000Z" },
@@ -135,7 +127,7 @@ describe("createSubscription", () => {
       get: mock(() => Promise.resolve(null)),
       delete: mock(() => Promise.resolve()),
     } as unknown as Parameters<typeof createSubscription>[1];
-    createSubscription("datasets", mockTable)();
+    createSubscription("datasets", mockTable, mockReloadFromDexie, mockDeltaSync)();
 
     await capturedCallback?.({
       record: { id: "ds1", updated: "2024-06-15T14:30:00.000Z" },

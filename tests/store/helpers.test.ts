@@ -71,7 +71,7 @@ const makeValue = (overrides: Partial<MeasurementValueRecord> = {}): Measurement
 
 const buildDatasets = (...args: Parameters<typeof buildDatasetsMap>) => {
   const result = buildDatasetsMap(...args);
-  return result.datasetIds.map(id => result.datasetsById[id]);
+  return result.datasetIds.map((id) => result.datasetsById[id]);
 };
 
 describe("buildDatasets", () => {

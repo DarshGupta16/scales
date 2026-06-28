@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { db } from "./lib/dexieDb";
-import { buildDatasetsMap } from "./store/helpers";
 import { backgroundState } from "./store/dirtyTracking";
+import { buildDatasetsMap } from "./store/helpers";
 import { createDatasetSlice } from "./store/slices/datasetSlice";
 import { createMeasurementSlice } from "./store/slices/measurementSlice";
 import { createPreferencesSlice } from "./store/slices/preferencesSlice";
@@ -32,7 +32,7 @@ export const useDatasetStore = create<DatasetState>((set, get, ...args) => ({
 
     // 1. Setup real-time subscriptions (one-time)
     if (!subscriptionsSetup) {
-      setupSubscriptions();
+      setupSubscriptions(get().reloadFromDexie, get().pbDeltaSync);
       subscriptionsSetup = true;
     }
 
@@ -46,19 +46,14 @@ export const useDatasetStore = create<DatasetState>((set, get, ...args) => ({
 
     try {
       // 3. Stage A - Fast Hydration (blocking)
-      const [
-        datasetRecords,
-        metricRecords,
-        unitRecords,
-        measurementRecords,
-        preferenceRecords,
-      ] = await Promise.all([
-        db.datasets.toArray(),
-        db.metrics.toArray(),
-        db.units.toArray(),
-        db.measurements.toArray(),
-        db.preferences.toArray(),
-      ]);
+      const [datasetRecords, metricRecords, unitRecords, measurementRecords, preferenceRecords] =
+        await Promise.all([
+          db.datasets.toArray(),
+          db.metrics.toArray(),
+          db.units.toArray(),
+          db.measurements.toArray(),
+          db.preferences.toArray(),
+        ]);
 
       // Collect IDs for the latest 7 measurements of each dataset
       const mByDataset = new Map<string, typeof measurementRecords>();
@@ -88,7 +83,7 @@ export const useDatasetStore = create<DatasetState>((set, get, ...args) => ({
         valueRecordsFast,
       );
 
-      const unitsById: Record<string, typeof unitRecords[0]> = {};
+      const unitsById: Record<string, (typeof unitRecords)[0]> = {};
       const unitIds: string[] = [];
       for (const u of unitRecords) {
         unitsById[u.id] = u;
@@ -126,32 +121,48 @@ export const useDatasetStore = create<DatasetState>((set, get, ...args) => ({
           // Re-fetch any datasets that were dirtied during background load
           if (backgroundState.dirtyDatasetIds.size > 0) {
             const dirtyDatasetIds = [...backgroundState.dirtyDatasetIds];
-            
+
             const dirtyDatasets = await db.datasets.where("id").anyOf(dirtyDatasetIds).toArray();
-            const dirtyMetrics = await db.metrics.where("datasetId").anyOf(dirtyDatasetIds).toArray();
-            const dirtyMeasurements = await db.measurements.where("datasetId").anyOf(dirtyDatasetIds).toArray();
-            
-            const dirtyMeasurementIds = dirtyMeasurements.map(m => m.id);
-            const dirtyValues = dirtyMeasurementIds.length > 0 
-              ? await db.measurement_values.where("measurementId").anyOf(dirtyMeasurementIds).toArray()
-              : [];
-              
+            const dirtyMetrics = await db.metrics
+              .where("datasetId")
+              .anyOf(dirtyDatasetIds)
+              .toArray();
+            const dirtyMeasurements = await db.measurements
+              .where("datasetId")
+              .anyOf(dirtyDatasetIds)
+              .toArray();
+
+            const dirtyMeasurementIds = dirtyMeasurements.map((m) => m.id);
+            const dirtyValues =
+              dirtyMeasurementIds.length > 0
+                ? await db.measurement_values
+                    .where("measurementId")
+                    .anyOf(dirtyMeasurementIds)
+                    .toArray()
+                : [];
+
             const dirtyUnits = await db.units.toArray(); // Keep simple
-            
-            const dirtyResult = buildDatasetsMap(dirtyDatasets, dirtyMetrics, dirtyUnits, dirtyMeasurements, dirtyValues);
-            
+
+            const dirtyResult = buildDatasetsMap(
+              dirtyDatasets,
+              dirtyMetrics,
+              dirtyUnits,
+              dirtyMeasurements,
+              dirtyValues,
+            );
+
             // Merge dirty result over full result
             for (const id of dirtyDatasetIds) {
-               if (dirtyResult.datasetsById[id]) {
-                 fullResult.datasetsById[id] = dirtyResult.datasetsById[id];
-               } else {
-                 delete fullResult.datasetsById[id];
-                 fullResult.datasetIds = fullResult.datasetIds.filter(did => did !== id);
-               }
+              if (dirtyResult.datasetsById[id]) {
+                fullResult.datasetsById[id] = dirtyResult.datasetsById[id];
+              } else {
+                delete fullResult.datasetsById[id];
+                fullResult.datasetIds = fullResult.datasetIds.filter((did) => did !== id);
+              }
             }
-            
+
             for (const m of dirtyMeasurements) {
-               fullResult.measurementToDatasetMap[m.id] = m.datasetId;
+              fullResult.measurementToDatasetMap[m.id] = m.datasetId;
             }
           }
 
@@ -161,7 +172,7 @@ export const useDatasetStore = create<DatasetState>((set, get, ...args) => ({
             measurementToDatasetMap: fullResult.measurementToDatasetMap,
             isFullyPopulated: true,
           });
-          
+
           backgroundState.dirtyDatasetIds.clear();
           backgroundState.isPopulating = false;
 

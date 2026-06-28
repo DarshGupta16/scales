@@ -1,6 +1,5 @@
 import type { EntityTable } from "dexie";
 import { pb } from "../../lib/pocketbase";
-import { useDatasetStore } from "../../store";
 
 /**
  * Generic PocketBase realtime subscription factory.
@@ -11,6 +10,8 @@ import { useDatasetStore } from "../../store";
 export function createSubscription<T extends { id: string; updated: number }>(
   collectionName: string,
   dexieTable: EntityTable<T, "id">,
+  reloadFromDexie: () => Promise<void>,
+  pbDeltaSync: () => Promise<void>,
 ) {
   return () =>
     pb.collection(collectionName).subscribe("*", async (e) => {
@@ -18,7 +19,7 @@ export function createSubscription<T extends { id: string; updated: number }>(
 
       if (action === "delete") {
         await dexieTable.delete(record.id as unknown as Parameters<typeof dexieTable.delete>[0]);
-        await useDatasetStore.getState().reloadFromDexie();
+        await reloadFromDexie();
         return;
       }
 
@@ -29,6 +30,6 @@ export function createSubscription<T extends { id: string; updated: number }>(
       );
       if (local && local.updated >= remoteUpdated) return;
 
-      await useDatasetStore.getState().pbDeltaSync();
+      await pbDeltaSync();
     });
 }

@@ -1,5 +1,5 @@
 import { db } from "../../lib/dexieDb";
-import { buildDatasetsMap } from "../helpers";
+import { buildHydrationPayload } from "../helpers";
 import type { DatasetState } from "../types";
 
 export const reloadFromDexieStrategy = async (
@@ -15,22 +15,8 @@ export const reloadFromDexieStrategy = async (
       db.preferences.toArray(),
     ]);
 
-    const result = buildDatasetsMap(allDs, allMet, allUnits, allM, allVal);
-    const unitsById: Record<string, typeof allUnits[0]> = {};
-    const unitIds: string[] = [];
-    for (const u of allUnits) {
-      unitsById[u.id] = u;
-      unitIds.push(u.id);
-    }
-
-    set({
-      datasetsById: result.datasetsById,
-      datasetIds: result.datasetIds,
-      measurementToDatasetMap: result.measurementToDatasetMap,
-      unitsById,
-      unitIds,
-      preferences: allPref,
-    });
+    const payload = buildHydrationPayload(allDs, allMet, allUnits, allM, allVal, allPref);
+    set(payload);
   } catch (err) {
     console.error("Failed to reload from Dexie:", err);
   }

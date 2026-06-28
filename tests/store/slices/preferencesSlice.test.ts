@@ -5,12 +5,14 @@ import { createStore } from "zustand";
 
 const mockDbPut = mock(() => Promise.resolve());
 const mockDbDelete = mock(() => Promise.resolve());
+const mockDbGet = mock(() => Promise.resolve());
 
 mock.module("@/lib/dexieDb", () => ({
   db: {
     preferences: {
       put: mockDbPut,
       delete: mockDbDelete,
+      get: mockDbGet,
     },
   },
 }));
